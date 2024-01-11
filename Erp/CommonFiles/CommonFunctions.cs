@@ -74,7 +74,7 @@ namespace Erp.CommonFiles
     public class CommonFunctions : RepositoryBase
     {
         public DbContextOptions<ErpDbContext> options = new DbContextOptionsBuilder<ErpDbContext>()
-            .UseSqlServer("Server=DESKTOP-F2TG0LU\\SQLEXPRESS;Database=ERPDatabase;Trusted_Connection=True;MultipleActiveResultSets=True;")
+            .UseSqlServer("Server=DESKTOP-F2TG0LU\\SQLEXPRESS;Database=ERPDatabase;Trusted_Connection=True;MultipleActiveResultSets=True;TrustServerCertificate=True")
             .Options;
 
         public static void LogError(Exception ex, string methodName, string additionalInfo = "")
