@@ -9,7 +9,8 @@
              xmlns:converters="clr-namespace:Erp.Converters"
 
              xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity" 
-             xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf" xmlns:converter="clr-namespace:Erp.Converters"
+             xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf" 
+             xmlns:converter="clr-namespace:Erp.Converters"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <UserControl.DataContext>
@@ -304,12 +305,10 @@
                             <Button x:Name="SaveData"  Width="100" HorizontalAlignment="Left"  Margin="2"  Command="{Binding SaveInputCommand}">
                                 <TextBlock Text="Save"/>
                             </Button>
-                            <Button x:Name="InsertData"  Width="180" HorizontalAlignment="Left"  Margin="2"  Command="{Binding InsertDataCommand}">
-                                <TextBlock Text="Insert Data For Optimisation "/>
-                            </Button>
 
-                            <Button x:Name="CalculateMPS"  Width="200" HorizontalAlignment="Left" Margin="2"  Command="{Binding CalculateMps}">
-                                <TextBlock Text="Calculate Production Schedule"/>
+
+                            <Button x:Name="CalculateMPS"  Width="210"  HorizontalAlignment="Left" Margin="2"  Command="{Binding CalculateMps}">
+                                <TextBlock Text="Calculate Production Schedule" FontWeight="Bold"/>
                             </Button>
                         </StackPanel>
 

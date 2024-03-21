@@ -9,10 +9,10 @@ namespace Erp.Model.BasicFiles
 {
     public class CountryData : RecordBaseModel
     {
-        public int _CountryId { get; set; }
-        public string _CountryCode { get; set; }
+        private int _CountryId { get; set; }
+        private string _CountryCode { get; set; }
 
-        public string _CountryDescr { get; set; }
+        private string _CountryDescr { get; set; }
 
         public int CountryId
         {

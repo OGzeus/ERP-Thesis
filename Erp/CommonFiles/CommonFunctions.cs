@@ -13,7 +13,7 @@ using Erp.Model;
 using Erp.Repositories;
 using FontAwesome.Sharp;
 using System.Net.Configuration;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System.Net;
 using System.Collections.ObjectModel;
 using Erp.Model.BasicFiles;
@@ -67,6 +67,13 @@ using System.Reflection.Emit;
 using DevExpress.XtraReports.Native;
 using Erp.Model.Manufacture.MRP;
 using Syncfusion.Windows.Controls;
+using Erp.Model.Thesis;
+using Erp.DataBase.Τhesis;
+using DlhSoft.Windows.Data;
+using Erp.Model.Thesis.VacationPlanning;
+using Microsoft.EntityFrameworkCore.Internal;
+using DevExpress.Xpo;
+using Erp.View.Thesis.CustomButtons;
 
 namespace Erp.CommonFiles
 {
@@ -74,60 +81,4428 @@ namespace Erp.CommonFiles
     public class CommonFunctions : RepositoryBase
     {
         public DbContextOptions<ErpDbContext> options = new DbContextOptionsBuilder<ErpDbContext>()
-            .UseSqlServer("Server=DESKTOP-F2TG0LU\\SQLEXPRESS;Database=ERPDatabase;Trusted_Connection=True;MultipleActiveResultSets=True;TrustServerCertificate=True")
+            .UseSqlServer("Server=DESKTOP-F2TG0LU\\SQLEXPRESS;Database=ERPDatabase;Trusted_Connection=True;MultipleActiveResultSets=True;Encrypt=false;")
             .Options;
 
-        public static void LogError(Exception ex, string methodName, string additionalInfo = "")
-        {
-            using (var dbContext = new ErpDbContext(ErpDbContext.DbOptions))
-            {
-                dbContext.Loge.Add(new Log
-                {
-                    ExceptionType = ex.GetType().ToString(),
-                    ExceptionMessage = ex.Message,
-                    StackTrace = ex.StackTrace,
-                    Source = ex.Source,
-                    MethodName = methodName,
-                    OccurredAt = DateTime.Now,
-                    AdditionalInfo = additionalInfo
-                });
 
-                dbContext.SaveChanges();
-            }
-        }
+        #region Thesis
 
-        public UserModel GetByUserName(string userName)
+        #region Language
+
+        public ObservableCollection<LanguageData> GetLanguageData(bool ShowDeleted)
         {
-            UserModel user = null;
+            ObservableCollection<LanguageData> DataList = new ObservableCollection<LanguageData>();
+
+            string FilterStr = "";
+
             using (var connection = GetConnection())
             using (var command = new SqlCommand())
             {
                 connection.Open();
                 command.Connection = connection;
-                command.CommandText = "select * from [User] where username=@username";
-                command.Parameters.Add("@username", System.Data.SqlDbType.NVarChar).Value = userName;
+
+                if (ShowDeleted == false)
+                {
+                    command.Parameters.AddWithValue("@ShowDeleted", ShowDeleted);
+                    FilterStr = String.Format(@" and IsDeleted =@ShowDeleted");
+                }
+                command.CommandText = string.Format(@"select LId,LCode,LDescr,IsDeleted from Language Where 1=1 {0}", FilterStr);
                 using (var reader = command.ExecuteReader())
                 {
-                    if (reader.Read())
+                    while (reader.Read())
                     {
-                        user = new UserModel()
-                        {
-                            Id = reader[0].ToString(),
-                            UserName = reader[1].ToString(),
-                            Password = string.Empty,
-                            Name = reader[3].ToString(),
-                            LastName = reader[4].ToString(),
-                            Email = reader[5].ToString(),
-                        };
+                        LanguageData data = new LanguageData();
+
+                        data.Id = int.Parse(reader["LId"].ToString());
+                        data.Code = reader["LCode"].ToString();
+                        data.Descr = reader["LDescr"].ToString();
+                        data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
+
+                        DataList.Add(data);
                     }
+                }
+
+                connection.Close();
+
+            }
+
+            return DataList;
+        }
+
+
+        public bool SaveLanguageData(ObservableCollection<LanguageData> Data)
+        {
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
+
+
+                    bool hasChanges = false;
+                    foreach (var row in Data)
+                    {
+                        var existingrow = dbContext.Language.SingleOrDefault(b => b.LId == row.Id);
+
+                        if (existingrow == null)
+                        {
+                            LanguageDataEntity newrow = new LanguageDataEntity();
+                            newrow.LCode = row.Code;
+                            newrow.LDescr = row.Descr;
+                            newrow.IsDeleted = false;
+                            dbContext.Language.Add(newrow);
+                            hasChanges = true;
+                        }
+                        else if (existingrow != null)
+                        {
+
+                            existingrow.LCode = row.Code;
+                            existingrow.LDescr = row.Descr;
+                            existingrow.IsDeleted = row.IsDeleted;
+
+                            hasChanges = true;
+
+
+
+                        }
+
+
+                    }
+
+                    if (hasChanges)
+                    {
+                        dbContext.SaveChanges();
+                    }
+
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "SaveLanguageData", "Notes");
+                return false;
+            }
+        }
+
+
+
+        #endregion
+
+        #region Airports
+        public int SaveAirportsData(AirportData flatData)
+        {
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
+                    // Separate query from execution
+                    int Id = flatData.Id;
+                    var existingQuery = dbContext.Airports.Where(c => c.AirportID == Id);
+                    var existing = existingQuery.SingleOrDefault();
+                    // Execute the query and get the result
+                    var CityQuery = dbContext.City.Where(c => c.CityId == flatData.City.CityId);
+                    var City = CityQuery.SingleOrDefault();
+
+                    if (existing != null)
+                    {
+
+
+                        // Update existing customer
+                        existing.AirportCode = flatData.Code;
+                        existing.AirportDescr = flatData.Descr;
+
+                        existing.CityId = City.CityId;
+
+                        existing.IsDeleted = flatData.IsDeleted;
+
+                        dbContext.SaveChanges();
+                        return 1;
+                    }
+                    else
+                    {
+                        return -1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "SaveAirportsData", "Notes");
+                return -1;
+            }
+        }
+
+        public int AddAirportsData(AirportData flatData)
+        {
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
+                    // Separate query from execution
+                    var existingItemQuery = dbContext.Airports.Where(r => r.AirportCode == flatData.Code);
+                    var existingItem = existingItemQuery.SingleOrDefault();
+                    // Execute the query and get the result
+
+
+                    if (existingItem == null)
+                    {
+                        var newItem = new AirportsDataEntity();
+                        // Insert new item
+                        newItem.AirportCode = flatData.Code;
+                        newItem.AirportDescr = flatData.Descr;
+                        newItem.CityId = dbContext.City.FirstOrDefault().CityId;
+                        newItem.IsDeleted = false;
+
+                        dbContext.Airports.Add(newItem);
+
+                        dbContext.SaveChanges();
+                        return 0;
+                    }
+                    else
+                    {
+                        // Else Print messages
+                        return 1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "AddAirportsData", "Notes");
+                return 2;
+
+            }
+        }
+
+        public AirportData GetAirportsChooserData(int Id, string Code)
+        {
+            AirportData FlatData = new AirportData();
+            string FilterStr = "";
+            try
+            {
+                using (var connection = GetConnection())
+                using (var command = new SqlCommand())
+                {
+                    connection.Open();
+                    command.Connection = connection;
+
+                    if (Id > 0)
+                    {
+                        command.Parameters.AddWithValue("@ID", Id);
+                        FilterStr = String.Format(@" and A.AirportID =@ID");
+
+                    }
+
+                    else if (!string.IsNullOrWhiteSpace(Code))
+                    {
+                        command.Parameters.AddWithValue("@Code", Code);
+                        FilterStr = String.Format(@" and A.AirportCode =@Code");
+
+                    }
+                    command.CommandText = string.Format(@"SELECT A.AirportID,A.AirportCode,A.AirportDescr,A.IsDeleted,
+City.CityId,City.CityCode,City.CityDescr
+FROM Airports AS A
+INNER JOIN City ON City.CityId = A.AirportID
+                                              Where 1=1 {0}", FilterStr);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            AirportData data = new AirportData();
+                            data.City = new CityData();
+
+
+                            data.Id = int.Parse(reader["AirportID"].ToString());
+                            data.Code = reader["AirportCode"].ToString();
+                            data.Descr = reader["AirportDescr"].ToString();
+
+                            data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
+
+
+                            data.City.CityId = int.Parse(reader["CityId"].ToString());
+                            data.City.CityCode = reader["CityCode"].ToString();
+                            data.City.CityDescr = reader["CityDescr"].ToString();
+                        }
+                    }
+
+                    connection.Close();
+                }
+
+                return FlatData;
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "GetAirportsChooserData", "Notes");
+                return null;
+            }
+        }
+        public ObservableCollection<AirportData> GetAirportsData(bool ShowDeleted)
+        {
+            ObservableCollection<AirportData> DataList = new ObservableCollection<AirportData>();
+
+            string FilterStr = "";
+
+            using (var connection = GetConnection())
+            using (var command = new SqlCommand())
+            {
+                connection.Open();
+                command.Connection = connection;
+
+                if (ShowDeleted == false)
+                {
+                    command.Parameters.AddWithValue("@ShowDeleted", ShowDeleted);
+                    FilterStr = String.Format(@" and A.IsDeleted =@ShowDeleted");
+                }
+                command.CommandText = string.Format(@"SELECT A.AirportID,A.AirportCode,A.AirportDescr,A.IsDeleted,
+City.CityId,City.CityCode,City.CityDescr
+FROM Airports AS A
+INNER JOIN City ON City.CityId = A.AirportID
+                                              Where 1=1 {0}", FilterStr);
+
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        AirportData data = new AirportData();
+                        data.City = new CityData();
+
+
+                        data.Id = int.Parse(reader["AirportID"].ToString());
+                        data.Code = reader["AirportCode"].ToString();
+                        data.Descr = reader["AirportDescr"].ToString();
+
+                        data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
+
+
+                        data.City.CityId = int.Parse(reader["CityId"].ToString());
+                        data.City.CityCode = reader["CityCode"].ToString();
+                        data.City.CityDescr = reader["CityDescr"].ToString();
+
+
+
+
+                        DataList.Add(data);
+                    }
+                }
+
+                connection.Close();
+            }
+
+            return DataList;
+        }
+        #endregion
+
+        #region ReqSchedule
+        public int SetMainSchedule(ReqScheduleInfoData FlatData)
+        {
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
+                    // Separate query from execution
+                    int ReqId = FlatData.ID;
+
+                    var selectedQuery = dbContext.ReqScheduleInfo.Where(r => r.ID == ReqId);
+                    var selectedSchedule= selectedQuery.SingleOrDefault();
+
+
+                    var MainSchedulequery = dbContext.ReqScheduleInfo.Where(r => r.MainSchedule == true);
+                    var MainSchedule = MainSchedulequery.SingleOrDefault();
+                    // Execute the query and get the result
+
+
+                    var result = System.Windows.MessageBox.Show($"The Schedule with Code {FlatData.ReqCode}  will be set as the Main Schedule  . Proceed?", "Confirmation", MessageBoxButton.YesNo);
+
+                    if (result == MessageBoxResult.Yes)
+                    {
+                        if (MainSchedule != null)
+                        {
+
+                            MainSchedule.MainSchedule = false;
+                            selectedSchedule.MainSchedule = true;
+
+
+                        }
+                        else
+                        {
+                            selectedSchedule.MainSchedule = true;
+                        }
+                        dbContext.SaveChanges();
+                        return 2;
+                    }
+                    else
+                    {
+                        return 1;
+                    }
+
+
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "SetMainSchedule", "Notes");
+                return -1;
+
+            }
+        }
+        public int SaveReqScheduleInfoData(ReqScheduleInfoData flatData)
+        {
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
+                    // Separate query from execution
+                    int ReqId = flatData.ID;
+                    var existingItemQuery = dbContext.ReqScheduleInfo.Where(r => r.ID == ReqId);
+                    var existingItem = existingItemQuery.SingleOrDefault();
+                    // Execute the query and get the result
+
+                    if (existingItem != null)
+                    {
+
+                        // Update existing item
+                        existingItem.ID = flatData.ID;
+                        existingItem.ReqCode = flatData.ReqCode;
+                        existingItem.ReqDescr = flatData.ReqDescr;
+                        existingItem.Notes = flatData.Notes;
+                        existingItem.DateFrom = flatData.DateFrom;
+                        existingItem.DateTo = flatData.DateTo;
+                        existingItem.DateTo = flatData.DateTo;
+                        existingItem.LimitLineFixed = flatData.LimitLineFixed;
+
+                        existingItem.IsDeleted = flatData.IsDeleted;
+                        existingItem.MainSchedule = flatData.MainSchedule;
+
+
+
+                        dbContext.SaveChanges();
+                        return 1;
+                    }
+                    else
+                    {
+                        return -1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "SaveReqScheduleInfoData", "Notes");
+                return -1;
+
+            }
+        }
+        public int AddReqScheduleInfoData(ReqScheduleInfoData flatData)
+        {
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
+                    // Separate query from execution
+                    var existingItemQuery = dbContext.ReqScheduleInfo.Where(r => r.ReqCode == flatData.ReqCode);
+                    var existingItem = existingItemQuery.SingleOrDefault();
+                    // Execute the query and get the result
+
+
+                    if (existingItem == null)
+                    {
+                        var newItem = new ReqScheduleInfoDataEntity();
+                        // Insert new ForeCast
+                        newItem.ReqCode = flatData.ReqCode;
+                        newItem.ReqDescr = flatData.ReqDescr;
+
+                        newItem.Notes = flatData.Notes;
+                        newItem.DateFrom = flatData.DateFrom;
+                        newItem.DateTo = flatData.DateTo;
+                        newItem.LimitLineFixed = flatData.LimitLineFixed;
+                        newItem.IsDeleted = false;
+                        newItem.MainSchedule = false;
+
+                        dbContext.ReqScheduleInfo.Add(newItem);
+
+                        dbContext.SaveChanges();
+
+                        return 0;
+                    }
+                    else
+                    {
+                        return 1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "AddReqScheduleInfoData", "Notes");
+                return 2;
+
+            }
+        }
+        public bool SaveReqScheduleRows(ReqScheduleInfoData FlatData)
+        {
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
+                    var ScheduleRows = FlatData.ReqScheduleRowsData;
+                    var ScheduleInfo = dbContext.ReqScheduleInfo.SingleOrDefault(r => r.ID == FlatData.ID);
+
+                    String ReqCode = ScheduleInfo.ReqCode.ToString();
+
+                    bool hasChanges = false;
+                    foreach (var row in ScheduleRows)
+                    {
+                        var DateStr = row.DateStr;
+
+                        var existingRows = dbContext.ReqScheduleRows.Where(b => b.ReqCode == ReqCode  && b.DateStr == row.DateStr);
+
+                        var existingrow = dbContext.ReqScheduleRows.FirstOrDefault(b => b.ReqCode == ReqCode && b.DateStr == row.DateStr);
+
+                        if (existingrow == null)
+                        {
+                            dbContext.ReqScheduleRows.Add(new ReqScheduleRowsDataEntity
+                            {
+                                ReqCode = ReqCode,
+                                Date = row.Date,
+                                DateStr = row.DateStr,
+                                LimitLine = row.LimitLine
+
+
+                            });
+                            hasChanges = true;
+                        }
+                        else if (existingrow != null)
+                        {
+
+                            if (existingrow.LimitLine != row.LimitLine)
+                            {
+                                existingrow.LimitLine = row.LimitLine;
+                                hasChanges = true;
+
+                            }
+
+
+                        }
+
+
+                    }
+
+                    if (hasChanges)
+                    {
+                        dbContext.SaveChanges();
+                    }
+
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "SaveReqScheduleRows", "Notes");
+                return false;
+            }
+        }
+
+
+        public ObservableCollection<ReqScheduleRowsData> GetReqSchedulesRows(string ReqCode)
+        {
+            ObservableCollection<ReqScheduleRowsData> DataList = new ObservableCollection<ReqScheduleRowsData>();
+            using (var connection = GetConnection())
+            using (var command = new SqlCommand())
+            {
+                connection.Open();
+                command.Connection = connection;
+
+                command.Parameters.AddWithValue("@Code", ReqCode);
+
+                command.CommandText = string.Format(@"select REQID,REQCODE,DATE,DATESTR,LIMITLINE
+FROM ReqSchedulerows
+Where ReqCode =@Code");
+
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+
+                        ReqScheduleRowsData data = new ReqScheduleRowsData();
+
+                        data.ReqCode = reader["REQCODE"].ToString();
+
+                        data.LimitLine = int.Parse(reader["LIMITLINE"].ToString());
+                        data.Date = Convert.ToDateTime(reader["DATE"]);
+
+                        data.DateStr = reader["DATESTR"].ToString();
+
+
+                        DataList.Add(data);
+
+                    }
+                }
+
+                connection.Close();
+            }
+
+            return DataList;
+        }
+        public ObservableCollection<ReqScheduleInfoData> GetReqScheduleInfoData(bool ShowDeleted)
+        {
+            ObservableCollection<ReqScheduleInfoData> DataList = new ObservableCollection<ReqScheduleInfoData>();
+
+
+            string FilterStr = "";
+
+
+            using (var connection = GetConnection())
+            using (var command = new SqlCommand())
+            {
+                connection.Open();
+                command.Connection = connection;
+
+                if (ShowDeleted == false)
+                {
+                    command.Parameters.AddWithValue("@ShowDeleted", ShowDeleted);
+                    FilterStr = String.Format(@"and IsDeleted = @ShowDeleted");
+
+                }
+
+                command.CommandText = string.Format(@"select ID,REQCODE,REQDESCR,NOTES,DATEFROM,DATETO,ISDELETED,MAINSCHEDULE,LimitLineFixed
+FROM ReqScheduleInfo
+Where  1=1 {0}", FilterStr);
+
+
+
+
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        ReqScheduleInfoData data = new ReqScheduleInfoData();
+
+                        data.ID = int.Parse(reader["ID"].ToString());
+                        data.ReqCode = reader["REQCODE"].ToString();
+                        data.ReqDescr = reader["REQDESCR"].ToString();
+                        data.LimitLineFixed = int.Parse(reader["LimitLineFixed"].ToString());
+                        data.DateFrom = Convert.ToDateTime(reader["DATEFROM"]);
+                        data.DateTo = Convert.ToDateTime(reader["DATETO"]);
+                        data.IsDeleted = bool.Parse(reader["ISDELETED"].ToString());
+                        data.MainSchedule = bool.Parse(reader["MAINSCHEDULE"].ToString());
+                        data.Notes = reader["NOTES"].ToString();
+
+
+                        DataList.Add(data);
+                    }
+                }
+
+                connection.Close();
+            }
+
+            return DataList;
+        }
+        public ReqScheduleInfoData GetReqScheduleInfoChooserData(int id, string Code)
+        {
+            ReqScheduleInfoData data = new ReqScheduleInfoData();
+
+            using (var connection = GetConnection())
+            using (var command = new SqlCommand())
+            {
+                connection.Open();
+                command.Connection = connection;
+
+                if (id > 0)
+                {
+                    command.Parameters.AddWithValue("@ID", id);
+
+                    command.CommandText = string.Format(@"select ID,REQCODE,REQDESCR,NOTES,DATEFROM,DATETO,ISDELETED,MAINSCHEDULE,LimitLineFixed
+                                                        FROM ReqScheduleInfo
+                                                        Where ID=@ID");
+                }
+                else if (!string.IsNullOrWhiteSpace(Code))
+                {
+                    command.Parameters.AddWithValue("@Code", Code); // Corrected variable name
+
+                    command.CommandText = string.Format(@"select ID,REQCODE,REQDESCR,NOTES,DATEFROM,DATETO,ISDELETED,MAINSCHEDULE,LimitLineFixed
+                                                        FROM ReqScheduleInfo
+                                                        Where REQCODE=@Code"); // Corrected parameter name
                 }
 
 
 
+                using (var reader = command.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        data.ID = int.Parse(reader["ID"].ToString());
+                        data.ReqCode = reader["REQCODE"].ToString();
+                        data.ReqDescr = reader["REQDESCR"].ToString();
+                        data.DateFrom = Convert.ToDateTime(reader["DATEFROM"]);
+                        data.DateTo = Convert.ToDateTime(reader["DATETO"]);
+                        data.LimitLineFixed = int.Parse(reader["LimitLineFixed"].ToString());
+
+                        data.IsDeleted = bool.Parse(reader["ISDELETED"].ToString());
+                        data.MainSchedule = bool.Parse(reader["MAINSCHEDULE"].ToString());
+                        data.Notes = reader["NOTES"].ToString();
+
+
+                    }
+                }
+
+                connection.Close();
             }
-            return user;
+
+            return data;
+        }
+        public ReqScheduleInfoData GetMainScheduleInfoData()
+        {
+            ReqScheduleInfoData data = new ReqScheduleInfoData();
+
+            using (var connection = GetConnection())
+            using (var command = new SqlCommand())
+            {
+                connection.Open();
+                command.Connection = connection;
+
+
+
+
+                command.CommandText = string.Format(@"select ID,REQCODE,REQDESCR,NOTES,DATEFROM,DATETO,ISDELETED,MAINSCHEDULE,LimitLineFixed
+                                                    FROM ReqScheduleInfo
+                                                    Where MAINSCHEDULE=1"); // Corrected parameter name
+
+
+
+
+                using (var reader = command.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        data.ID = int.Parse(reader["ID"].ToString());
+                        data.ReqCode = reader["REQCODE"].ToString();
+                        data.ReqDescr = reader["REQDESCR"].ToString();
+                        data.DateFrom = Convert.ToDateTime(reader["DATEFROM"]);
+                        data.DateTo = Convert.ToDateTime(reader["DATETO"]);
+                        data.LimitLineFixed = int.Parse(reader["LimitLineFixed"].ToString());
+                        data.IsDeleted = bool.Parse(reader["ISDELETED"].ToString());
+                        data.MainSchedule = bool.Parse(reader["MAINSCHEDULE"].ToString());
+                        data.Notes = reader["NOTES"].ToString();
+
+
+                    }
+                }
+
+                connection.Close();
+            }
+
+            return data;
         }
 
+        #endregion
+
+        #region Certification
+        public int SaveCertificationData(CertificationData flatData)
+        {
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
+                    // Separate query from execution
+                    int Id = flatData.Id;
+                    var existingQuery = dbContext.Certifications.Where(c => c.CertID == Id);
+                    var existing= existingQuery.SingleOrDefault();
+                    // Execute the query and get the result
+
+                    if (existing != null)
+                    {
+
+
+                        // Update existing customer
+                        existing.Code = flatData.Code;
+                        existing.Descr = flatData.Descr;
+                        existing.ValidityPeriod = flatData.ValidityPeriod;
+                        existing.CertPosition = flatData.CertPosition.ToString();
+                        existing.ValidityTimeBucket = flatData.ValidityTimeBucket.ToString();
+                        existing.DateFrom = flatData.DateFrom;
+                        existing.DateTo = flatData.DateTo;
+
+
+
+                        existing.IsDeleted = flatData.IsDeleted;
+
+                        dbContext.SaveChanges();
+                        return 1;
+                    }
+                    else
+                    {
+                        return -1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "SaveCertificationData", "Notes");
+                return -1;
+            }
+        }
+        public int AddCertificationData(CertificationData flatData)
+        {
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
+                    // Separate query from execution
+                    var existingItemQuery = dbContext.Certifications.Where(r => r.Code == flatData.Code);
+                    var existingItem = existingItemQuery.SingleOrDefault();
+                    // Execute the query and get the result
+
+
+                    if (existingItem == null)
+                    {
+                        var newItem = new CertificationsDataEntity();
+                        // Insert new item
+                        newItem.Code = flatData.Code;
+                        newItem.Descr = flatData.Descr;
+                        newItem.ValidityPeriod = 1;
+                        newItem.CertPosition = BasicEnums.CertPosition.PNT.ToString();
+                        newItem.ValidityTimeBucket = BasicEnums.Timebucket.Yearly.ToString();
+                        newItem.DateFrom = DateTime.Now;
+                        newItem.DateTo = DateTime.Now.AddYears(1);
+
+
+
+                        newItem.IsDeleted = false;
+
+
+                        dbContext.Certifications.Add(newItem);
+
+                        dbContext.SaveChanges();
+                        return 0;
+                    }
+                    else
+                    {
+                        // Else Print messages
+                        return 1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "AddCertificationData", "Notes");
+                return 2;
+
+            }
+        }
+
+        public CertificationData GetCertificationChooserData(int Id, string Code)
+        {
+            CertificationData FlatData = new CertificationData();
+            string FilterStr = "";
+            try
+            {
+                using (var connection = GetConnection())
+                using (var command = new SqlCommand())
+                {
+                    connection.Open();
+                    command.Connection = connection;
+
+                    if (Id > 0)
+                    {
+                        command.Parameters.AddWithValue("@ID", Id);
+                        FilterStr = String.Format(@" and Certifications.CertID =@ID");
+
+                    }
+
+                    else if (!string.IsNullOrWhiteSpace(Code))
+                    {
+                        command.Parameters.AddWithValue("@Code", Code);
+                        FilterStr = String.Format(@" and Certifications.Code =@Code");
+
+                    }
+                    command.CommandText = string.Format(@"select CertID,Code,Descr,ValidityPeriod,ValidityTimeBucket,DateFrom,
+                                              DateTo,CertPosition,IsDeleted
+                                              from Certifications
+                                              Where 1=1 {0}", FilterStr);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            CertificationData data = new CertificationData();
+
+                            data.Id = int.Parse(reader["CertId"].ToString());
+                            data.Code = reader["Code"].ToString();
+                            data.Descr = reader["Descr"].ToString();
+                            data.ValidityPeriod = int.Parse(reader["ValidityPeriod"].ToString());
+
+                            data.CertPosition = (BasicEnums.CertPosition)Enum.Parse(typeof(BasicEnums.CertPosition), reader["CertPosition"].ToString());
+                            data.ValidityTimeBucket = (BasicEnums.Timebucket)Enum.Parse(typeof(BasicEnums.Timebucket), reader["ValidityTimeBucket"].ToString());
+
+                            data.DateFrom = DateTime.Parse(reader["DateFrom"].ToString());
+                            data.DateTo = DateTime.Parse(reader["DateTo"].ToString());
+
+
+                            data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
+
+
+
+                        }
+                    }
+
+                    connection.Close();
+                }
+
+                return FlatData;
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "GetCertificationChooserData", "Notes");
+                return null;
+            }
+        }
+        public ObservableCollection<CertificationData> GetCertificationData(bool ShowDeleted)
+        {
+            ObservableCollection<CertificationData> DataList = new ObservableCollection<CertificationData>();
+
+            string FilterStr = "";
+
+            using (var connection = GetConnection())
+            using (var command = new SqlCommand())
+            {
+                connection.Open();
+                command.Connection = connection;
+
+                if (ShowDeleted == false)
+                {
+                    command.Parameters.AddWithValue("@ShowDeleted", ShowDeleted);
+                    FilterStr = String.Format(@" and Certifications.IsDeleted =@ShowDeleted");
+                }
+                command.CommandText = string.Format(@"select CertID,Code,Descr,ValidityPeriod,ValidityTimeBucket,DateFrom,
+                                              DateTo,CertPosition,IsDeleted
+                                              from Certifications
+                                              Where 1=1 {0}", FilterStr);
+
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        CertificationData data = new CertificationData();
+
+
+
+
+                        data.Id = int.Parse(reader["CertId"].ToString());
+                        data.Code = reader["Code"].ToString();
+                        data.Descr = reader["Descr"].ToString();
+                        data.ValidityPeriod = int.Parse(reader["ValidityPeriod"].ToString());
+
+                        data.CertPosition = (BasicEnums.CertPosition)Enum.Parse(typeof(BasicEnums.CertPosition), reader["CertPosition"].ToString());
+                        data.ValidityTimeBucket = (BasicEnums.Timebucket)Enum.Parse(typeof(BasicEnums.Timebucket), reader["ValidityTimeBucket"].ToString());
+
+                        data.DateFrom = DateTime.Parse(reader["DateFrom"].ToString());
+                        data.DateTo = DateTime.Parse(reader["DateTo"].ToString());
+
+
+                        data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
+
+
+
+
+                        DataList.Add(data);
+                    }
+                }
+
+                connection.Close();
+            }
+
+            return DataList;
+        }
+        #endregion
+
+        #region Employee
+
+        #region 1stTab General Info
+
+        public int SaveEmployeeData(EmployeeData flatData)
+        {
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
+                    // Separate query from execution
+                    int employeeId = flatData.EmployeeId;
+                    var existingQuery = dbContext.Employees.Where(c => c.EmployeeID == employeeId);
+                    var existing = existingQuery.SingleOrDefault();
+                    // Execute the query and get the result
+                    //var AirportQuery = dbContext.Airports.Where(c => c.AirportCode == flatData.BaseAirport.Code);
+                    //var Airport = AirportQuery.SingleOrDefault();
+
+                    //var CertificationQuery = dbContext.Certifications.Where(c => c.Code == flatData.Certification.Code);
+                    //var Certification = AirportQuery.SingleOrDefault();
+
+                    if (existing != null)
+                    {
+
+
+                        // Update existing customer
+                        existing.Code = flatData.Code;
+                        existing.Descr = flatData.Descr;
+                        existing.FirstName = flatData.FirstName;
+                        existing.LastName = flatData.LastName;
+                        existing.Gender = flatData.Gender.ToString();
+                        existing.ContactNumber = flatData.ContactNumber;
+                        existing.Email = flatData.Email;
+                        existing.Address = flatData.Address;
+                        existing.Position = flatData.Position.ToString();
+                        existing.TotalFlightHours = flatData.TotalFlightHours;
+                        existing.Seniority = flatData.Seniority;
+                        existing.Language = flatData.Language; ;
+
+                        existing.DateOfBirth = DateTime.Now;
+                        existing.HireDate = DateTime.Now;
+
+                        existing.BaseAirportId = flatData.BaseAirport.Id;
+                        existing.CertificationID = flatData.Certification.Id;
+
+                        existing.IsDeleted = flatData.IsDeleted;
+
+                        dbContext.SaveChanges();
+                        return 1;
+                    }
+                    else
+                    {
+                        return -1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "SaveEmployeeData", "Notes");
+                return -1;
+            }
+        }
+
+        public int AddEmployeeData(EmployeeData flatData)
+        {
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
+                    // Separate query from execution
+                    var existingItemQuery = dbContext.Employees.Where(r => r.Code == flatData.Code);
+                    var existingItem = existingItemQuery.SingleOrDefault();
+                    // Execute the query and get the result
+
+
+                    if (existingItem == null)
+                    {
+                        var newItem = new EmployeeDataEntity();
+                        // Insert new item
+                        newItem.Code = flatData.Code;
+                        newItem.Descr = flatData.Descr;
+                        newItem.FirstName = " ";
+                        newItem.LastName = " ";
+                        newItem.Gender = BasicEnums.Gender.Male.ToString();
+                        newItem.ContactNumber = " ";
+                        newItem.Email = " ";
+                        newItem.Address = " ";
+                        newItem.Position = BasicEnums.EmployeeType.Captain.ToString();
+                        newItem.TotalFlightHours = 0;
+                        newItem.Seniority = 0;
+                        newItem.Language = 0;
+
+                        newItem.DateOfBirth = DateTime.Now;
+                        newItem.HireDate = DateTime.Now;
+
+                        newItem.BaseAirportId = dbContext.Airports.FirstOrDefault().AirportID;
+                        newItem.CertificationID = dbContext.Certifications.FirstOrDefault().CertID;
+
+                        newItem.IsDeleted = false;
+
+
+                        dbContext.Employees.Add(newItem);
+
+                        dbContext.SaveChanges();
+                        return 0;
+                    }
+                    else
+                    {
+                        // Else Print messages
+                        return 1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "AddEmployeeData", "Notes");
+                return 2;
+
+            }
+        }
+
+        public EmployeeData GetEmployeeChooserData(int Id, string Code)
+        {
+            EmployeeData FlatData = new EmployeeData();
+            string FilterStr = "";
+            try
+            {
+                using (var connection = GetConnection())
+                using (var command = new SqlCommand())
+                {
+                    connection.Open();
+                    command.Connection = connection;
+
+                    if (Id > 0)
+                    {
+                        command.Parameters.AddWithValue("@ID", Id);
+                        FilterStr = String.Format(@" and Employees.EmployeeID =@ID");
+
+                    }
+
+                    else if (!string.IsNullOrWhiteSpace(Code))
+                    {
+                        command.Parameters.AddWithValue("@Code", Code);
+                        FilterStr = String.Format(@" and Employees.Code =@Code");
+
+                    }
+                    command.CommandText = string.Format(@"SELECT Employees.EmployeeID, Employees.Code, Employees.Descr, 
+Employees.FirstName,Employees.LastName, Employees.Gender, Employees.DateOfBirth, 
+Employees.ContactNumber, Employees.Email,Employees.Address,Employees.Position,Employees.CertificationID,Employees.HireDate,Employees.TotalFlightHours,
+Employees.Seniority,Employees.Language,Employees.BaseAirportId,Employees.IsDeleted,
+C.CertID,C.Code as CCODE,C.Descr CDESCR,C.ValidityPeriod,C.ValidityTimeBucket,C.DateFrom,
+C.DateTo,C.CertPosition,A.AirportID,A.AirportCode,A.AirportDescr,A.CityId
+FROM Employees
+INNER JOIN Certifications as C ON Employees.CertificationID = C.CertID
+INNER JOIN Airports AS A ON Employees.BaseAirportId = A.AirportID
+                                              Where 1=1 {0}", FilterStr);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            EmployeeData data = new EmployeeData();
+                            data.Certification = new CertificationData();
+                            data.BaseAirport = new AirportData();
+                            data.BaseAirport.City = new CityData();
+
+
+                            data.EmployeeId = int.Parse(reader["EmployeeID"].ToString());
+                            data.Code = reader["Code"].ToString();
+                            data.Descr = reader["Descr"].ToString();
+                            data.FirstName = reader["FirstName"].ToString();
+                            data.LastName = reader["LastName"].ToString();
+                            data.Gender = (BasicEnums.Gender)Enum.Parse(typeof(BasicEnums.Gender), reader["Gender"].ToString());
+                            data.DateOfBirth = DateTime.Parse(reader["DateOfBirth"].ToString());
+                            data.HireDate = DateTime.Parse(reader["HireDate"].ToString());
+                            data.ContactNumber = reader["ContactNumber"].ToString();
+                            data.Email = reader["Email"].ToString();
+                            data.Address = reader["Address"].ToString();
+
+                            data.Position = (BasicEnums.EmployeeType)Enum.Parse(typeof(BasicEnums.EmployeeType), reader["Position"].ToString());
+                            data.TotalFlightHours = int.Parse(reader["TotalFlightHours"].ToString());
+                            data.Seniority = int.Parse(reader["Seniority"].ToString());
+                            data.Language = int.Parse(reader["Language"].ToString());
+
+                            data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
+
+
+                            data.Certification.Id = int.Parse(reader["CertId"].ToString());
+                            data.Certification.Code = reader["CCODE"].ToString();
+                            data.Certification.Descr = reader["CDESCR"].ToString();
+                            data.Certification.ValidityPeriod = int.Parse(reader["ValidityPeriod"].ToString());
+                            data.Certification.CertPosition = (BasicEnums.CertPosition)Enum.Parse(typeof(BasicEnums.CertPosition), reader["CertPosition"].ToString());
+                            data.Certification.ValidityTimeBucket = (BasicEnums.Timebucket)Enum.Parse(typeof(BasicEnums.Timebucket), reader["ValidityTimeBucket"].ToString());
+                            data.Certification.DateFrom = DateTime.Parse(reader["DateFrom"].ToString());
+                            data.Certification.DateTo = DateTime.Parse(reader["DateTo"].ToString());
+
+                            data.BaseAirport.Id = int.Parse(reader["AirportID"].ToString());
+                            data.BaseAirport.Code = reader["AirportCode"].ToString();
+                            data.BaseAirport.Descr = reader["AirportDescr"].ToString();
+                            data.BaseAirport.City.CityId = int.Parse(reader["CityId"].ToString());
+
+                            FlatData = data;
+                        }
+                    }
+
+                    connection.Close();
+                }
+
+                
+                return FlatData;
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "GetEmployeeChooserData", "Notes");
+                return null;
+            }
+        }
+        public ObservableCollection<EmployeeData> GetEmployeeData(bool ShowDeleted)
+        {
+            ObservableCollection<EmployeeData> DataList = new ObservableCollection<EmployeeData>();
+
+            string FilterStr = "";
+
+            using (var connection = GetConnection())
+            using (var command = new SqlCommand())
+            {
+                connection.Open();
+                command.Connection = connection;
+
+                if (ShowDeleted == false)
+                {
+                    command.Parameters.AddWithValue("@ShowDeleted", ShowDeleted);
+                    FilterStr = String.Format(@" and Employees.IsDeleted =@ShowDeleted");
+                }
+                command.CommandText = string.Format(@"SELECT Employees.EmployeeID, Employees.Code, Employees.Descr, 
+Employees.FirstName,Employees.LastName, Employees.Gender, Employees.DateOfBirth, 
+Employees.ContactNumber, Employees.Email,Employees.Address,Employees.Position,Employees.CertificationID,Employees.HireDate,Employees.TotalFlightHours,
+Employees.Seniority,Employees.Language,Employees.BaseAirportId,Employees.IsDeleted,
+C.CertID,C.Code as CCODE,C.Descr CDESCR,C.ValidityPeriod,C.ValidityTimeBucket,C.DateFrom,
+C.DateTo,C.CertPosition,A.AirportID,A.AirportCode,A.AirportDescr,A.CityId
+FROM Employees
+INNER JOIN Certifications as C ON Employees.CertificationID = C.CertID
+INNER JOIN Airports AS A ON Employees.BaseAirportId = A.AirportID
+                                              Where 1=1 {0}", FilterStr);
+
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        EmployeeData data = new EmployeeData();
+                        data.Certification = new CertificationData();
+                        data.BaseAirport = new AirportData();
+                        data.BaseAirport.City = new CityData();
+
+
+                        data.EmployeeId = int.Parse(reader["EmployeeID"].ToString());
+                        data.Code = reader["Code"].ToString();
+                        data.Descr = reader["Descr"].ToString();
+                        data.FirstName = reader["FirstName"].ToString();
+                        data.LastName = reader["LastName"].ToString();
+                        data.Gender = (BasicEnums.Gender)Enum.Parse(typeof(BasicEnums.Gender), reader["Gender"].ToString());
+                        data.DateOfBirth = DateTime.Parse(reader["DateOfBirth"].ToString());
+                        data.HireDate = DateTime.Parse(reader["HireDate"].ToString());
+                        data.ContactNumber = reader["ContactNumber"].ToString();
+                        data.Email = reader["Email"].ToString();
+                        data.Address = reader["Address"].ToString();
+
+                        data.Position = (BasicEnums.EmployeeType)Enum.Parse(typeof(BasicEnums.EmployeeType), reader["Position"].ToString());
+                        data.TotalFlightHours = int.Parse(reader["TotalFlightHours"].ToString());
+                        data.Seniority = int.Parse(reader["Seniority"].ToString());
+                        data.Language = int.Parse(reader["Language"].ToString());
+
+                        data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
+
+
+                        data.Certification.Id = int.Parse(reader["CertId"].ToString());
+                        data.Certification.Code = reader["CCODE"].ToString();
+                        data.Certification.Descr = reader["CDESCR"].ToString();
+                        data.Certification.ValidityPeriod = int.Parse(reader["ValidityPeriod"].ToString());
+                        data.Certification.CertPosition = (BasicEnums.CertPosition)Enum.Parse(typeof(BasicEnums.CertPosition), reader["CertPosition"].ToString());
+                        data.Certification.ValidityTimeBucket = (BasicEnums.Timebucket)Enum.Parse(typeof(BasicEnums.Timebucket), reader["ValidityTimeBucket"].ToString());
+                        data.Certification.DateFrom = DateTime.Parse(reader["DateFrom"].ToString());
+                        data.Certification.DateTo = DateTime.Parse(reader["DateTo"].ToString());
+
+                        data.BaseAirport.Id = int.Parse(reader["AirportID"].ToString());
+                        data.BaseAirport.Code = reader["AirportCode"].ToString();
+                        data.BaseAirport.Descr = reader["AirportDescr"].ToString();
+                        data.BaseAirport.City.CityId = int.Parse(reader["CityId"].ToString());
+
+
+
+
+                        DataList.Add(data);
+                    }
+                }
+
+                connection.Close();
+            }
+
+            return DataList;
+        }
+
+        #endregion
+
+        #region 2ndTab Languages
+        public ObservableCollection<EMPLanguageData> GetEMPLanguageData(string finalEmployeeCode, bool addLanguageFlag)
+        {
+            ObservableCollection<EMPLanguageData> data = new ObservableCollection<EMPLanguageData>();
+
+            using (var connection = GetConnection())
+            using (var command = new SqlCommand())
+            {
+                connection.Open();
+                command.Connection = connection;
+
+                command.Parameters.AddWithValue("@finalEmployeeCode", finalEmployeeCode);
+
+                command.CommandText = @"
+            Select EmployeeID from Employees 
+            Where Code = @finalEmployeeCode";
+
+                int finalEmployeeId = (int)command.ExecuteScalar();
+                command.Parameters.Clear();
+                command.Parameters.AddWithValue("@finalEmployeeId", finalEmployeeId);
+
+                command.CommandText = @"
+                select L.LId,L.LCode,L.LDescr
+                From Language as L
+                INNER JOIN EmpLanguages AS EL ON EL.LanguageId = L.LId
+                WHERE EL.EMPId = @finalEmployeeId";
+
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        LanguageData languagedata = new LanguageData();
+                        EMPLanguageData EMPLData = new EMPLanguageData();
+
+                        EMPLData.FinalEmployeeId = finalEmployeeId;
+
+                        languagedata.Id = int.Parse(reader["LId"].ToString());
+                        languagedata.Code = reader["LCode"].ToString();
+                        languagedata.Descr = reader["LDescr"].ToString();
+
+
+                        EMPLData.Language = languagedata;
+
+
+                        EMPLData.LanguageFlag = true;
+                        EMPLData.NewLanguageFlag = false;
+                        EMPLData.ExistingFlag = true;
+
+                        data.Add(EMPLData);
+                    }
+                }
+
+                if (addLanguageFlag)
+                {
+                    command.Parameters.Clear();
+                    command.Parameters.AddWithValue("@finalEmployeeId", finalEmployeeId);
+
+                    command.CommandText = @"
+select L.LId ,L.LCode,L.LDescr
+From Language as L
+WHERE NOT EXISTS (SELECT 1 FROM EmpLanguages WHERE LanguageId = L.LId AND EmpId = @finalEmployeeId) 
+AND L.isDeleted = 0";
+
+
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            LanguageData languagedata = new LanguageData();
+                            EMPLanguageData EMPLData = new EMPLanguageData();
+
+                            EMPLData.FinalEmployeeId = finalEmployeeId;
+
+                            languagedata.Id = int.Parse(reader["LId"].ToString());
+                            languagedata.Code = reader["LCode"].ToString();
+                            languagedata.Descr = reader["LDescr"].ToString();
+
+
+                            EMPLData.Language = languagedata;
+
+                            EMPLData.LanguageFlag = false;
+                            EMPLData.NewLanguageFlag = true;
+                            EMPLData.ExistingFlag = false;
+
+                            data.Add(EMPLData);
+                        }
+                    }
+                }
+
+                connection.Close();
+                return data;
+            }
+        }
+        public bool SaveEMPLanguageData(ObservableCollection<EMPLanguageData> Data, string FinalEmployeeCode)
+        {
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
+                    // Retrieve the final item from the Rmaster table
+                    var employee = dbContext.Employees.SingleOrDefault(r => r.Code == FinalEmployeeCode);
+
+                    if (employee == null)
+                    {
+                        // Final item not found
+                        return false;
+                    }
+
+                    int finalEmployeeId = employee.EmployeeID;
+
+                    int result = 0;
+                    foreach (var row in Data)
+                    {
+                        int EMPLanguageId = row.Language.Id;
+                        var existingLanguage = dbContext.EmpLanguages.SingleOrDefault(b => b.EmpId == finalEmployeeId && b.LanguageId == EMPLanguageId);
+
+                        if (existingLanguage == null && row.LanguageFlag == true && row.NewLanguageFlag == true)
+                        {
+                            // Insert new bom
+                            EMPLanguagesDataEntity newLanguage = new EMPLanguagesDataEntity
+                            {
+                                EmpId = finalEmployeeId,
+                                LanguageId = EMPLanguageId,
+                            };
+
+                            dbContext.EmpLanguages.Add(newLanguage);
+                            result += 1;
+                        }
+                        else if (row.ExistingFlag == true && row.LanguageFlag == false)
+                        {
+                            dbContext.EmpLanguages.Remove(existingLanguage);
+
+                        }
+                        //else if (row.ExistingFlag == true && row.BomItemFlag == true)
+                        //{
+                        //    // Update existing bom
+                        //    existingBom.Percentage = (float)row.BomPercentage;
+                        //}
+                    }
+
+                    dbContext.SaveChanges();
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "SaveEMPLanguageData", "Notes");
+                return false;
+            }
+        }
+
+        #endregion
+
+        #region 3dTab LeaveBids
+
+        public ObservableCollection<LeaveBidsDataStatic> GetLeaveBids(string EmployeeCode,string ScheduleCode)
+        {
+            ObservableCollection<LeaveBidsDataStatic> DataList = new ObservableCollection<LeaveBidsDataStatic>();
+            using (var connection = GetConnection())
+            using (var command = new SqlCommand())
+            {
+                connection.Open();
+                command.Connection = connection;
+
+                command.Parameters.AddWithValue("@EmpCode", EmployeeCode);
+                command.Parameters.AddWithValue("@ScheduleCode", ScheduleCode);
+
+
+                command.CommandText = string.Format(@"SELECT L.BidId, L.BidCode, L.PriorityLevel, L.BidType, L.DateFrom, L.DateTo, L.DateFromStr, L.DateToStr,
+    L.NumberOfDays, L.NumberOfDaysMin, L.NumberOfDaysMax, L.IsDeleted,
+    E.EmployeeID, E.Code AS EMPCode,
+    R.ReqCode
+FROM LeaveBids AS L
+INNER JOIN Employees AS E ON E.EmployeeID = L.EmpId
+INNER JOIN ReqScheduleInfo AS R ON R.ID = L.SceduleId
+WHERE E.Code = @EmpCode AND R.ReqCode = @ScheduleCode
+ORDER BY L.PriorityLevel");
+
+
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+
+                        LeaveBidsDataStatic data = new LeaveBidsDataStatic();
+                        data.Employee = new EmployeeData();
+                        data.Schedule = new ReqScheduleInfoData();
+
+                        data.BidCode = reader["BidCode"].ToString();
+
+                        data.PriorityLevel = int.Parse(reader["PriorityLevel"].ToString());
+
+                        data.BidType= (BasicEnums.BidType)Enum.Parse(typeof(BasicEnums.BidType), reader["BidType"].ToString());
+
+                        data.DateFrom = Convert.ToDateTime(reader["Datefrom"]);
+                        data.DateTo = Convert.ToDateTime(reader["DateTo"]);
+
+
+                        data.DateFromStr = data.DateFrom.ToString("dd/MM/yy"); 
+                        data.DateToStr = data.DateTo.ToString("dd/MM/yy"); 
+
+
+                        data.DateTo = Convert.ToDateTime(reader["DateTo"]);
+                        data.NumberOfDays = int.Parse(reader["NumberOfDays"].ToString());
+                        data.NumberOfDaysMin = int.Parse(reader["NumberOfDaysMin"].ToString());
+                        data.NumberOfDaysMax = int.Parse(reader["NumberOfDaysMax"].ToString());
+
+                        data.Employee.Code = reader["EMPCode"].ToString();
+                        data.Schedule.ReqCode = reader["ReqCode"].ToString();
+                        data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
+                        data.ExistingFlag = true;
+                        data.NewBidFlag = false;
+                        data.Bidflag = true;
+                        DataList.Add(data);
+
+                    }
+                }
+
+                connection.Close();
+            }
+
+            return DataList;
+        }
+
+        public bool SaveLeaveBidsData(ObservableCollection<LeaveBidsDataStatic> Data, string EmployeeCode, string ScheduleCode)
+        {
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
+                    // Retrieve the final item from the Rmaster table
+                    var employee = dbContext.Employees.SingleOrDefault(r => r.Code == EmployeeCode);
+                    var schedule = dbContext.ReqScheduleInfo.SingleOrDefault(r => r.ReqCode == ScheduleCode);
+
+                    if (employee == null)
+                    {
+                        // Final item not found
+                        return false;
+                    }
+
+                    int EmployeeId = employee.EmployeeID;
+                    int scheduleId = schedule.ID;
+
+                    int result = 0;
+                    foreach (var row in Data)
+                    {
+                        string BidCode = row.BidCode;
+                        var existingBid = dbContext.LeaveBids.SingleOrDefault(b => b.EmpId == EmployeeId && b.BidCode == BidCode);
+
+                        if (row.ExistingFlag == false && row.Bidflag == true && row.NewBidFlag == true)
+                        {
+                            // Insert new bom
+                            LeaveBidsDataEntity newBid = new LeaveBidsDataEntity
+                            {
+                                EmpId = EmployeeId,
+                                SceduleId = scheduleId,
+                                BidCode = row.BidCode,
+                                PriorityLevel = row.PriorityLevel,
+                                BidType = row.BidType.ToString(),
+                                DateFrom = row.DateFrom,
+                                DateTo = row.DateTo,
+                                DateFromStr = row.DateFrom.ToString(),
+                                DateToStr = row.DateTo.ToString(),
+                                NumberOfDays = row.NumberOfDays,
+                                NumberOfDaysMin = row.NumberOfDaysMin,
+                                NumberOfDaysMax = row.NumberOfDaysMax
+
+                            };
+
+                            dbContext.LeaveBids.Add(newBid);
+                            result += 1;
+
+                        }
+                        else if (row.ExistingFlag == true && row.Bidflag == false)
+                        {
+                            dbContext.LeaveBids.Remove(existingBid);
+
+                        }
+                        else if (row.ExistingFlag == true && row.Bidflag == true)
+                        {
+                            // Update existing bom
+                            existingBid.BidCode = row.BidCode;
+                            existingBid.PriorityLevel = row.PriorityLevel;
+                            existingBid.BidType = row.BidType.ToString();
+                            existingBid.DateFrom = row.DateFrom;
+                            existingBid.DateTo = row.DateTo;
+                            existingBid.DateFromStr = row.DateFrom.ToString();
+                            existingBid.DateToStr = row.DateTo.ToString();
+                            existingBid.NumberOfDays = row.NumberOfDays;
+                            existingBid.NumberOfDaysMin = row.NumberOfDaysMin;
+                            existingBid.NumberOfDaysMax = row.NumberOfDaysMax;
+                        }
+
+
+                        }
+
+                    dbContext.SaveChanges();
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "SaveLeaveBidsData", "Notes");
+                return false;
+            }
+        }
+
+        public bool SaveLeaveBidsRows(ObservableCollection<LeaveBidRowData> Data)
+        {
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
+                    // Retrieve the final item from the Rmaster table
+
+
+                    foreach (var row in Data)
+                    {
+
+                        // Insert new bom
+                        LeaveBidRowsDataEntity newRow = new LeaveBidRowsDataEntity();
+
+                        var BidId = dbContext.LeaveBids.SingleOrDefault(b => b.BidCode == row.LeaveBid.BidCode).BidId;
+                        newRow.BidId = BidId;
+                        newRow.EmpId = row.EmpId;
+                        newRow.ScheduleId = row.ScheduleId;
+                        newRow.Date = row.Date;
+                        newRow.DateStr = row.DateStr;
+
+
+                        dbContext.LeaveBidsRows.Add(newRow);
+
+                    }
+
+                    dbContext.SaveChanges();
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "SaveLeaveBidsRows", "Notes");
+                return false;
+            }
+        }
+
+        public int DeleteLeaveBidData(LeaveBidsData Data)
+        {
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
+                    string BidCode = Data.BidCode;
+                    var existingBid = dbContext.LeaveBids.SingleOrDefault(b => b.BidCode == Data.BidCode);
+
+                    // Check if the bid exists
+                    if (existingBid == null)
+                    {
+                        // Bid does not exist in the database
+                        return 1;
+                    }
+
+                    dbContext.LeaveBids.Remove(existingBid);
+                    dbContext.SaveChanges();
+                    return 2; // Indicating successful deletion
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "DeleteLeaveBidData", "Notes");
+                return 0; // Indicating failure due to an exception
+            }
+        }
+
+
+        #endregion
+
+        #region 3dTab LeaveStatus
+        public int SaveLeaveStatusData(EmployeeData flatData)
+        {
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
+                    // Separate query from execution
+                    int employeeId = flatData.EmployeeId;
+                    var existingQuery = dbContext.LeaveStatus.Where(c => c.EmpId == employeeId);
+                    var existing = existingQuery.SingleOrDefault();
+
+                    if (existing != null)
+                    {
+
+
+                        // Update existing customer
+                        existing.Total = flatData.LeaveStatus.Total;
+                        existing.Used = flatData.LeaveStatus.Used;
+                        existing.CurrentBalance = flatData.LeaveStatus.CurrentBalance;
+                        existing.ProjectedBalance = flatData.LeaveStatus.ProjectedBalance;
+                        existing.EmpId = employeeId;
+                        dbContext.SaveChanges();
+
+                        return 1;
+                    }
+                    else
+                    {
+                        var newItem = new LeaveStatusDataEntity();
+                        // Insert new item
+                        newItem.Total = flatData.LeaveStatus.Total;
+                        newItem.Used = flatData.LeaveStatus.Used;
+                        newItem.CurrentBalance = flatData.LeaveStatus.CurrentBalance;
+                        newItem.ProjectedBalance = flatData.LeaveStatus.ProjectedBalance;
+                        newItem.EmpId = employeeId;
+
+                        dbContext.LeaveStatus.Add(newItem);
+                        dbContext.SaveChanges();
+                        return 1;
+
+                    }
+
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "SaveLeaveStatusData", "Notes");
+                return -1;
+            }
+        }
+
+        public LeaveStatusData GetLeaveStatusChooserData(int Id, string Code)
+        {
+            LeaveStatusData FlatData = new LeaveStatusData();
+            string FilterStr = "";
+            try
+            {
+                using (var connection = GetConnection())
+                using (var command = new SqlCommand())
+                {
+                    connection.Open();
+                    command.Connection = connection;
+
+                    if (Id > 0)
+                    {
+                        command.Parameters.AddWithValue("@ID", Id);
+                        FilterStr = String.Format(@" and E.EmployeeID =@ID");
+
+                    }
+
+                    else if (!string.IsNullOrWhiteSpace(Code))
+                    {
+                        command.Parameters.AddWithValue("@Code", Code);
+                        FilterStr = String.Format(@" and E.Code =@Code");
+
+                    }
+                    command.CommandText = string.Format(@"select L.LSId,L.Total,L.Used,L.CurrentBalance,L.ProjectedBalance,E.EmployeeID,E.Code
+from LeaveStatus as L
+INNER JOIN Employees as E ON E.EmployeeID =L.EmpId
+                                              Where 1=1 {0}", FilterStr);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            LeaveStatusData data = new LeaveStatusData();
+
+
+
+                            data.Total = int.Parse(reader["Total"].ToString());
+                            data.Used = int.Parse(reader["Used"].ToString());
+                            data.ProjectedBalance = int.Parse(reader["ProjectedBalance"].ToString());
+
+
+                            FlatData = data;
+                        }
+                    }
+
+                    connection.Close();
+                }
+
+
+                return FlatData;
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "GetLeaveStatusChooserData", "Notes");
+                return null;
+            }
+        }
+        #endregion
+
+        #endregion
+
+        #region Vacation Planning
+
+        #region CRUD Commands
+
+        public int SaveVPInputData(VacationPlanningInputData flatData)
+        {
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
+                    // Separate query from execution
+                    int vpId = flatData.VPId;
+                    var existingQuery = dbContext.VPInput.Where(c => c.VPID == vpId);
+                    var existing = existingQuery.SingleOrDefault();
+
+                    // Execute the query and get the result
+
+
+                    if (existing != null)
+                    {
+
+
+                        // Update existing customer
+                        existing.VPCODE = flatData.VPCode;
+                        existing.VPDESCR = flatData.VPDescr;
+                        existing.MaxSatisfiedBids = flatData.MaxSatisfiedBids;
+                        existing.SeparValue = flatData.SeparValue;
+
+                        existing.EMPLOYEETYPE = flatData.EmployeeType.ToString();
+                        existing.VPLOGICTYPE = flatData.VPLogicType.ToString();
+                        existing.IsDeleted = flatData.IsDeleted;
+                        existing.SCHEDULEID = flatData.Schedule.ID;
+
+
+                        dbContext.SaveChanges();
+                        return 1;
+
+
+
+
+                    }
+                    else
+                    {
+                        return -1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "SaveVPInputData", "Notes");
+                return -1;
+            }
+        }
+        public int AddVPInputData(VacationPlanningInputData flatData)
+        {
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
+                    // Separate query from execution
+                    var existingVPQuery = dbContext.VPInput.Where(r => r.VPCODE == flatData.VPCode);
+                    var existingVP = existingVPQuery.SingleOrDefault();
+                    // Execute the query and get the result
+
+
+                    if (existingVP == null)
+                    {
+                        var newVP = new VPInputDataEntity();
+                        // Insert new item
+                        newVP.VPCODE = flatData.VPCode;
+                        newVP.VPDESCR = flatData.VPDescr;
+                        newVP.EMPLOYEETYPE = BasicEnums.EmployeeType.Captain.ToString();
+                        newVP.VPLOGICTYPE = BasicEnums.VPLogicType.Strict_Seniority.ToString();
+                        newVP.MaxSatisfiedBids = 2;
+                        newVP.SeparValue = 2;
+
+                        newVP.IsDeleted = false;
+
+                        var MainSchedule = dbContext.ReqScheduleInfo.FirstOrDefault(r => r.MainSchedule == true);
+                        newVP.SCHEDULEID = MainSchedule.ID;
+
+
+
+
+                        dbContext.VPInput.Add(newVP);
+
+                        dbContext.SaveChanges();
+                        return 0;
+                    }
+                    else
+                    {
+                        // Else Print messages
+                        return 1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "AddVPInputData", "Notes");
+                return 2;
+
+            }
+        }
+
+        public ObservableCollection<VacationPlanningInputData> GetVPInputData(bool ShowDeleted)
+        {
+            ObservableCollection<VacationPlanningInputData> DataList = new ObservableCollection<VacationPlanningInputData>();
+
+            string FilterStr = "";
+            using (var connection = GetConnection())
+            using (var command = new SqlCommand())
+            {
+                connection.Open();
+                command.Connection = connection;
+
+                if (ShowDeleted == false)
+                {
+                    command.Parameters.AddWithValue("@ShowDeleted", ShowDeleted);
+                    FilterStr = String.Format(@"and V.IsDeleted = @ShowDeleted");
+
+                }
+
+                command.CommandText = string.Format(@"SELECT V.VPID,V.VPCODE,V.VPDESCR,V.EMPLOYEETYPE,V.VPLOGICTYPE,V.SeparValue,
+V.MaxSatisfiedBids,V.ISDELETED,
+R.ID,R.ReqCode,R.ReqDescr,R.DateFrom,R.DateTo,R.LimitLineFixed
+FROM VPInput as V
+INNER JOIN ReqScheduleInfo AS R ON R.ID = V.SCHEDULEID
+Where 1=1 {0}", FilterStr);
+
+
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        VacationPlanningInputData data = new VacationPlanningInputData();
+                        data.Schedule = new ReqScheduleInfoData();
+                        data.VPId = int.Parse(reader["VPID"].ToString());
+                        data.VPCode = reader["VPCODE"].ToString();
+                        data.VPDescr = reader["VPDESCR"].ToString();
+                        data.MaxSatisfiedBids = int.Parse(reader["MaxSatisfiedBids"].ToString());
+                        data.SeparValue = int.Parse(reader["SeparValue"].ToString());
+
+                        data.EmployeeType = (BasicEnums.EmployeeType)Enum.Parse(typeof(BasicEnums.EmployeeType), reader["EMPLOYEETYPE"].ToString());
+                        data.VPLogicType = (BasicEnums.VPLogicType)Enum.Parse(typeof(BasicEnums.VPLogicType), reader["VPLogicType"].ToString());
+
+                        data.IsDeleted = bool.Parse(reader["ISDELETED"].ToString());
+
+
+
+                        data.Schedule.ID = int.Parse(reader["ID"].ToString());
+                        data.Schedule.ReqCode = reader["ReqCode"].ToString();
+                        data.Schedule.ReqDescr = reader["ReqDescr"].ToString();
+
+                        data.Schedule.DateFrom = DateTime.Parse(reader["DateFrom"].ToString());
+                        data.Schedule.DateTo = DateTime.Parse(reader["DateTo"].ToString());
+                        data.Schedule.LimitLineFixed = int.Parse(reader["LimitLineFixed"].ToString());
+
+                        data.Schedule.DateFromStr = data.Schedule.DateFrom.ToString(); //THELEI ALAGH
+                        data.Schedule.DateToStr = data.Schedule.DateTo.ToString();
+
+
+
+                        DataList.Add(data);
+                    }
+                }
+
+                connection.Close();
+            }
+
+            return DataList;
+        }
+
+        public VacationPlanningInputData GetVPInputChooserData(int VPId, string VPCode, VacationPlanningInputData Data)
+        {
+
+            string FilterStr = "";
+            using (var connection = GetConnection())
+            using (var command = new SqlCommand())
+            {
+                connection.Open();
+                command.Connection = connection;
+
+                if (VPId > 0)
+                {
+                    command.Parameters.AddWithValue("@VPID", VPId);
+                    FilterStr += " and V.VPID = @VPID";
+                }
+                else if (!string.IsNullOrWhiteSpace(VPCode))
+                {
+                    command.Parameters.AddWithValue("@VPCODE", VPCode);
+                    FilterStr += " and V.VPCODE = @VPCODE";
+                }
+
+                command.CommandText = string.Format(@"SELECT V.VPID, V.VPCODE, V.VPDESCR, V.EMPLOYEETYPE, V.VPLOGICTYPE, V.MaxSatisfiedBids, V.ISDELETED,V.SeparValue,
+                                      R.ID, R.ReqCode, R.ReqDescr, R.DateFrom, R.DateTo
+                                      FROM VPInput AS V
+                                      INNER JOIN ReqScheduleInfo AS R ON R.ID = V.SCHEDULEID
+                                      WHERE 1=1 {0}", FilterStr);
+
+
+
+                using (var reader = command.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+
+                        Data.Schedule = new ReqScheduleInfoData();
+                        Data.VPId = int.Parse(reader["VPID"].ToString());
+                        Data.VPCode = reader["VPCODE"].ToString();
+                        Data.VPDescr = reader["VPDESCR"].ToString();
+                        Data.EmployeeType = (BasicEnums.EmployeeType)Enum.Parse(typeof(BasicEnums.EmployeeType), reader["EMPLOYEETYPE"].ToString());
+                        Data.VPLogicType = (BasicEnums.VPLogicType)Enum.Parse(typeof(BasicEnums.VPLogicType), reader["VPLogicType"].ToString());
+                        Data.MaxSatisfiedBids = int.Parse(reader["MaxSatisfiedBids"].ToString());
+                        Data.SeparValue = int.Parse(reader["SeparValue"].ToString());
+
+                        Data.IsDeleted = bool.Parse(reader["ISDELETED"].ToString());
+
+
+
+                        Data.Schedule.ID = int.Parse(reader["ID"].ToString());
+                        Data.Schedule.ReqCode = reader["ReqCode"].ToString();
+                        Data.Schedule.ReqDescr = reader["ReqDescr"].ToString();
+
+                        Data.Schedule.DateFrom = DateTime.Parse(reader["DateFrom"].ToString());
+                        Data.Schedule.DateTo = DateTime.Parse(reader["DateTo"].ToString());
+
+                        Data.Schedule.DateFromStr = Data.Schedule.DateFrom.ToString(); //THELEI ALAGH
+                        Data.Schedule.DateToStr = Data.Schedule.DateTo.ToString();
+                    }
+                }
+
+                connection.Close();
+            }
+
+            return Data;
+        }
+        #endregion
+
+        #region Calculate Vacation Planning
+
+
+        #region  Advanced
+        public VacationPlanningOutputData CalculateVacationPlanningAdvanced3(VacationPlanningInputData InputData)
+        {
+            GRBEnv env = new GRBEnv("mpslogfile.log");
+            GRBModel model = new GRBModel(env);
+            GRBModel WorkingModel = new GRBModel(env);
+
+            VacationPlanningOutputData Data = new VacationPlanningOutputData();
+            Data.VPYijResultsDataGrid = new ObservableCollection<VPYijResultsData>();
+            Data.VPYijzResultsDataGrid = new ObservableCollection<VPYijResultsData>();
+            Data.VPXijResultsDataGrid = new ObservableCollection<VPXijResultsData>();
+            Data.EmpLeaveStatusData = new ObservableCollection<EmployeeData>();
+
+            List<string> rows = new List<string>();
+            List<string> columns = new List<string>();
+            Dictionary<(string, string), double> make_plan = new Dictionary<(string, string), double>();
+            double bigM = 10000;
+
+            try
+            {
+                #region Optimization paramaters
+                // Define the parameters
+                string[] Employees = InputData.Employees.Select(d => d.Code).ToArray();
+                int MaxLeaveBids = InputData.MaxLeaveBids;
+                int MaxSatisfiedBids = InputData.MaxSatisfiedBids;
+                string[] Dates = InputData.DatesStr;
+
+                Dictionary<string, int> MaxLeaveBidsPerEmployee = InputData.MaxLeaveBidsPerEmployee;
+                Dictionary<string, string> BidsPerEmployee = InputData.BidsPerEmployee;
+
+                Dictionary<(string, string, int), int> ZbidsDict = InputData.ZBidsDict;
+                Dictionary<(string, string), int> RBidsDict = InputData.RBidsDict;
+                int MaxNonSpecific = RBidsDict.Max(kvp => kvp.Value);
+
+                int multiplier = 1;
+                int SeparValue = InputData.SeparValue;
+                int LimitLineFixed = InputData.Schedule.LimitLineFixed;
+
+                int Zmax = ZbidsDict.Max(kvp => kvp.Value);
+
+                #endregion
+                #region Optimization Algorithm
+                // Decision variables
+                GRBVar[,,,] Y = new GRBVar[Employees.Length, MaxLeaveBids, MaxNonSpecific, Zmax];
+                GRBVar[,] X = new GRBVar[Employees.Length, Dates.Length];
+
+
+                // Create decision variables X
+                for (int i = 0; i < Employees.Length; i++)
+                {
+                    for (int t = 0; t < Dates.Length; t++)
+                    {
+                        // Define the variable name
+                        string varNameX = $"X{i + 1}_{t + 1}";
+
+                        // Create the binary variable with a name
+                        X[i, t] = model.AddVar(0.0, 1.0, 0.0, GRB.BINARY, varNameX);
+                    }
+                }
+
+                // Create decision variables Y
+                for (int i = 0; i < Employees.Length; i++)
+                {
+                    for (int j = 0; j < MaxLeaveBidsPerEmployee[Employees[i]]; j++)
+                    {
+                        #region Find ZValue
+
+                        int Rvalue = new int();
+                        int Zvalue = new int();
+                        var EmployeeCode = Employees[i];
+                        var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == Employees[i]);
+                        var BidCode = specificEmployee.LeaveBidDataGridStatic[j].BidCode;
+                        Rvalue = RBidsDict.TryGetValue((Employees[i], BidCode), out int valueR) ? valueR : Zvalue;
+                        Zvalue = ZbidsDict.TryGetValue((Employees[i], BidCode, Rvalue), out int value) ? value : Zvalue;
+                        #endregion
+                        for (int r = 0; r < Rvalue; r++) //allagh
+                        {
+                            for (int z = 0; z < Zvalue; z++) //allagh
+                            {
+                                // Define the variable name
+                                string varNameY = $"Y{i + 1}_{j + 1}_{r + 1}_{z + 1}";
+
+                                // Create the binary variable with a name
+                                Y[i, j, r, z] = model.AddVar(0.0, 1.0, 0.0, GRB.BINARY, varNameY);
+                            }
+
+                        }
+                    }
+                }
+
+
+                // Objective function
+                GRBLinExpr objective = 0;
+
+                for (int i = Employees.Length - 1; i >= 0; i--)
+                {
+                    for (int j = MaxLeaveBidsPerEmployee[Employees[i]] - 1; j >= 0; j--)
+                    {
+                        #region Find ZValue
+                        int Zvalue = new int();
+                        int Rvalue = new int();
+                        var EmployeeCode = Employees[i];
+                        var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == Employees[i]);
+                        var BidCode = specificEmployee.LeaveBidDataGridStatic[j].BidCode;
+                        Rvalue = RBidsDict.TryGetValue((Employees[i], BidCode), out int valueR) ? valueR : Zvalue;
+                        Zvalue = ZbidsDict.TryGetValue((Employees[i], BidCode, Rvalue), out int value) ? value : Zvalue;
+                        #endregion
+                        for (int r = 0; r < Rvalue; r++) //allagh
+                        {
+                            for (int z = 0; z < Zvalue; z++) //allagh
+                            {
+                                objective.AddTerm(multiplier, Y[i, j, r, z]);
+                                multiplier = multiplier * 1;
+                            }
+                        }
+
+
+                    }
+                }
+
+
+                model.SetObjective(objective, GRB.MAXIMIZE);
+
+                // Constraints
+
+                // #1. Adding constraints for maximum number of satisfied bids dynamically
+                for (int i = 0; i < Employees.Length; i++)
+                {
+                    GRBLinExpr sumLeaveBids = 0;
+                    for (int j = 0; j < MaxLeaveBidsPerEmployee[Employees[i]]; j++)
+                    {
+
+                        #region Find ZValue
+                        int Zvalue = new int();
+                        int Rvalue = new int();
+                        var EmployeeCode = Employees[i];
+                        var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == Employees[i]);
+                        var BidCode = specificEmployee.LeaveBidDataGridStatic[j].BidCode;
+                        Rvalue = RBidsDict.TryGetValue((Employees[i], BidCode), out int valueR) ? valueR : Zvalue;
+                        Zvalue = ZbidsDict.TryGetValue((Employees[i], BidCode, Rvalue), out int value) ? value : Zvalue;
+                        #endregion
+                        for (int r = 0; r < Rvalue; r++)
+                        {
+                            for (int z = 0; z < Zvalue; z++)
+                            {
+                                sumLeaveBids.AddTerm(1.0, Y[i, j, r, z]);
+
+                            }
+                        } //allagh
+
+
+                    }
+
+                    // Adding the constraint for the current employee
+                    model.AddConstr(sumLeaveBids <= MaxSatisfiedBids, "MaxSatisfiedBids_" + Employees[i]);
+                }
+
+
+                // #2. Entitlements
+                for (int i = 0; i < Employees.Length; i++)
+                {
+                    var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == Employees[i]);
+                    GRBLinExpr sumLeaveBidDays = 0;
+                    for (int j = 0; j < MaxLeaveBidsPerEmployee[Employees[i]]; j++)
+                    {
+                        var NumberOfDays = specificEmployee.LeaveBidDataGridStatic[j].NumberOfDaysMax;
+                        #region Find ZValue
+                        int Zvalue = new int();
+                        int Rvalue = new int();
+                        var EmployeeCode = Employees[i];
+                        var BidCode = specificEmployee.LeaveBidDataGridStatic[j].BidCode;
+                        Rvalue = RBidsDict.TryGetValue((Employees[i], BidCode), out int valueR) ? valueR : Zvalue;
+                        Zvalue = ZbidsDict.TryGetValue((Employees[i], BidCode, Rvalue), out int value) ? value : Zvalue;
+                        #endregion
+                        for (int r = 0; r < Rvalue; r++) //allagh
+                        {
+                            NumberOfDays = NumberOfDays - r;
+                            for (int z = 0; z < Zvalue; z++) //allagh
+                            {
+                                sumLeaveBidDays.AddTerm(NumberOfDays, Y[i, j, r, z]); // Summing up the leavebidsDays for each employee
+                            }
+                        }
+
+
+                    }
+
+                    var MaxLeaveDays = specificEmployee.LeaveStatus.CurrentBalance;
+
+                    // Adding the constraint for the current employee
+                    model.AddConstr(sumLeaveBidDays <= MaxLeaveDays, "MaxLeaveDays_" + Employees[i]);
+
+
+                }
+
+                // #3. Limit Lines
+
+                for (int t = 0; t < Dates.Length; t++)
+                {
+                    GRBLinExpr sumDays = 0;
+                    var LimitLine = InputData.Schedule.ReqScheduleRowsData.ElementAt(t).LimitLine;
+
+                    for (int i = 0; i < Employees.Length; i++)
+                    {
+
+                        sumDays.AddTerm(1, X[i, t]);
+
+
+                    }
+                    model.AddConstr(sumDays <= LimitLine, "LimitLine_" + Dates[t]);
+
+                }
+
+                //#5. Overlapping
+                #region New OverLapping
+
+
+
+                #region SepOverlap 2
+                for (int i = 0; i < Employees.Length; i++)
+                {
+                    for (int j1 = 0; j1 < MaxLeaveBidsPerEmployee[Employees[i]] - 1; j1++)
+                    {
+                        for (int j2 = j1 + 1; j2 < MaxLeaveBidsPerEmployee[Employees[i]]; j2++)
+                        {
+                            var d = j2;
+
+                            var EmployeeCode = Employees[i];
+                            var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == Employees[i]);
+
+
+                            #region Find z1,z2
+                            int Z1value = new int();
+                            int Z2value = new int();
+                            int R1value = new int();
+                            int R2value = new int();
+
+                            var BidCode1 = specificEmployee.LeaveBidDataGridStatic[j1].BidCode;
+                            R1value = RBidsDict.TryGetValue((Employees[i], BidCode1), out int valueR1) ? valueR1 : R1value;
+
+                            var BidCode2 = specificEmployee.LeaveBidDataGridStatic[j2].BidCode;
+                            R2value = RBidsDict.TryGetValue((Employees[i], BidCode2), out int valueR2) ? valueR2 : R2value;
+                            #endregion
+
+                            for (int r1 = 0; r1 < R1value; r1++)
+                            {
+                                Z1value = ZbidsDict.TryGetValue((Employees[i], BidCode1, r1 + 1), out int value1) ? value1 : Z1value;
+
+                                for (int r2 = 0; r2 < R2value; r2++)
+                                {
+                                    Z2value = ZbidsDict.TryGetValue((Employees[i], BidCode2, r2 + 1), out int value2) ? value2 : Z2value;
+
+                                    for (int z1 = 0; z1 < Z1value; z1++)
+                                    {
+                                        for (int z2 = 0; z2 < Z2value; z2++)
+                                        {
+                                            if (SeparOrOverlap(i, j1, j2, z1, z2, r1, r2))
+                                            {
+                                                GRBLinExpr expr = Y[i, j1, r1, z1] + Y[i, j2, r2, z2];
+                                                model.AddConstr(expr <= 1, $"SO{i + 1}_{j1 + 1}_{z1 + 1}_{j2 + 1}_{z2 + 1}");
+                                            }
+                                        }
+                                    }
+                                }
+
+
+                            }
+
+
+
+
+                        }
+                    }
+                }
+
+                bool SeparOrOverlap(int i, int j1, int j2, int z1, int z2, int r1, int r2)
+                {
+
+                    var emp = InputData.Employees.ElementAt(i);
+
+                    var SelectedBid1 = emp.LeaveBidDataGridStatic.ElementAt(j1);
+                    var SelectedBid2 = emp.LeaveBidDataGridStatic.ElementAt(j2);
+                    if (SelectedBid2.DateFrom.AddDays(z2) >= SelectedBid1.DateFrom.AddDays(SelectedBid1.NumberOfDaysMax + SeparValue + z1 - r1))
+                    {
+                        return false;
+
+                    };
+                    if (SelectedBid2.DateFrom.AddDays(SelectedBid2.NumberOfDaysMax + z2 - r1) <= SelectedBid1.DateFrom.AddDays(-SeparValue))
+                    {
+
+                        return false;
+
+                    };
+
+                    return true;
+                }
+
+                #endregion
+                #endregion
+                //#6.Connection Between Y and X
+                for (int i = 0; i < Employees.Length; i++)
+                {
+                    var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == Employees[i]);
+                    var maxBids = MaxLeaveBidsPerEmployee[Employees[i]];
+
+                    for (int j = 0; j < maxBids; j++)
+                    {
+                        var bid = specificEmployee.LeaveBidDataGridStatic[j];
+                        var bidDays = bid.NumberOfDays;
+
+                        #region Find ZValue
+                        int Zvalue = new int();
+                        int Rvalue = new int();
+                        var EmployeeCode = Employees[i];
+                        var BidCode = specificEmployee.LeaveBidDataGridStatic[j].BidCode;
+                        Rvalue = RBidsDict.TryGetValue((Employees[i], BidCode), out int valueR) ? valueR : Zvalue;
+                        Zvalue = ZbidsDict.TryGetValue((Employees[i], BidCode, Rvalue), out int value) ? value : Zvalue;
+                        #endregion
+                        for (int r = 0; r < Rvalue; r++) //allagh
+                        {
+                            for (int z = 0; z < Zvalue; z++) //allagh
+                            {
+                                var startDateIndex = Array.IndexOf(Dates, bid.DateFrom.ToString("dd/MM/yyyy"));
+
+                                GRBLinExpr sumDays = 0;
+                                for (int k = 0; k < bidDays; k++)
+                                {
+                                    sumDays.AddTerm(1, X[i, startDateIndex + k + z]); // Add X variables for each day of the bid
+                                }
+                                // Add the constraint
+                                model.AddConstr(bidDays * Y[i, j, r, z] <= sumDays, $"BidDaysConstraint_{Employees[i]}_{j}_{z}");
+                            }
+
+                        }
+
+
+                    }
+                }
+
+
+                //#7. Connection Between Yij and Yijz 
+                // #1. Adding constraints for maximum number of satisfied bids dynamically
+                //for (int i = 0; i < Employees.Length; i++)
+                //{
+                //    for (int j = 0; j < MaxLeaveBidsPerEmployee[Employees[i]]; j++)
+                //    {
+                //        GRBLinExpr sumZPerBid = 0;
+
+                //        #region Find ZValue
+                //        int Zvalue = new int();
+                //        var EmployeeCode = Employees[i];
+                //        var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == Employees[i]);
+                //        var BidCode = specificEmployee.LeaveBidDataGridStatic[j].BidCode;
+                //        Zvalue = ZbidsDict.TryGetValue((Employees[i], BidCode), out int value) ? value : Zvalue;
+                //        #endregion
+
+                //        for (int z = 0; z < Zvalue; z++) //allagh
+                //        {
+                //            sumZPerBid.AddTerm(1.0, Y[i, j, z]); // Summing up the leave bids for each employee
+
+                //        }
+                //        // Adding the constraint for each Bid
+                //        model.AddConstr(sumZPerBid <= 1, "SumZPerBid_" + Employees[i]);
+                //    }
+
+                //}
+
+                #endregion
+
+                #region New Optimize settings
+                bool grant = false;
+                BasicEnums.VPLogicType logic = InputData.VPLogicType;
+                int FinishedEmpIds = 0;
+                int FinishedBidIds = 1;
+
+                int id = 0;
+                var numRowsPerEmployee = InputData.Employees.Select(e => e.LeaveBidDataGridStatic.Count);
+                var numOfEmployes = InputData.Employees.Count;
+                int N = numRowsPerEmployee.Sum();
+                int[] NextBid = new int[N];
+
+                int[] NrOfBids = MaxLeaveBidsPerEmployee.Values.ToArray();
+                List<string> outputLines = new List<string>();
+
+
+                model.Update();
+
+                while (FinishedEmpIds <= numOfEmployes) // Kozani
+                {
+
+
+                    int j = NextBid[id];
+
+                    #region Change Z
+                    var z = 0;
+                    var r = 0;
+                    #region Find ZValue
+                    int Zvalue = new int();
+                    int Rvalue = new int();
+                    var EmployeeCode = Employees[id];
+                    var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == Employees[id]);
+
+                    var BidCode = specificEmployee.LeaveBidDataGridStatic[j].BidCode;
+                    Rvalue = RBidsDict.TryGetValue((Employees[id], BidCode), out int valueR) ? valueR : Zvalue;
+                    Zvalue = ZbidsDict.TryGetValue((Employees[id], BidCode, Rvalue), out int value) ? value : Zvalue;
+                    #endregion
+                    for (r = 0; r < Rvalue; r++)
+                    {
+                        for (z = 0; z < Zvalue; z++)
+                        {
+                            #region Check Bid
+                            GRBVar K = model.GetVarByName($"Y{id + 1}_{j + 1}_{r + 1}_{z + 1}");
+                            K.LB = 1;
+                            model.Update();
+                            model.Optimize();
+                            bool solution = (model.Status == GRB.Status.OPTIMAL);
+                            if (solution)
+                            {
+                                grant = true;
+                                string message = $"Crew member {id + 1} was awarded bid {j + 1} Yijrz = " + $"Y{id + 1}_{j + 1}_{r + 1}_{z + 1}";
+                                Console.WriteLine(message);
+                                outputLines.Add(message);
+                                Data.ObjValue = model.ObjVal;
+                                #region Insert Xij
+                                var emp = InputData.Employees.ElementAt(id);
+
+                                var SelectedBid = emp.LeaveBidDataGridStatic.ElementAt(j);
+                                var DateFrom = SelectedBid.DateFrom.AddDays(z).ToString("dd/MM/yyyy");
+                                var DateTo = SelectedBid.DateFrom.AddDays(SelectedBid.NumberOfDaysMax - r + z).ToString("dd/MM/yyyy");
+
+                                string employee = Employees[id];
+
+                                var DateFromIndex = Dates.IndexOf(DateFrom);
+                                var DateToIdIndex = Dates.IndexOf(DateTo);
+
+
+
+                                if (DateFromIndex != -1 && DateToIdIndex != -1)
+                                {
+                                    for (int t = DateFromIndex; t <= DateToIdIndex && t < Dates.Length; t++)
+                                    {
+                                        GRBVar Xij = model.GetVarByName($"X{id + 1}_{t + 1}");
+                                        Xij.LB = 1;
+                                    }
+
+                                }
+                                else
+                                {
+                                    // Handle the case where DateFrom or DateTo is not found in the Dates list
+                                    Console.WriteLine("DateFrom or DateTo not found in the Dates list.");
+                                }
+
+                                #endregion
+
+                                z = Zvalue; //Break from the loop and dont check the others z
+                            }
+                            else
+                            {
+                                grant = false;
+                                K.LB = 0;
+                                string message = $"Crew member {id + 1} was not awarded bid {j + 1}Yijrz = " + $"Y{id + 1}_{j + 1}_{r + 1}_{z + 1}";
+                                Console.WriteLine(message);
+                                outputLines.Add(message);
+                            }
+
+                            #endregion
+
+                        }
+                    }
+
+                    #endregion
+                    NextBid[id]++;
+                    if (NextBid[id] == NrOfBids[id])
+                    {
+                        FinishedEmpIds++;
+
+                    }
+                    if (model.Status == GRB.Status.OPTIMAL)
+                    {
+                        Data.ObjValue = model.ObjVal;
+                    }
+                    if (FinishedBidIds == N)
+                    {
+                        break;
+                    }
+                    FinishedBidIds = FinishedBidIds + 1;
+                    if (FinishedBidIds <= N)
+                    {
+                        id = GetNextId(id, grant, numOfEmployes, NextBid, NrOfBids, FinishedEmpIds, logic);
+                    }
+                }
+                #endregion
+
+                var Upgrade = new bool();
+
+
+
+
+                var flag = new bool();
+                var customMessageBox = new CustomMessageBox("Do you want to Save the Results or Search for a better Solution?");
+                if (customMessageBox.ShowDialog() == true)
+                {
+                    // User clicked Save Only or Save and Upgrade
+                    if (customMessageBox.DialogResult == true)
+                    {
+                        // User clicked Save Only or Save and Upgrade
+                        var result = customMessageBox.Message.Contains("Save and Upgrade") ? "Save and Upgrade" : "Save Only";
+                        Console.WriteLine($"User clicked {result}");
+
+                        if (result == "Save and Upgrade" || result == "Save Only")
+                        {
+                            #region OutputResults
+                            if (Data.ObjValue > 0)
+                            {
+
+
+
+                                // Create a data structure to store the optimal solution
+                                model.Update();
+
+
+                                #region Insert Xij
+                                // Extract the optimal solution for the 'X' variables
+                                for (int i = 0; i < Employees.Length; i++)
+                                {
+                                    for (int t = 0; t < Dates.Length; t++)
+                                    {
+                                        string employee = Employees[i];
+                                        string date = Dates[t];
+                                        double xValue = X[i, t].LB;
+                                        if (xValue == 1)
+                                        {
+                                            Console.WriteLine($"Employee: {employee}, Date: {date}, Value: {xValue}");
+                                        }
+                                        // Store the optimal 'X' value in the data structure
+                                        make_plan[(employee, date)] = xValue;
+
+                                        // Add 'employee' and 'date' to the respective lists if they are not already there
+                                        if (!rows.Contains(employee))
+                                            rows.Add(employee);
+                                        if (!columns.Contains(date))
+                                            columns.Add(date);
+                                    }
+                                }
+                                #endregion
+
+
+
+                                // Print the optimal solution for 'X' variables
+                                Console.WriteLine("Optimal Solution for X Variables:");
+                                foreach (var employee in rows)
+                                {
+                                    foreach (var date in columns)
+                                    {
+                                        double xValue = make_plan.ContainsKey((employee, date)) ? make_plan[(employee, date)] : 0.0;
+                                        Console.WriteLine($"Employee: {employee}, Date: {date}, Value: {xValue} -> Employee: {employee}, Date: {date}, Value: {xValue} X{(Array.IndexOf(Employees, employee) + 1)}{(Array.IndexOf(Dates, date) + 1)}");
+
+
+                                        #region Populate VP Xij
+                                        VPXijResultsData singleDataRecord = new VPXijResultsData();
+
+
+                                        singleDataRecord.Xij = $"X{(Array.IndexOf(Employees, employee) + 1)}{(Array.IndexOf(Dates, date) + 1)}";
+                                        singleDataRecord.XijFlag = xValue;
+                                        singleDataRecord.Date = date;
+
+
+
+
+                                        var SpecificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == employee);
+                                        singleDataRecord.Employee = SpecificEmployee;
+
+                                        Data.VPXijResultsDataGrid.Add(singleDataRecord);
+                                        #endregion
+                                    }
+                                }
+
+                                // Extract the optimal solution for the 'Y' variables
+                                Dictionary<(string, int, int, int), double> y_plan = new Dictionary<(string, int, int, int), double>();
+                                for (int i = 0; i < Employees.Length; i++)
+                                {
+                                    for (int j = 0; j < MaxLeaveBidsPerEmployee[Employees[i]]; j++)
+                                    {
+                                        var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == Employees[i]);
+
+                                        #region Find ZValue
+                                        int Zvalue = new int();
+                                        int Rvalue = new int();
+                                        var EmployeeCode = Employees[i];
+                                        var BidCode = specificEmployee.LeaveBidDataGridStatic[j].BidCode;
+                                        Rvalue = RBidsDict.TryGetValue((Employees[i], BidCode), out int valueR) ? valueR : Zvalue;
+                                        #endregion
+                                        for (int r = 0; r < Rvalue; r++)
+                                        {
+                                            Zvalue = ZbidsDict.TryGetValue((Employees[i], BidCode, r + 1), out int value) ? value : Zvalue;
+
+                                            for (int z = 0; z < Zvalue; z++) //allagh
+                                            {
+                                                string employee = Employees[i];
+                                                int bidIndex = j;
+                                                double yValue = Y[i, j, r, z].LB;
+
+                                                // Store the optimal 'Y' value in the data structure
+                                                y_plan[(employee, bidIndex, r, z)] = yValue;
+                                            }
+                                        }
+
+
+
+
+
+
+
+                                    }
+                                }
+
+                                // Print the optimal solution for 'Y' variables
+                                Console.WriteLine("\nOptimal Solution for Y Variables:");
+                                int counter = 0;
+                                foreach (var employee in rows)
+                                {
+                                    var TotalNumberOfDays = 0;
+
+                                    for (int j = 0; j < MaxLeaveBidsPerEmployee[employee]; j++)
+                                    {
+                                        #region Find ZValue
+                                        int Zvalue = new int();
+                                        int Rvalue = new int();
+                                        var EmployeeCode = employee;
+                                        var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == EmployeeCode);
+                                        var BidCode = specificEmployee.LeaveBidDataGridStatic[j].BidCode;
+                                        Rvalue = RBidsDict.TryGetValue((EmployeeCode, BidCode), out int valueR) ? valueR : Zvalue;
+                                        #endregion
+
+                                        for (int r = 0; r < Rvalue; r++)
+                                        {
+                                            Zvalue = ZbidsDict.TryGetValue((EmployeeCode, BidCode, r + 1), out int value) ? value : Zvalue;
+                                            for (int z = 0; z < Zvalue; z++) //allagh
+                                            {
+                                                int bidIndex = j;
+                                                double yValue = y_plan.ContainsKey((employee, bidIndex, r, z)) ? y_plan[(employee, bidIndex, r, z)] : 0.0;
+              
+                                                Console.WriteLine($"Employee: {employee}, BidIndex: {bidIndex + 1}, Value: {yValue} -> Employee: {employee}, BidIndex: {bidIndex + 1}, Value: {yValue} Y{(Array.IndexOf(Employees, employee) + 1)}{(bidIndex + 1)}");
+
+                                                #region Populate VP Yij
+                                                VPYijResultsData yijDataRecord = new VPYijResultsData();
+                                                yijDataRecord.LeaveBidData = new LeaveBidsDataStatic();
+
+
+                                                yijDataRecord.Yij = $"Y{(Array.IndexOf(Employees, employee) + 1)}{(bidIndex + 1)}";
+                                                yijDataRecord.Yijr = $"Y{(Array.IndexOf(Employees, employee) + 1)}{(bidIndex + 1)}{(r + 1)}";
+                                                yijDataRecord.Yijrz = $"Y{(Array.IndexOf(Employees, employee) + 1)}{(bidIndex + 1)}{(r + 1)}{(z + 1)}";
+
+                                                yijDataRecord.YijFlag = yValue;
+                                                yijDataRecord.ConfirmedBidFlag = yValue;
+
+                                                var SpecificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == employee);
+                                                yijDataRecord.Employee = SpecificEmployee;
+
+                                                yijDataRecord.LeaveBidData = SpecificEmployee.LeaveBidDataGridStatic[j];
+
+                                                #region Edit Dates
+
+                                                var DateFrom = SpecificEmployee.LeaveBidDataGridStatic[j].DateFrom;
+                                                var NumberOfDays = SpecificEmployee.LeaveBidDataGridStatic[j].NumberOfDaysMax - r;
+                                                var NumberOfDaysMax = SpecificEmployee.LeaveBidDataGridStatic[j].NumberOfDaysMax ;
+                                                var NumberOfDaysMin = SpecificEmployee.LeaveBidDataGridStatic[j].NumberOfDaysMin;
+
+                                                var BidType = SpecificEmployee.LeaveBidDataGridStatic[j].BidType;
+                                                var DateTo = SpecificEmployee.LeaveBidDataGridStatic[j].DateTo;
+
+                                                yijDataRecord.DateFrom = DateFrom;
+                                                yijDataRecord.DateTo = DateTo;
+
+                                                if (BidType == BasicEnums.BidType.Min_Max)
+                                                {
+                                                    NumberOfDays = 0;
+                                                }
+                                                else if (BidType == BasicEnums.BidType.Non_Specific)
+                                                {
+                                                    NumberOfDaysMax = 0;
+                                                    NumberOfDaysMin = 0;
+
+                                                }
+                                                else if (BidType == BasicEnums.BidType.Specific)
+                                                {
+                                                    NumberOfDaysMax = 0;
+                                                    NumberOfDaysMin = 0;
+                                                }
+
+                                                yijDataRecord.NumberOfDays = NumberOfDays;
+                                                yijDataRecord.NumberOfDaysMax = NumberOfDaysMax;
+                                                yijDataRecord.NumberOfDaysMin = NumberOfDaysMin;
+
+                                                yijDataRecord.DateFromStr = DateFrom.ToString("dd/MM/yyyy");
+                                                yijDataRecord.DateToStr = DateTo.ToString("dd/MM/yyyy");
+
+                                                #endregion
+
+                                                #region ADD RECORD 
+                                                var existingRecord = Data.VPYijResultsDataGrid.FirstOrDefault(record => record.Yij == yijDataRecord.Yij);
+
+                                                if (existingRecord != null)
+                                                {
+                                                    if (existingRecord.YijFlag == 1)
+                                                    {
+
+                                                    }
+                                                    else if (existingRecord.YijFlag == 0 && yijDataRecord.YijFlag == 0)
+                                                    {
+
+                                                    }
+                                                    else if (existingRecord.YijFlag == 0 && yijDataRecord.YijFlag == 1)
+                                                    {
+                                                        // Insert the new record and remove the existing record
+                                                        Data.VPYijResultsDataGrid.Remove(existingRecord);
+                                                        Data.VPYijResultsDataGrid.Add(yijDataRecord);
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    Data.VPYijResultsDataGrid.Add(yijDataRecord);
+
+                                                }
+
+                                                #endregion
+
+
+
+                                                #endregion
+
+                                                #region Populate VP Yijz
+                                                VPYijResultsData yijzDataRecord = new VPYijResultsData();
+                                                yijzDataRecord.LeaveBidData = new LeaveBidsDataStatic();
+
+
+                                                yijzDataRecord.Yij = $"Y{(Array.IndexOf(Employees, employee) + 1)}{(bidIndex + 1)}";
+                                                yijzDataRecord.Yijr = $"Y{(Array.IndexOf(Employees, employee) + 1)}{(bidIndex + 1)}{(r + 1)}";
+                                                yijzDataRecord.Yijrz = $"Y{(Array.IndexOf(Employees, employee) + 1)}{(bidIndex + 1)}{(r + 1)}{(z + 1)}";
+
+                                                yijzDataRecord.YijFlag = yValue;
+                                                yijzDataRecord.ConfirmedBidFlag = yValue;
+
+                                                yijzDataRecord.Employee = SpecificEmployee;
+
+                                                yijzDataRecord.LeaveBidData = SpecificEmployee.LeaveBidDataGridStatic[j];
+
+                                                #region Edit Dates
+
+                                                if (SpecificEmployee.LeaveBidDataGridStatic[j].BidType == BasicEnums.BidType.Min_Max)
+                                                {
+                                                }
+
+                                                DateFrom = SpecificEmployee.LeaveBidDataGridStatic[j].DateFrom.AddDays(z);
+                                                NumberOfDays = SpecificEmployee.LeaveBidDataGridStatic[j].NumberOfDaysMax - r;
+                                                DateTo = DateFrom.AddDays(NumberOfDays);
+
+                                                yijzDataRecord.DateFrom = DateFrom;
+                                                yijzDataRecord.DateTo = DateTo;
+                                                yijzDataRecord.NumberOfDays = NumberOfDays;
+                                                yijzDataRecord.DateFromStr = DateFrom.ToString("dd/MM/yyyy");
+                                                yijzDataRecord.DateToStr = DateTo.ToString("dd/MM/yyyy");
+
+                                                #endregion
+                                                Data.VPYijzResultsDataGrid.Add(yijzDataRecord);
+
+
+
+                                                #endregion
+                                                if (yValue == 1)
+                                                {
+                                                    TotalNumberOfDays = TotalNumberOfDays + NumberOfDays;
+
+                                                }
+                                            }
+                                        } //allagh
+
+                                        counter++;
+                                    }
+
+                                    var UpdatedEmp = InputData.Employees.FirstOrDefault(emp => emp.Code == employee);
+                                    UpdatedEmp.LeaveStatus.ProjectedBalance = UpdatedEmp.LeaveStatus.CurrentBalance - TotalNumberOfDays;
+                                    Data.EmpLeaveStatusData.Add(UpdatedEmp);
+
+                                }
+
+
+                                #region Create c#sol.txt for python
+                                string filePath = @"C:\Users\npoly\Source\Repos\Bids_CrewScheduling_Kozanidis\c#sol.txt";
+                                File.WriteAllText(filePath, string.Empty);
+
+                                using (StreamWriter writer = new StreamWriter(filePath, true)) // 'true' parameter appends to the existing file if it exists
+                                {
+                                    foreach (string line in outputLines)
+                                    {
+                                        writer.WriteLine(line);
+                                    }
+                                }
+
+                                #endregion
+                            }
+                            #endregion
+                        }
+                        if (result == "Save and Upgrade")
+                        {
+                            // Handle Save and Upgrade scenario
+                            Console.WriteLine("Saving and upgrading...");
+                            flag = SaveVpVijResultData(Data, 1, InputData.VPId);
+                            Console.WriteLine(flag);
+                            Upgrade = true;
+                        }
+                        else
+                        {
+                            // Handle Save Only scenario
+                            Console.WriteLine("Saving only...");
+                            flag = SaveVpVijResultData(Data, 1, InputData.VPId);
+                            Console.WriteLine(flag);
+                            Upgrade = false;
+
+                        }
+                    }
+                    else
+                    {
+                        // User clicked Upgrade Only
+                        Console.WriteLine("User clicked Upgrade Only");
+                        // Handle Upgrade Only scenario
+                        //flag = SaveVpVijResultData(Data, -1, InputData.VPId);
+                        Console.WriteLine(flag);
+                        Upgrade = true;
+
+                    }
+                }
+                while (Upgrade == true)
+                {
+                    var CurrentObjectiveValue = Data.ObjValue;
+                    var NewInputData = InputData;
+
+
+                    //Data = CalculateVacationPlanningAdvanced2(NewInputData,Yijk);
+                }
+                model.Dispose();
+                env.Dispose();
+
+                return Data;
+
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("An error occurred: " + ex.Message);
+                return Data;
+            }
+        }
+
+        //public VacationPlanningOutputData CalculateVacationPlanningAdvanced(VacationPlanningInputData InputData)
+        //{
+        //    GRBEnv env = new GRBEnv("mpslogfile.log");
+        //    GRBModel model = new GRBModel(env);
+        //    GRBModel WorkingModel = new GRBModel(env);
+
+        //    VacationPlanningOutputData Data = new VacationPlanningOutputData();
+        //    Data.VPYijResultsDataGrid = new ObservableCollection<VPYijResultsData>();
+        //    Data.VPXijResultsDataGrid = new ObservableCollection<VPXijResultsData>();
+        //    Data.EmpLeaveStatusData = new ObservableCollection<EmployeeData>();
+
+        //    List<string> rows = new List<string>();
+        //    List<string> columns = new List<string>();
+        //    Dictionary<(string, string), double> make_plan = new Dictionary<(string, string), double>();
+        //    double bigM = 10000;
+
+        //    try
+        //    {
+        //        // Define the parameters
+        //        string[] Employees = InputData.Employees.Select(d => d.Code).ToArray();
+        //        int MaxLeaveBids = InputData.MaxLeaveBids;
+        //        int MaxSatisfiedBids = InputData.MaxSatisfiedBids;
+        //        string[] Dates = InputData.DatesStr;
+        //        Dictionary<string, int> MaxLeaveBidsPerEmployee = InputData.MaxLeaveBidsPerEmployee;
+        //        int multiplier = 1;
+        //        int SeparValue = InputData.SeparValue;
+        //        int LimitLineFixed = InputData.Schedule.LimitLineFixed;
+
+
+
+        //        // Decision variables
+        //        GRBVar[,] Y = new GRBVar[Employees.Length, MaxLeaveBids];
+        //        GRBVar[,] X = new GRBVar[Employees.Length, Dates.Length];
+
+
+        //        // Create decision variables X
+        //        for (int i = 0; i < Employees.Length; i++)
+        //        {
+        //            for (int t = 0; t < Dates.Length; t++)
+        //            {
+        //                // Define the variable name
+        //                string varNameX = $"X{i + 1}_{t + 1}";
+
+        //                // Create the binary variable with a name
+        //                X[i, t] = model.AddVar(0.0, 1.0, 0.0, GRB.BINARY, varNameX);
+        //            }
+        //        }
+
+        //        // Create decision variables Y
+        //        for (int i = 0; i < Employees.Length; i++)
+        //        {
+        //            for (int j = 0; j < MaxLeaveBidsPerEmployee[Employees[i]]; j++)
+        //            {
+        //                // Define the variable name
+        //                string varNameY = $"Y{i + 1}_{j + 1}";
+
+        //                // Create the binary variable with a name
+        //                Y[i, j] = model.AddVar(0.0, 1.0, 0.0, GRB.BINARY, varNameY);
+
+        //            }
+        //        }
+
+
+        //        // Objective function
+        //        GRBLinExpr objective = 0;
+
+        //        for (int i = Employees.Length - 1; i >= 0; i--)
+        //        {
+        //            for (int j = MaxLeaveBidsPerEmployee[Employees[i]] - 1; j >= 0; j--)
+        //            {
+        //                objective.AddTerm(multiplier, Y[i, j]);
+        //                multiplier = multiplier * 1;
+        //            }
+        //        }
+
+
+        //        model.SetObjective(objective, GRB.MAXIMIZE);
+
+        //        // Constraints
+
+        //        // #1. Adding constraints for maximum number of satisfied bids dynamically
+        //        for (int i = 0; i < Employees.Length; i++)
+        //        {
+        //            GRBLinExpr sumLeaveBids = 0;
+        //            for (int j = 0; j < MaxLeaveBidsPerEmployee[Employees[i]]; j++)
+        //            {
+        //                sumLeaveBids.AddTerm(1.0, Y[i, j]); // Summing up the leave bids for each employee
+        //            }
+        //            // Adding the constraint for the current employee
+        //            model.AddConstr(sumLeaveBids <= MaxSatisfiedBids, "MaxSatisfiedBids_" + Employees[i]);
+        //        }
+
+
+        //        // #2. Entitlements
+        //        for (int i = 0; i < Employees.Length; i++)
+        //        {
+        //            var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == Employees[i]);
+        //            GRBLinExpr sumLeaveBidDays = 0;
+        //            for (int j = 0; j < MaxLeaveBidsPerEmployee[Employees[i]]; j++)
+        //            {
+        //                var NumberOfDays = specificEmployee.LeaveBidDataGridStatic[j].NumberOfDays;
+
+
+        //                sumLeaveBidDays.AddTerm(NumberOfDays, Y[i, j]); // Summing up the leavebidsDays for each employee
+
+
+        //            }
+
+        //            var MaxLeaveDays = specificEmployee.LeaveStatus.CurrentBalance;
+
+        //            // Adding the constraint for the current employee
+        //            model.AddConstr(sumLeaveBidDays <= MaxLeaveDays, "MaxLeaveDays_" + Employees[i]);
+
+
+        //        }
+
+        //        // #3. Limit Lines
+
+        //        for (int t = 0; t < Dates.Length; t++)
+        //        {
+        //            GRBLinExpr sumDays = 0;
+        //            var LimitLine = InputData.Schedule.ReqScheduleRowsData.ElementAt(t).LimitLine;
+
+        //            for (int i = 0; i < Employees.Length; i++)
+        //            {
+
+        //                sumDays.AddTerm(1, X[i, t]);
+
+
+        //            }
+        //            model.AddConstr(sumDays <= LimitLine, "LimitLine_" + Dates[t]);
+
+        //        }
+
+        //        //#5. Overlapping
+        //        #region New OverLapping
+
+        //        // Separation-Overlap constraint
+        //        for (int i = 0; i < Employees.Length; i++)
+        //        {
+        //            for (int j1 = 0; j1 < MaxLeaveBidsPerEmployee[Employees[i]] - 1; j1++)
+        //            {
+        //                for (int j2 = j1 + 1; j2 < MaxLeaveBidsPerEmployee[Employees[i]]; j2++)
+        //                {
+        //                    if (SeparOrOverlap(i, j1, j2))
+        //                    {
+        //                        GRBLinExpr expr = Y[i, j1] + Y[i, j2];
+        //                        model.AddConstr(expr <= 1, $"SO{i + 1}_{j1 + 1}_{j2 + 1}");
+        //                    }
+        //                }
+        //            }
+        //        }
+
+        //        bool SeparOrOverlap(int i, int j1, int j2)
+        //        {
+
+        //            var emp = InputData.Employees.ElementAt(i);
+
+        //            var SelectedBid1 = emp.LeaveBidDataGridStatic.ElementAt(j1);
+        //            var SelectedBid2 = emp.LeaveBidDataGridStatic.ElementAt(j2);
+
+
+        //            if (SelectedBid2.DateFrom >= SelectedBid1.DateFrom.AddDays(SelectedBid1.NumberOfDays + SeparValue) )
+        //            {
+        //                return false;
+
+        //            };
+        //            if (SelectedBid2.DateFrom.AddDays(SelectedBid2.NumberOfDays ) <= SelectedBid1.DateFrom.AddDays(-SeparValue))
+        //            {
+
+        //                return false;
+
+        //            };
+
+        //            return true;
+        //        }
+
+        //        #endregion
+        //        //#6.Connection Between Y and X
+        //        for (int i = 0; i < Employees.Length; i++)
+        //        {
+        //            var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == Employees[i]);
+        //            var maxBids = MaxLeaveBidsPerEmployee[Employees[i]];
+
+        //            for (int j = 0; j < maxBids; j++)
+        //            {
+        //                var bid = specificEmployee.LeaveBidDataGridStatic[j];
+        //                var bidDays = bid.NumberOfDays;
+        //                var startDateIndex = Array.IndexOf(Dates, bid.DateFrom.ToString("dd/MM/yyyy"));
+
+        //                GRBLinExpr sumDays = 0;
+
+
+
+        //                for (int k = 0; k < bidDays; k++)
+        //                {
+        //                    sumDays.AddTerm(1, X[i, startDateIndex + k]); // Add X variables for each day of the bid
+        //                }
+
+        //                // Add the constraint
+        //                model.AddConstr(bidDays * Y[i, j] <= sumDays, $"BidDaysConstraint_{Employees[i]}_{j}");
+        //            }
+        //        }
+        //        // Solve the model
+        //        //model.Optimize();
+
+        //        #region New Optimize settings
+        //        bool grant;
+        //        BasicEnums.VPLogicType logic = InputData.VPLogicType;
+        //        int FinishedEmpIds = 0;
+        //        int FinishedBidIds = 1;
+
+        //        int id = 0;
+        //        var numRowsPerEmployee = InputData.Employees.Select(e => e.LeaveBidDataGridStatic.Count);
+        //        var numOfEmployes = InputData.Employees.Count;
+        //        int N = numRowsPerEmployee.Sum();
+        //        int[] NextBid = new int[N];
+
+        //        int[] NrOfBids = MaxLeaveBidsPerEmployee.Values.ToArray();
+        //        List<string> outputLines = new List<string>();
+
+
+        //        model.Update();
+
+        //        while (FinishedEmpIds <= numOfEmployes) // Kozani
+        //        {
+        //            int j = NextBid[id];
+
+        //            //Y[i, j] = model.AddVar(0.0, 1.0, 0.0, GRB.BINARY, $"Y{i + 1}_{i + 1}");
+        //            var Y1_1 = $"Y{id + 1}_{j + 1}";
+
+
+        //            GRBVar K = model.GetVarByName($"Y{id + 1}_{j + 1}");
+        //            K.LB = 1;
+        //            model.Update();
+        //            model.Optimize();
+        //            bool solution = (model.Status == GRB.Status.OPTIMAL);
+        //            if (solution)
+        //            {
+
+        //                grant = true;
+        //                string message = $"Crew member {id + 1} was awarded bid {j + 1}";
+        //                Console.WriteLine(message);
+        //                outputLines.Add(message);
+        //                Data.ObjValue = model.ObjVal;
+        //                #region Insert Xij
+        //                var emp = InputData.Employees.ElementAt(id);
+
+        //                var SelectedBid = emp.LeaveBidDataGridStatic.ElementAt(j);
+        //                var DateTo = SelectedBid.DateFrom.AddDays(SelectedBid.NumberOfDays).ToString("dd/MM/yyyy");
+        //                var DateFrom = SelectedBid.DateFrom.ToString("dd/MM/yyyy");
+
+        //                string employee = Employees[id];
+
+        //                var DateFromIndex = Dates.IndexOf(DateFrom);
+        //                var DateToIdIndex = Dates.IndexOf(DateTo);
+
+
+
+        //                if (DateFromIndex != -1 && DateToIdIndex != -1)
+        //                {
+        //                    for (int t = DateFromIndex; t <= DateToIdIndex && t < Dates.Length; t++)
+        //                    {
+        //                        GRBVar Xij = model.GetVarByName($"X{id+1}_{t + 1}");
+        //                        Xij.LB = 1;
+        //                    }
+
+        //                }
+        //                else
+        //                {
+        //                    // Handle the case where DateFrom or DateTo is not found in the Dates list
+        //                    Console.WriteLine("DateFrom or DateTo not found in the Dates list.");
+        //                }
+
+
+
+        //                #endregion
+
+        //            }
+        //            else
+        //            {
+        //                grant = false;
+        //                K.LB = 0;
+        //                string message = $"Crew member {id + 1} was not awarded bid {j + 1}";
+        //                Console.WriteLine(message);
+        //                outputLines.Add(message);
+        //            }
+        //            NextBid[id]++;
+        //            if (NextBid[id] == NrOfBids[id])
+        //            {
+        //                FinishedEmpIds++;
+
+        //            }
+        //            if (model.Status == GRB.Status.OPTIMAL)
+        //            {
+        //                Data.ObjValue = model.ObjVal;
+        //            }
+        //            if (FinishedBidIds == N)
+        //            {
+        //                break;
+        //            }
+        //            FinishedBidIds = FinishedBidIds + 1;
+        //            if (FinishedBidIds <= N)
+        //            {
+        //                id = GetNextId(id, grant, numOfEmployes, NextBid, NrOfBids, FinishedEmpIds, logic);
+
+        //            }
+        //        }
+        //        #endregion
+
+
+        //        #region OutputResults
+        //        if (Data.ObjValue >0 )
+        //        {
+
+
+
+        //            // Create a data structure to store the optimal solution
+        //            model.Update();
+
+
+        //            #region Insert Xij
+        //            // Extract the optimal solution for the 'X' variables
+        //            for (int i = 0; i < Employees.Length; i++)
+        //            {
+        //                for (int t = 0; t < Dates.Length; t++)
+        //                {
+        //                    string employee = Employees[i];
+        //                    string date = Dates[t];
+        //                    double xValue = X[i, t].LB;
+        //                    if (xValue == 1)
+        //                    {
+        //                        Console.WriteLine($"Employee: {employee}, Date: {date}, Value: {xValue}");
+        //                    }
+        //                    // Store the optimal 'X' value in the data structure
+        //                    make_plan[(employee, date)] = xValue;
+
+        //                    // Add 'employee' and 'date' to the respective lists if they are not already there
+        //                    if (!rows.Contains(employee))
+        //                        rows.Add(employee);
+        //                    if (!columns.Contains(date))
+        //                        columns.Add(date);
+        //                }
+        //            }
+        //            #endregion
+
+
+
+        //            // Print the optimal solution for 'X' variables
+        //            Console.WriteLine("Optimal Solution for X Variables:");
+        //            foreach (var employee in rows)
+        //            {
+        //                foreach (var date in columns)
+        //                {
+        //                    double xValue = make_plan.ContainsKey((employee, date)) ? make_plan[(employee, date)] : 0.0;
+        //                    Console.WriteLine($"Employee: {employee}, Date: {date}, Value: {xValue} -> Employee: {employee}, Date: {date}, Value: {xValue} X{(Array.IndexOf(Employees, employee) + 1)}{(Array.IndexOf(Dates, date) + 1)}");
+
+
+        //                    #region Populate VP Xij
+        //                    VPXijResultsData singleDataRecord = new VPXijResultsData();
+
+
+        //                    singleDataRecord.Xij = $"X{(Array.IndexOf(Employees, employee) + 1)}{(Array.IndexOf(Dates, date) + 1)}";
+        //                    singleDataRecord.XijFlag = xValue;
+        //                    singleDataRecord.Date = date;
+
+
+
+
+        //                    var SpecificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == employee);
+        //                    singleDataRecord.Employee = SpecificEmployee;
+
+        //                    Data.VPXijResultsDataGrid.Add(singleDataRecord);
+        //                    #endregion
+        //                }
+        //            }
+
+        //            // Extract the optimal solution for the 'Y' variables
+        //            Dictionary<(string, int), double> y_plan = new Dictionary<(string, int), double>();
+        //            for (int i = 0; i < Employees.Length; i++)
+        //            {
+        //                for (int j = 0; j < MaxLeaveBidsPerEmployee[Employees[i]]; j++)
+        //                {
+        //                    string employee = Employees[i];
+        //                    int bidIndex = j;
+        //                    double yValue = Y[i, j].LB;
+
+        //                    // Store the optimal 'Y' value in the data structure
+        //                    y_plan[(employee, bidIndex)] = yValue;
+
+
+        //                }
+        //            }
+
+        //            // Print the optimal solution for 'Y' variables
+        //            Console.WriteLine("\nOptimal Solution for Y Variables:");
+        //            int a = 0;
+        //            foreach (var employee in rows)
+        //            {          
+        //                var TotalNumberOfDays = 0;
+
+        //                for (int j = 0; j < MaxLeaveBidsPerEmployee[employee]; j++)
+        //                {
+        //                    int bidIndex = j;
+        //                    double yValue = y_plan.ContainsKey((employee, bidIndex)) ? y_plan[(employee, bidIndex)] : 0.0;
+        //                    Console.WriteLine($"Employee: {employee}, BidIndex: {bidIndex + 1}, Value: {yValue} -> Employee: {employee}, BidIndex: {bidIndex + 1}, Value: {yValue} Y{(Array.IndexOf(Employees, employee) + 1)}{(bidIndex + 1)}");
+
+        //                    #region Populate VP Yij
+        //                    VPYijResultsData singleDataRecord = new VPYijResultsData();
+        //                    singleDataRecord.LeaveBidData = new LeaveBidsDataStatic();
+
+
+        //                    singleDataRecord.Yij = $"Y{(Array.IndexOf(Employees, employee) + 1)}{(bidIndex + 1)}";
+
+        //                    singleDataRecord.YijFlag = yValue;
+        //                    singleDataRecord.ConfirmedBidFlag = yValue;
+
+
+
+
+        //                    var SpecificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == employee);
+        //                    singleDataRecord.Employee = SpecificEmployee;
+
+        //                    singleDataRecord.LeaveBidData = SpecificEmployee.LeaveBidDataGridStatic[j];
+        //                    Data.VPYijResultsDataGrid.Add(singleDataRecord);
+        //                    #endregion
+        //                    if(yValue == 1)
+        //                    {
+        //                        TotalNumberOfDays = TotalNumberOfDays + SpecificEmployee.LeaveBidDataGridStatic[j].NumberOfDays;
+
+        //                    }
+
+
+
+
+        //                    a++;
+        //                }
+
+        //                var UpdatedEmp = InputData.Employees.FirstOrDefault(emp => emp.Code == employee);
+        //                UpdatedEmp.LeaveStatus.ProjectedBalance = UpdatedEmp.LeaveStatus.CurrentBalance - TotalNumberOfDays;
+        //                Data.EmpLeaveStatusData.Add(UpdatedEmp);
+
+        //            }
+
+
+        //            #region Create c#sol.txt for python
+        //            string filePath = @"C:\Users\npoly\Source\Repos\Bids_CrewScheduling_Kozanidis\c#sol.txt";
+        //            File.WriteAllText(filePath, string.Empty);
+
+        //            using (StreamWriter writer = new StreamWriter(filePath, true)) // 'true' parameter appends to the existing file if it exists
+        //            {
+        //                foreach (string line in outputLines)
+        //                {
+        //                    writer.WriteLine(line);
+        //                }
+        //            }
+
+        //            #endregion
+        //        }
+        //        #endregion
+
+
+
+
+
+        //        model.Dispose();
+        //        env.Dispose();
+
+        //        return Data;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine("An error occurred: " + ex.Message);
+        //        return Data;
+        //    }
+        //}
+
+        //public VacationPlanningOutputData CalculateVacationPlanningAdvanced2(VacationPlanningInputData InputData)
+        //{
+        //    GRBEnv env = new GRBEnv("mpslogfile.log");
+        //    GRBModel model = new GRBModel(env);
+        //    GRBModel WorkingModel = new GRBModel(env);
+
+        //    VacationPlanningOutputData Data = new VacationPlanningOutputData();
+        //    Data.VPYijResultsDataGrid = new ObservableCollection<VPYijResultsData>();
+        //    Data.VPYijzResultsDataGrid = new ObservableCollection<VPYijResultsData>();
+        //    Data.VPXijResultsDataGrid = new ObservableCollection<VPXijResultsData>();
+        //    Data.EmpLeaveStatusData = new ObservableCollection<EmployeeData>();
+
+        //    List<string> rows = new List<string>();
+        //    List<string> columns = new List<string>();
+        //    Dictionary<(string, string), double> make_plan = new Dictionary<(string, string), double>();
+        //    double bigM = 10000;
+
+        //    try
+        //    {
+        //        #region Optimization paramaters
+        //        // Define the parameters
+        //        string[] Employees = InputData.Employees.Select(d => d.Code).ToArray();
+        //        int MaxLeaveBids = InputData.MaxLeaveBids;
+        //        int MaxSatisfiedBids = InputData.MaxSatisfiedBids;
+        //        string[] Dates = InputData.DatesStr;
+
+        //        Dictionary<string, int> MaxLeaveBidsPerEmployee = InputData.MaxLeaveBidsPerEmployee;
+        //        Dictionary<string, string> BidsPerEmployee = InputData.BidsPerEmployee;
+
+        //        Dictionary<(string, string), int> ZbidsDict = InputData.ZBidsDict;
+
+        //        int multiplier = 1;
+        //        int SeparValue = InputData.SeparValue;
+        //        int LimitLineFixed = InputData.Schedule.LimitLineFixed;
+
+        //        var Zmax = 30;
+
+        //        #endregion
+        //        #region
+        //        // Decision variables
+        //        GRBVar[,,] Y = new GRBVar[Employees.Length, MaxLeaveBids, Zmax];
+        //        GRBVar[,] X = new GRBVar[Employees.Length, Dates.Length];
+
+
+        //        // Create decision variables X
+        //        for (int i = 0; i < Employees.Length; i++)
+        //        {
+        //            for (int t = 0; t < Dates.Length; t++)
+        //            {
+        //                // Define the variable name
+        //                string varNameX = $"X{i + 1}_{t + 1}";
+
+        //                // Create the binary variable with a name
+        //                X[i, t] = model.AddVar(0.0, 1.0, 0.0, GRB.BINARY, varNameX);
+        //            }
+        //        }
+
+        //        // Create decision variables Y
+        //        for (int i = 0; i < Employees.Length; i++)
+        //        {
+        //            for (int j = 0; j < MaxLeaveBidsPerEmployee[Employees[i]]; j++)
+        //            {
+        //                #region Find ZValue
+
+        //                int Zvalue = new int();
+        //                var EmployeeCode = Employees[i];
+        //                var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == Employees[i]);
+        //                var BidCode = specificEmployee.LeaveBidDataGridStatic[j].BidCode;
+        //                Zvalue = ZbidsDict.TryGetValue((Employees[i], BidCode), out int value) ? value : Zvalue;
+
+        //                #endregion
+
+        //                for (int z = 0; z < Zvalue; z++) //allagh
+        //                {
+        //                    // Define the variable name
+        //                    string varNameY = $"Y{i + 1}_{j + 1}_{z+1}"; 
+
+        //                    // Create the binary variable with a name
+        //                    Y[i, j, z] = model.AddVar(0.0, 1.0, 0.0, GRB.BINARY, varNameY); 
+        //                }
+
+        //            }
+        //        }
+
+
+        //        // Objective function
+        //        GRBLinExpr objective = 0;
+
+        //        for (int i = Employees.Length - 1; i >= 0; i--)
+        //        {
+        //            for (int j = MaxLeaveBidsPerEmployee[Employees[i]] - 1; j >= 0; j--)
+        //            {
+        //                #region Find ZValue
+        //                int Zvalue = new int();
+        //                var EmployeeCode = Employees[i];
+        //                var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == Employees[i]);
+        //                var BidCode = specificEmployee.LeaveBidDataGridStatic[j].BidCode;
+        //                Zvalue = ZbidsDict.TryGetValue((Employees[i], BidCode), out int value) ? value : Zvalue;
+        //                #endregion
+
+        //                for (int z = 0; z < Zvalue; z++) //allagh
+        //                {
+        //                    objective.AddTerm(multiplier, Y[i, j, z]);
+        //                    multiplier = multiplier * 1;
+        //                }
+
+        //            }
+        //        }
+
+
+        //        model.SetObjective(objective, GRB.MAXIMIZE);
+
+        //        // Constraints
+
+        //        // #1. Adding constraints for maximum number of satisfied bids dynamically
+        //        for (int i = 0; i < Employees.Length; i++)
+        //        {
+        //            GRBLinExpr sumLeaveBids = 0;
+        //            for (int j = 0; j < MaxLeaveBidsPerEmployee[Employees[i]]; j++)
+        //            {
+
+        //                #region Find ZValue
+        //                int Zvalue = new int();
+        //                var EmployeeCode = Employees[i];
+        //                var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == Employees[i]);
+        //                var BidCode = specificEmployee.LeaveBidDataGridStatic[j].BidCode;
+        //                Zvalue = ZbidsDict.TryGetValue((Employees[i], BidCode), out int value) ? value : Zvalue;
+        //                #endregion
+
+        //                for (int z = 0; z < Zvalue; z++) //allagh
+        //                {
+        //                    sumLeaveBids.AddTerm(1.0, Y[i, j, z]); // Summing up the leave bids for each employee
+
+        //                }
+        //            }
+        //            // Adding the constraint for the current employee
+        //            model.AddConstr(sumLeaveBids <= MaxSatisfiedBids, "MaxSatisfiedBids_" + Employees[i]);
+        //        }
+
+
+        //        // #2. Entitlements
+        //        for (int i = 0; i < Employees.Length; i++)
+        //        {
+        //            var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == Employees[i]);
+        //            GRBLinExpr sumLeaveBidDays = 0;
+        //            for (int j = 0; j < MaxLeaveBidsPerEmployee[Employees[i]]; j++)
+        //            {
+        //                var NumberOfDays = specificEmployee.LeaveBidDataGridStatic[j].NumberOfDays;
+        //                #region Find ZValue
+        //                int Zvalue = new int();
+        //                var EmployeeCode = Employees[i];
+        //                var BidCode = specificEmployee.LeaveBidDataGridStatic[j].BidCode;
+        //                Zvalue = ZbidsDict.TryGetValue((Employees[i], BidCode), out int value) ? value : Zvalue;
+        //                #endregion
+
+        //                for (int z = 0; z < Zvalue; z++) //allagh
+        //                {
+        //                    sumLeaveBidDays.AddTerm(NumberOfDays, Y[i, j ,z]); // Summing up the leavebidsDays for each employee
+        //                }
+
+        //            }
+
+        //            var MaxLeaveDays = specificEmployee.LeaveStatus.CurrentBalance;
+
+        //            // Adding the constraint for the current employee
+        //            model.AddConstr(sumLeaveBidDays <= MaxLeaveDays, "MaxLeaveDays_" + Employees[i]);
+
+
+        //        }
+
+        //        // #3. Limit Lines
+
+        //        for (int t = 0; t < Dates.Length; t++)
+        //        {
+        //            GRBLinExpr sumDays = 0;
+        //            var LimitLine = InputData.Schedule.ReqScheduleRowsData.ElementAt(t).LimitLine;
+
+        //            for (int i = 0; i < Employees.Length; i++)
+        //            {
+
+        //                sumDays.AddTerm(1, X[i, t]);
+
+
+        //            }
+        //            model.AddConstr(sumDays <= LimitLine, "LimitLine_" + Dates[t]);
+
+        //        }
+
+        //        //#5. Overlapping
+        //        #region New OverLapping
+
+
+
+        //        // Separation-Overlap constraint
+        //        #region SepOverlap Working
+        //        //for (int i = 0; i < Employees.Length; i++)
+        //        //{
+        //        //    var a = 1;
+        //        //    for (int j1 = 0; j1 < MaxLeaveBidsPerEmployee[Employees[i]] - 1; j1++)
+        //        //    {
+        //        //        for (int j2 = j1 +1; j2 < MaxLeaveBidsPerEmployee[Employees[i]]; j2++)
+        //        //        {
+        //        //            var d = j2;
+
+        //        //            var EmployeeCode = Employees[i];
+        //        //            var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == Employees[i]);
+        //        //            #region Find z1,z2
+        //        //            int Z1value = new int();
+        //        //            int Z2value = new int();
+
+        //        //            var BidCode1 = specificEmployee.LeaveBidDataGridStatic[j1].BidCode;
+        //        //            Z1value = ZbidsDict.TryGetValue((Employees[i], BidCode1), out int value1) ? value1 : Z1value;
+
+        //        //            var BidCode2 = specificEmployee.LeaveBidDataGridStatic[j2].BidCode;
+        //        //            Z2value = ZbidsDict.TryGetValue((Employees[i], BidCode2), out int value2) ? value2 : Z2value;
+        //        //            #endregion
+        //        //            for (int z1 = 0; z1 < Z1value; z1++) 
+        //        //            {
+        //        //                for (int z2 = 0; z2 < Z2value; z2++) 
+        //        //                {
+        //        //                    if (SeparOrOverlap(i, j1, j2, z1, z2))
+        //        //                    {
+        //        //                        GRBLinExpr expr = Y[i, j1,z1] + Y[i, j2,z2];
+        //        //                        model.AddConstr(expr <= 1, $"SO{i + 1}_{j1 + 1}_{z1 + 1}_{j2 + 1}_{z2 + 1}");
+        //        //                    }
+        //        //                }
+        //        //            }
+
+        //        //        }
+        //        //    }
+        //        //}
+
+        //        //bool SeparOrOverlap(int i, int j1, int j2 ,int z1, int z2)
+        //        //{
+
+        //        //    var emp = InputData.Employees.ElementAt(i);
+
+        //        //    var SelectedBid1 = emp.LeaveBidDataGridStatic.ElementAt(j1);
+        //        //    var SelectedBid2 = emp.LeaveBidDataGridStatic.ElementAt(j2);
+        //        //    if (SelectedBid2.DateFrom.AddDays(z2) >= SelectedBid1.DateFrom.AddDays(SelectedBid1.NumberOfDays + SeparValue +z1))
+        //        //    {
+        //        //        return false;
+
+        //        //    };
+        //        //    if (SelectedBid2.DateFrom.AddDays(SelectedBid2.NumberOfDays +z2) <= SelectedBid1.DateFrom.AddDays(-SeparValue))
+        //        //    {
+
+        //        //        return false;
+
+        //        //    };
+
+        //        //    return true;
+        //        //}
+
+        //        #endregion
+        //        #region SepOverlap 2
+        //        for (int i = 0; i < Employees.Length; i++)
+        //        {
+        //            for (int j1 = 0; j1 < MaxLeaveBidsPerEmployee[Employees[i]] - 1; j1++)
+        //            {
+        //                for (int j2 = j1 + 1; j2 < MaxLeaveBidsPerEmployee[Employees[i]]; j2++)
+        //                {
+        //                    var d = j2;
+
+        //                    var EmployeeCode = Employees[i];
+        //                    var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == Employees[i]);
+        //                    #region Find z1,z2
+        //                    int Z1value = new int();
+        //                    int Z2value = new int();
+
+        //                    var BidCode1 = specificEmployee.LeaveBidDataGridStatic[j1].BidCode;
+        //                    Z1value = ZbidsDict.TryGetValue((Employees[i], BidCode1), out int value1) ? value1 : Z1value;
+
+        //                    var BidCode2 = specificEmployee.LeaveBidDataGridStatic[j2].BidCode;
+        //                    Z2value = ZbidsDict.TryGetValue((Employees[i], BidCode2), out int value2) ? value2 : Z2value;
+        //                    #endregion
+        //                    for (int z1 = 0; z1 < Z1value; z1++)
+        //                    {
+        //                        for (int z2 = 0; z2 < Z2value; z2++)
+        //                        {
+        //                            if (SeparOrOverlap(i, j1, j2, z1, z2))
+        //                            {
+        //                                GRBLinExpr expr = Y[i, j1, z1] + Y[i, j2, z2];
+        //                                model.AddConstr(expr <= 1, $"SO{i + 1}_{j1 + 1}_{z1 + 1}_{j2 + 1}_{z2 + 1}");
+        //                            }
+        //                        }
+        //                    }
+
+        //                }
+        //            }
+        //        }
+
+        //        bool SeparOrOverlap(int i, int j1, int j2, int z1, int z2)
+        //        {
+
+        //            var emp = InputData.Employees.ElementAt(i);
+
+        //            var SelectedBid1 = emp.LeaveBidDataGridStatic.ElementAt(j1);
+        //            var SelectedBid2 = emp.LeaveBidDataGridStatic.ElementAt(j2);
+        //            if (SelectedBid2.DateFrom.AddDays(z2) >= SelectedBid1.DateFrom.AddDays(SelectedBid1.NumberOfDays + SeparValue + z1))
+        //            {
+        //                return false;
+
+        //            };
+        //            if (SelectedBid2.DateFrom.AddDays(SelectedBid2.NumberOfDays + z2) <= SelectedBid1.DateFrom.AddDays(-SeparValue))
+        //            {
+
+        //                return false;
+
+        //            };
+
+        //            return true;
+        //        }
+
+        //        #endregion
+        //        #endregion
+        //        //#6.Connection Between Y and X
+        //        for (int i = 0; i < Employees.Length; i++)
+        //        {
+        //            var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == Employees[i]);
+        //            var maxBids = MaxLeaveBidsPerEmployee[Employees[i]];
+
+        //            for (int j = 0; j < maxBids; j++)
+        //            {
+        //                var bid = specificEmployee.LeaveBidDataGridStatic[j];
+        //                var bidDays = bid.NumberOfDays;
+
+        //                #region Find ZValue
+        //                int Zvalue = new int();
+        //                var EmployeeCode = Employees[i];
+        //                var BidCode = specificEmployee.LeaveBidDataGridStatic[j].BidCode;
+        //                Zvalue = ZbidsDict.TryGetValue((Employees[i], BidCode), out int value) ? value : Zvalue;
+        //                #endregion
+        //                for (int z = 0; z < Zvalue; z++) //allagh
+        //                {
+        //                    var startDateIndex = Array.IndexOf(Dates, bid.DateFrom.ToString("dd/MM/yyyy"));
+
+        //                    GRBLinExpr sumDays = 0;
+        //                    for (int k = 0; k < bidDays; k++)
+        //                    {
+        //                        sumDays.AddTerm(1, X[i, startDateIndex + k + z]); // Add X variables for each day of the bid
+        //                    }
+        //                    // Add the constraint
+        //                    model.AddConstr(bidDays * Y[i, j, z] <= sumDays, $"BidDaysConstraint_{Employees[i]}_{j}_{z}");
+        //                }
+
+
+        //            }
+        //        }
+
+
+        //        //#7. Connection Between Yij and Yijz 
+        //        // #1. Adding constraints for maximum number of satisfied bids dynamically
+        //        //for (int i = 0; i < Employees.Length; i++)
+        //        //{
+        //        //    for (int j = 0; j < MaxLeaveBidsPerEmployee[Employees[i]]; j++)
+        //        //    {
+        //        //        GRBLinExpr sumZPerBid = 0;
+
+        //        //        #region Find ZValue
+        //        //        int Zvalue = new int();
+        //        //        var EmployeeCode = Employees[i];
+        //        //        var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == Employees[i]);
+        //        //        var BidCode = specificEmployee.LeaveBidDataGridStatic[j].BidCode;
+        //        //        Zvalue = ZbidsDict.TryGetValue((Employees[i], BidCode), out int value) ? value : Zvalue;
+        //        //        #endregion
+
+        //        //        for (int z = 0; z < Zvalue; z++) //allagh
+        //        //        {
+        //        //            sumZPerBid.AddTerm(1.0, Y[i, j, z]); // Summing up the leave bids for each employee
+
+        //        //        }
+        //        //        // Adding the constraint for each Bid
+        //        //        model.AddConstr(sumZPerBid <= 1, "SumZPerBid_" + Employees[i]);
+        //        //    }
+
+        //        //}
+
+        //        #endregion
+
+        //        #region New Optimize settings
+        //        bool grant = false;
+        //        BasicEnums.VPLogicType logic = InputData.VPLogicType;
+        //        int FinishedEmpIds = 0;
+        //        int FinishedBidIds = 1;
+
+        //        int id = 0;
+        //        var numRowsPerEmployee = InputData.Employees.Select(e => e.LeaveBidDataGridStatic.Count);
+        //        var numOfEmployes = InputData.Employees.Count;
+        //        int N = numRowsPerEmployee.Sum();
+        //        int[] NextBid = new int[N];
+
+        //        int[] NrOfBids = MaxLeaveBidsPerEmployee.Values.ToArray();
+        //        List<string> outputLines = new List<string>();
+
+
+        //        model.Update();
+
+        //        while (FinishedEmpIds <= numOfEmployes) // Kozani
+        //        {
+
+
+        //            int j = NextBid[id];
+
+        //            #region Change Z
+        //            var z = 0;
+        //            #region Find ZValue
+        //            int Zvalue = new int();
+        //            var EmployeeCode = Employees[id];
+        //            var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == Employees[id]);
+        //            var BidCode = specificEmployee.LeaveBidDataGridStatic[j].BidCode;
+        //            Zvalue = ZbidsDict.TryGetValue((Employees[id], BidCode), out int value) ? value : Zvalue;
+        //            #endregion
+
+        //            for (z = 0; z < Zvalue; z++) //allagh
+        //            {
+        //                #region Check Bid
+        //                GRBVar K = model.GetVarByName($"Y{id + 1}_{j + 1}_{z + 1}");
+        //                K.LB = 1;
+        //                model.Update();
+        //                model.Optimize();
+        //                bool solution = (model.Status == GRB.Status.OPTIMAL);
+        //                if (solution)
+        //                {
+
+        //                    grant = true;
+        //                    string message = $"Crew member {id + 1} was awarded bid {j + 1}";
+        //                    Console.WriteLine(message);
+        //                    outputLines.Add(message);
+        //                    Data.ObjValue = model.ObjVal;
+        //                    #region Insert Xij
+        //                    var emp = InputData.Employees.ElementAt(id);
+
+        //                    var SelectedBid = emp.LeaveBidDataGridStatic.ElementAt(j);
+        //                    var DateFrom = SelectedBid.DateFrom.AddDays(z).ToString("dd/MM/yyyy");
+        //                    var DateTo = SelectedBid.DateFrom.AddDays(SelectedBid.NumberOfDays).ToString("dd/MM/yyyy");
+
+        //                    string employee = Employees[id];
+
+        //                    var DateFromIndex = Dates.IndexOf(DateFrom);
+        //                    var DateToIdIndex = Dates.IndexOf(DateTo);
+
+
+
+        //                    if (DateFromIndex != -1 && DateToIdIndex != -1)
+        //                    {
+        //                        for (int t = DateFromIndex; t <= DateToIdIndex && t < Dates.Length; t++)
+        //                        {
+        //                            GRBVar Xij = model.GetVarByName($"X{id + 1}_{t + 1}");
+        //                            Xij.LB = 1;
+        //                        }
+
+        //                    }
+        //                    else
+        //                    {
+        //                        // Handle the case where DateFrom or DateTo is not found in the Dates list
+        //                        Console.WriteLine("DateFrom or DateTo not found in the Dates list.");
+        //                    }
+
+        //                    #endregion
+
+        //                    z = Zvalue; //Break from the loop and dont check the others z
+        //                }
+        //                else
+        //                {
+        //                    grant = false;
+        //                    K.LB = 0;
+        //                    string message = $"Crew member {id + 1} was not awarded bid {j + 1}";
+        //                    Console.WriteLine(message);
+        //                    outputLines.Add(message);
+        //                }
+
+        //                #endregion
+
+        //            }
+        //            #endregion
+        //            NextBid[id]++;
+        //            if (NextBid[id] == NrOfBids[id])
+        //            {
+        //                FinishedEmpIds++;
+
+        //            }
+        //            if (model.Status == GRB.Status.OPTIMAL)
+        //            {
+        //                Data.ObjValue = model.ObjVal;
+        //            }
+        //            if (FinishedBidIds == N)
+        //            {
+        //                break;
+        //            }
+        //            FinishedBidIds = FinishedBidIds + 1;
+        //            if (FinishedBidIds <= N)
+        //            {
+        //                id = GetNextId(id, grant, numOfEmployes, NextBid, NrOfBids, FinishedEmpIds, logic);
+        //            }
+        //        }
+        //        #endregion
+
+        //        var Upgrade = new bool();
+
+
+
+
+        //        var flag = new bool();
+        //        var customMessageBox = new CustomMessageBox("Do you want to Save the Results or Search for a better Solution?");
+        //        if (customMessageBox.ShowDialog() == true)
+        //        {
+        //            // User clicked Save Only or Save and Upgrade
+        //            if (customMessageBox.DialogResult == true)
+        //            {
+        //                // User clicked Save Only or Save and Upgrade
+        //                var result = customMessageBox.Message.Contains("Save and Upgrade") ? "Save and Upgrade" : "Save Only";
+        //                Console.WriteLine($"User clicked {result}");
+
+        //                if (result == "Save and Upgrade" || result == "Save Only")
+        //                {
+        //                    #region OutputResults
+        //                    if (Data.ObjValue > 0)
+        //                    {
+
+
+
+        //                        // Create a data structure to store the optimal solution
+        //                        model.Update();
+
+
+        //                        #region Insert Xij
+        //                        // Extract the optimal solution for the 'X' variables
+        //                        for (int i = 0; i < Employees.Length; i++)
+        //                        {
+        //                            for (int t = 0; t < Dates.Length; t++)
+        //                            {
+        //                                string employee = Employees[i];
+        //                                string date = Dates[t];
+        //                                double xValue = X[i, t].LB;
+        //                                if (xValue == 1)
+        //                                {
+        //                                    Console.WriteLine($"Employee: {employee}, Date: {date}, Value: {xValue}");
+        //                                }
+        //                                // Store the optimal 'X' value in the data structure
+        //                                make_plan[(employee, date)] = xValue;
+
+        //                                // Add 'employee' and 'date' to the respective lists if they are not already there
+        //                                if (!rows.Contains(employee))
+        //                                    rows.Add(employee);
+        //                                if (!columns.Contains(date))
+        //                                    columns.Add(date);
+        //                            }
+        //                        }
+        //                        #endregion
+
+
+
+        //                        // Print the optimal solution for 'X' variables
+        //                        Console.WriteLine("Optimal Solution for X Variables:");
+        //                        foreach (var employee in rows)
+        //                        {
+        //                            foreach (var date in columns)
+        //                            {
+        //                                double xValue = make_plan.ContainsKey((employee, date)) ? make_plan[(employee, date)] : 0.0;
+        //                                Console.WriteLine($"Employee: {employee}, Date: {date}, Value: {xValue} -> Employee: {employee}, Date: {date}, Value: {xValue} X{(Array.IndexOf(Employees, employee) + 1)}{(Array.IndexOf(Dates, date) + 1)}");
+
+
+        //                                #region Populate VP Xij
+        //                                VPXijResultsData singleDataRecord = new VPXijResultsData();
+
+
+        //                                singleDataRecord.Xij = $"X{(Array.IndexOf(Employees, employee) + 1)}{(Array.IndexOf(Dates, date) + 1)}";
+        //                                singleDataRecord.XijFlag = xValue;
+        //                                singleDataRecord.Date = date;
+
+
+
+
+        //                                var SpecificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == employee);
+        //                                singleDataRecord.Employee = SpecificEmployee;
+
+        //                                Data.VPXijResultsDataGrid.Add(singleDataRecord);
+        //                                #endregion
+        //                            }
+        //                        }
+
+        //                        // Extract the optimal solution for the 'Y' variables
+        //                        Dictionary<(string, int, int), double> y_plan = new Dictionary<(string, int, int), double>();
+        //                        for (int i = 0; i < Employees.Length; i++)
+        //                        {
+        //                            for (int j = 0; j < MaxLeaveBidsPerEmployee[Employees[i]]; j++)
+        //                            {
+        //                                var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == Employees[i]);
+        //                                #region Find ZValue
+        //                                int Zvalue = new int();
+        //                                var EmployeeCode = Employees[i];
+        //                                var BidCode = specificEmployee.LeaveBidDataGridStatic[j].BidCode;
+        //                                Zvalue = ZbidsDict.TryGetValue((Employees[i], BidCode), out int value) ? value : Zvalue;
+        //                                #endregion
+
+        //                                for (int z = 0; z < Zvalue; z++) //allagh
+        //                                {
+        //                                    string employee = Employees[i];
+        //                                    int bidIndex = j;
+        //                                    double yValue = Y[i, j, z].LB;
+
+        //                                    // Store the optimal 'Y' value in the data structure
+        //                                    y_plan[(employee, bidIndex, z)] = yValue;
+        //                                }
+
+
+
+
+
+        //                            }
+        //                        }
+
+        //                        // Print the optimal solution for 'Y' variables
+        //                        Console.WriteLine("\nOptimal Solution for Y Variables:");
+        //                        int counter = 0;
+        //                        foreach (var employee in rows)
+        //                        {
+        //                            var TotalNumberOfDays = 0;
+
+        //                            for (int j = 0; j < MaxLeaveBidsPerEmployee[employee]; j++)
+        //                            {
+        //                                #region Find ZValue
+        //                                int Zvalue = new int();
+        //                                var EmployeeCode = employee;
+        //                                var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == EmployeeCode);
+        //                                var BidCode = specificEmployee.LeaveBidDataGridStatic[j].BidCode;
+        //                                Zvalue = ZbidsDict.TryGetValue((EmployeeCode, BidCode), out int value) ? value : Zvalue;
+        //                                #endregion
+
+        //                                for (int z = 0; z < Zvalue; z++) //allagh
+        //                                {
+        //                                    int bidIndex = j;
+        //                                    double yValue = y_plan.ContainsKey((employee, bidIndex, z)) ? y_plan[(employee, bidIndex, z)] : 0.0;
+        //                                    Console.WriteLine($"Employee: {employee}, BidIndex: {bidIndex + 1}, Value: {yValue} -> Employee: {employee}, BidIndex: {bidIndex + 1}, Value: {yValue} Y{(Array.IndexOf(Employees, employee) + 1)}{(bidIndex + 1)}");
+
+        //                                    #region Populate VP Yij
+        //                                    VPYijResultsData yijDataRecord = new VPYijResultsData();
+        //                                    yijDataRecord.LeaveBidData = new LeaveBidsDataStatic();
+
+
+        //                                    yijDataRecord.Yij = $"Y{(Array.IndexOf(Employees, employee) + 1)}{(bidIndex + 1)}";
+        //                                    yijDataRecord.Yijz = $"Y{(Array.IndexOf(Employees, employee) + 1)}{(bidIndex + 1)}{(z + 1)}";
+
+        //                                    yijDataRecord.YijFlag = yValue;
+        //                                    yijDataRecord.ConfirmedBidFlag = yValue;
+
+        //                                    var SpecificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == employee);
+        //                                    yijDataRecord.Employee = SpecificEmployee;
+
+        //                                    yijDataRecord.LeaveBidData = SpecificEmployee.LeaveBidDataGridStatic[j];
+
+        //                                    #region Edit Dates
+
+        //                                    var DateFrom = SpecificEmployee.LeaveBidDataGridStatic[j].DateFrom;
+        //                                    var NumberOfDays = SpecificEmployee.LeaveBidDataGridStatic[j].NumberOfDays;
+        //                                    var DateTo = SpecificEmployee.LeaveBidDataGridStatic[j].DateTo;
+
+        //                                    yijDataRecord.DateFrom = DateFrom;
+        //                                    yijDataRecord.DateTo = DateTo;
+        //                                    yijDataRecord.NumberOfDays = NumberOfDays;
+        //                                    yijDataRecord.DateFromStr = DateFrom.ToString("dd/MM/yyyy");
+        //                                    yijDataRecord.DateToStr = DateTo.ToString("dd/MM/yyyy");
+
+        //                                    #endregion
+
+        //                                    #region ADD RECORD 
+        //                                    var existingRecord = Data.VPYijResultsDataGrid.FirstOrDefault(record => record.Yij == yijDataRecord.Yij);
+
+        //                                    if (existingRecord != null)
+        //                                    {
+        //                                        if (existingRecord.YijFlag == 1)
+        //                                        {
+
+        //                                        }
+        //                                        else if (existingRecord.YijFlag == 0 && yijDataRecord.YijFlag == 0)
+        //                                        {
+
+        //                                        }
+        //                                        else if (existingRecord.YijFlag == 0 && yijDataRecord.YijFlag == 1)
+        //                                        {
+        //                                            // Insert the new record and remove the existing record
+        //                                            Data.VPYijResultsDataGrid.Remove(existingRecord);
+        //                                            Data.VPYijResultsDataGrid.Add(yijDataRecord);
+        //                                        }
+        //                                    }
+        //                                    else
+        //                                    {
+        //                                        Data.VPYijResultsDataGrid.Add(yijDataRecord);
+
+        //                                    }
+
+        //                                    #endregion
+
+
+
+        //                                    #endregion
+
+        //                                    #region Populate VP Yijz
+        //                                    VPYijResultsData yijzDataRecord = new VPYijResultsData();
+        //                                    yijzDataRecord.LeaveBidData = new LeaveBidsDataStatic();
+
+
+        //                                    yijzDataRecord.Yij = $"Y{(Array.IndexOf(Employees, employee) + 1)}{(bidIndex + 1)}";
+        //                                    yijzDataRecord.Yijz = $"Y{(Array.IndexOf(Employees, employee) + 1)}{(bidIndex + 1)}{(z + 1)}";
+
+        //                                    yijzDataRecord.YijFlag = yValue;
+        //                                    yijzDataRecord.ConfirmedBidFlag = yValue;
+
+        //                                    yijzDataRecord.Employee = SpecificEmployee;
+
+        //                                    yijzDataRecord.LeaveBidData = SpecificEmployee.LeaveBidDataGridStatic[j];
+
+        //                                    #region Edit Dates
+
+        //                                    DateFrom = SpecificEmployee.LeaveBidDataGridStatic[j].DateFrom.AddDays(z);
+        //                                    NumberOfDays = SpecificEmployee.LeaveBidDataGridStatic[j].NumberOfDays;
+        //                                    DateTo = DateFrom.AddDays(NumberOfDays);
+
+        //                                    yijzDataRecord.DateFrom = DateFrom;
+        //                                    yijzDataRecord.DateTo = DateTo;
+        //                                    yijzDataRecord.NumberOfDays = NumberOfDays;
+        //                                    yijzDataRecord.DateFromStr = DateFrom.ToString("dd/MM/yyyy");
+        //                                    yijzDataRecord.DateToStr = DateTo.ToString("dd/MM/yyyy");
+
+        //                                    #endregion
+        //                                    Data.VPYijzResultsDataGrid.Add(yijzDataRecord);
+
+
+
+        //                                    #endregion
+        //                                    if (yValue == 1)
+        //                                    {
+        //                                        TotalNumberOfDays = TotalNumberOfDays + SpecificEmployee.LeaveBidDataGridStatic[j].NumberOfDays;
+
+        //                                    }
+        //                                }
+        //                                counter++;
+        //                            }
+
+        //                            var UpdatedEmp = InputData.Employees.FirstOrDefault(emp => emp.Code == employee);
+        //                            UpdatedEmp.LeaveStatus.ProjectedBalance = UpdatedEmp.LeaveStatus.CurrentBalance - TotalNumberOfDays;
+        //                            Data.EmpLeaveStatusData.Add(UpdatedEmp);
+
+        //                        }
+
+
+        //                        #region Create c#sol.txt for python
+        //                        string filePath = @"C:\Users\npoly\Source\Repos\Bids_CrewScheduling_Kozanidis\c#sol.txt";
+        //                        File.WriteAllText(filePath, string.Empty);
+
+        //                        using (StreamWriter writer = new StreamWriter(filePath, true)) // 'true' parameter appends to the existing file if it exists
+        //                        {
+        //                            foreach (string line in outputLines)
+        //                            {
+        //                                writer.WriteLine(line);
+        //                            }
+        //                        }
+
+        //                        #endregion
+        //                    }
+        //                    #endregion
+        //                }
+        //                if (result == "Save and Upgrade")
+        //                {
+        //                    // Handle Save and Upgrade scenario
+        //                    Console.WriteLine("Saving and upgrading...");
+        //                    flag = SaveVpVijResultData(Data, 1, InputData.VPId);
+        //                    Console.WriteLine(flag);
+        //                    Upgrade = true;
+        //                }
+        //                else
+        //                {
+        //                    // Handle Save Only scenario
+        //                    Console.WriteLine("Saving only...");
+        //                    flag = SaveVpVijResultData(Data, 1, InputData.VPId);
+        //                    Console.WriteLine(flag);
+        //                    Upgrade = false;
+
+        //                }
+        //            }
+        //            else
+        //            {
+        //                // User clicked Upgrade Only
+        //                Console.WriteLine("User clicked Upgrade Only");
+        //                // Handle Upgrade Only scenario
+        //                //flag = SaveVpVijResultData(Data, -1, InputData.VPId);
+        //                Console.WriteLine(flag);
+        //                Upgrade = true;
+
+        //            }
+        //        }
+        //        while(Upgrade == true)
+        //        {
+        //            var CurrentObjectiveValue = Data.ObjValue;
+        //            var NewInputData = InputData;
+        //            var Yijk = "aaaa";
+
+
+        //            //Data = CalculateVacationPlanningAdvanced2(NewInputData,Yijk);
+        //        }
+        //        model.Dispose();
+        //        env.Dispose();
+
+        //        return Data;
+
+
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine("An error occurred: " + ex.Message);
+        //        return Data;
+        //    }
+        //}
+
+        public bool SaveVpVijResultData(VacationPlanningOutputData Data, int ReplicationNumber, int VPID)
+        {
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
+
+                    foreach (var row in Data.VPYijzResultsDataGrid)
+                    {
+                        VPYijzResultsDataEntity newRow = new VPYijzResultsDataEntity();
+
+                        var BidId = dbContext.LeaveBids.SingleOrDefault(b => b.BidCode == row.LeaveBidData.BidCode).BidId;
+                        newRow.BidId = BidId;
+                        newRow.EmpId = row.Employee.EmployeeId;
+                        newRow.VPID = VPID;
+                        newRow.Yij = row.Yij;
+                        newRow.Yijr = row.Yijr;
+                        newRow.Yijrz = row.Yijrz;
+
+                        newRow.DateFromStr = row.DateFromStr;
+                        newRow.DateToStr = row.DateToStr;
+                        newRow.NumberOfDays = row.NumberOfDays;
+                        newRow.NumberOfDaysMin = row.NumberOfDaysMin;
+                        newRow.NumberOfDaysMax = row.NumberOfDaysMax;
+                        newRow.ReplicationNumber = ReplicationNumber;
+
+                        bool Confirmed = new bool();
+
+                        if (row.YijFlag == 0)
+                        {
+                            Confirmed = false;
+                        }
+                        else
+                        {
+                            Confirmed = true;
+                        }
+                        newRow.Confirmed = Confirmed;
+
+
+                        dbContext.VPYijzResults.Add(newRow);
+
+                    }
+
+                    dbContext.SaveChanges();
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "SaveVpVijResultData", "Notes");
+                return false;
+            }
+        }
+
+
+        public int GetNextId(int aId, bool accept, int N, int[] NextBid, int[] NrOfBids,int FinishedEmpIds, BasicEnums.VPLogicType VPLogicType)
+        {
+            try
+            {
+                int RId = 0;
+                var logic = VPLogicType;
+                if (FinishedEmpIds == N)
+                    return 0;
+
+                if (logic == BasicEnums.VPLogicType.Strict_Seniority)
+                {
+                    RId = aId;
+                }
+                else if (logic == BasicEnums.VPLogicType.Fair_Assignment)
+                {
+                    if (accept == true)
+                    {
+                        RId = aId + 1;
+                    }
+                    else
+                    {
+                        RId = aId;
+                    }
+                }
+                else if (logic == BasicEnums.VPLogicType.Bid_By_Bid)
+                {
+                    RId = aId + 1;
+                }
+
+                if (RId == N)
+                {
+                    RId = 0;
+                }
+
+                while (NextBid[RId] == NrOfBids[RId])
+                {
+                    RId++;
+                    if (RId == N)
+                    {
+                        RId = 0;
+                    }
+                }
+
+                return RId;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("An error occurred: " + ex.Message);
+                return -1;
+            }
+        }
+
+        public int CreatePythonTxt(VacationPlanningInputData InputData)
+        {
+
+            string[] Employees = InputData.Employees.Select(d => d.Code).ToArray();
+
+            int MaxLeaveBids = InputData.MaxLeaveBids;
+            int MaxSatisfiedBids = InputData.MaxSatisfiedBids;
+            string[] Dates = InputData.DatesStr;
+            int SeparValue = InputData.SeparValue;
+            int LimitLineFixed = InputData.Schedule.LimitLineFixed;
+            int numOfEmployes = InputData.Employees.Count;
+
+            int[] generalxt = { LimitLineFixed, SeparValue, MaxSatisfiedBids };
+            int[] entitlementstxt = new int[numOfEmployes];
+            int[] NumberOfBidstxt = new int[numOfEmployes];
+
+            int[][] dateStarttxt = new int[numOfEmployes][];
+            int[][] dateLengthtxt = new int[numOfEmployes][];
+
+            Dictionary<string, int> MaxLeaveBidsPerEmployee = InputData.MaxLeaveBidsPerEmployee;
+            int[] NrOfBids = MaxLeaveBidsPerEmployee.Values.ToArray();
+            NumberOfBidstxt = NrOfBids;
+
+            #region Python Inser Entiltements,NubmerOfBids
+            var i = 0;
+            foreach(var emp in InputData.Employees)
+            {
+                entitlementstxt[i] = emp.LeaveStatus.CurrentBalance;
+                NumberOfBidstxt[i] = emp.LeaveBidDataGridStatic.Count; //ALAGH
+
+                dateStarttxt[i] = new int[MaxLeaveBids];
+                dateLengthtxt[i] = new int[MaxLeaveBids];
+                for (int j = 0; j < MaxLeaveBidsPerEmployee[emp.Code]; j++)
+                {
+
+                    var DateFrom = emp.LeaveBidDataGridStatic[j].DateFrom.ToString("dd/MM/yyyy");
+                    var DateFromIndex = Dates.IndexOf(DateFrom);
+
+                    dateStarttxt[i][j] = DateFromIndex + 1;
+                    dateLengthtxt[i][j] = emp.LeaveBidDataGridStatic[j].NumberOfDays;
+                }
+
+
+                i++;
+            }
+
+
+
+            #endregion
+
+
+            #region Create Notepad For Python 2nd part
+
+
+            // Specify the file path
+            string filePath = @"C:\Users\npoly\Source\Repos\Bids_CrewScheduling_Kozanidis\vms_data.txt";
+
+            // Write data to the text file and print to console for debugging
+            using (StreamWriter writer = new StreamWriter(filePath))
+            {
+                // Write LimitLine, SeparValue, and MaxBids
+                for (int a = 0; a < generalxt.Length; a++)
+                {
+                    writer.Write($"{generalxt[a]} ");
+                    Console.Write($"{generalxt[a]} ");
+
+                }
+                writer.WriteLine("\n");
+                Console.WriteLine("\n");
+
+                // Write Entitlements
+                for (int a = 0; a < entitlementstxt.Length; a++)
+                {
+                    writer.Write($"{entitlementstxt[a]} ");
+                    Console.Write($"{entitlementstxt[a]} ");
+
+                }
+                writer.WriteLine("\n");
+                Console.WriteLine("\n");
+
+                // Write NumberOfBids
+                for (int a = 0; a < NumberOfBidstxt.Length; a++)
+                {
+                    writer.Write($"{NumberOfBidstxt[a]} ");
+                    Console.Write($"{NumberOfBidstxt[a]} ");
+
+                }
+                writer.WriteLine("\n");
+                Console.WriteLine("\n");
+
+                // Write DateStart
+                int rowCount = dateStarttxt.Length;
+                int currentRow = 0;
+                foreach (int[] row in dateStarttxt)
+                {
+                    currentRow++;
+                    foreach (int value in row)
+                    {
+                        if (value > 0)
+                        {
+                            writer.Write($"{value} ");
+                            Console.Write($"{value} ");
+                        }
+
+                    }
+                    if (currentRow < rowCount) // Check if it's not the last row
+                    {
+                        writer.WriteLine();
+                        Console.WriteLine();
+                    }
+                }
+
+                writer.WriteLine("\n");
+                Console.WriteLine("\n");
+
+                // Write DateLength
+                foreach (int[] row in dateLengthtxt)
+                {
+                    foreach (int value in row)
+                    {
+
+                        if (value > 0)
+                        {
+                            writer.Write($"{value} ");
+                            Console.Write($"{value} ");
+                        }
+                    }
+                    writer.WriteLine(" ");
+                    Console.WriteLine(" ");
+                }
+            }
+
+            #endregion
+            return 1;
+        }
+
+        #endregion
+
+        #region Show Employees LeaveStatus
+
+        #endregion
+
+        #endregion
+
+        #region Crew Rostering
+
+        #region Optimisation
+
+        #endregion
+
+        #endregion
+        public ObservableCollection<EmployeeData> GetEmployeesByTypeData(VacationPlanningInputData InputData, bool ShowDeleted)
+        {
+            ObservableCollection<EmployeeData> DataList = new ObservableCollection<EmployeeData>();
+
+            string FilterStr = "";
+
+            using (var connection = GetConnection())
+            using (var command = new SqlCommand())
+            {
+                connection.Open();
+                command.Connection = connection;
+
+                if (ShowDeleted == false)
+                {
+                    command.Parameters.AddWithValue("@ShowDeleted", ShowDeleted);
+                    FilterStr = string.Concat(FilterStr, " AND E.IsDeleted = @ShowDeleted");
+                }
+                command.Parameters.AddWithValue("@Position", InputData.EmployeeType.ToString());
+                FilterStr = string.Concat(FilterStr, " AND E.Position = @Position");
+
+                command.CommandText = string.Format(@"SELECT E.EmployeeID, E.Code, E.Descr,  
+E.Position,E.Seniority,E.IsDeleted
+FROM Employees AS E
+WHERE 1=1 {0}
+ORDER BY E.Seniority", FilterStr);
+
+
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        EmployeeData data = new EmployeeData();
+                        data.Certification = new CertificationData();
+                        data.BaseAirport = new AirportData();
+                        data.BaseAirport.City = new CityData();
+
+
+                        data.EmployeeId = int.Parse(reader["EmployeeID"].ToString());
+                        data.Code = reader["Code"].ToString();
+                        data.Descr = reader["Descr"].ToString();
+                        data.Position = (BasicEnums.EmployeeType)Enum.Parse(typeof(BasicEnums.EmployeeType), reader["Position"].ToString());
+                        data.Seniority = int.Parse(reader["Seniority"].ToString());
+                        data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
+
+
+
+                        DataList.Add(data);
+                    }
+                }
+
+                connection.Close();
+            }
+
+            return DataList;
+        }
+
+        #endregion
+        #endregion
 
         #region BasicFiles
 
@@ -612,7 +4987,7 @@ WHERE
                 if (ShowDeleted == false)
                 {
                     command.Parameters.AddWithValue("@ShowDeleted", ShowDeleted);
-                    FilterStr = String.Format(@"and IsDeleted = @ShowDeleted");
+                    FilterStr = String.Format(@"and L.IsDeleted = @ShowDeleted");
 
                 }
                 command.CommandText = string.Format(@"SELECT
@@ -626,7 +5001,7 @@ WHERE
     L.BatchSize,
     L.Period,
     L.MainPolicy,
-    L.IsDeleted,
+    L.IsDeleted
 FROM 
     LotPolicy AS L
 Inner JOIN Rmaster AS R ON L.ItemId = R.ItemId  Where 1=1 {0}
@@ -3565,7 +7940,7 @@ Rmaster.Assembly, Rmaster.MesUnit
 From Rmaster
 
 WHERE NOT EXISTS (SELECT 1 FROM Stock WHERE ItemId = Rmaster.ItemId AND InvId = @InvId)
-And Rmaster.AssemblyNumber<=2";
+And Rmaster.AssemblyNumber <=2 And Rmaster.IsDeleted = 0";
 
                     using (var reader = command.ExecuteReader())
                     {
@@ -3600,6 +7975,70 @@ And Rmaster.AssemblyNumber<=2";
             return DataList;
         }
 
+        public ObservableCollection<StockData> GetMRPItemData(string InvCode)
+        {
+            ObservableCollection<StockData> DataList = new ObservableCollection<StockData>();
+
+            using (var connection = GetConnection())
+            using (var command = new SqlCommand())
+            {
+                connection.Open();
+                command.Connection = connection;
+
+                command.Parameters.AddWithValue("@InvCode", InvCode);
+
+                command.CommandText = string.Format(@"Select InvId from Inventory 
+Where InvCode = @InvCode");
+
+                //EXECUTE SCALAR
+
+                int InventoryId = (int)command.ExecuteScalar();
+                command.Parameters.Clear();
+                command.Parameters.AddWithValue("@InvId", InventoryId);
+
+
+                command.CommandText = string.Format(@"
+ SELECT Rmaster.ItemId,Rmaster.ItemCode,Rmaster.ItemDescr,Rmaster.MesUnit,
+ Rmaster.ItemType,Rmaster.Assembly,Lot.LotPolicyCode,Lot.LeadTime,Lot.BatchSize,
+Stock.Quantity 
+FROM STOCK
+Inner JOIN Rmaster ON Rmaster.ItemId = Stock.ItemId
+Inner Join LotPolicy as Lot on Lot.ItemId = Rmaster.ItemId
+Where Lot.MainPolicy = 1 and Stock.InvId = @InvId");
+
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        StockData stockdata = new StockData();
+                        ItemData itemData = new ItemData();
+                        itemData.LotPolicy = new LotPolicyData();
+
+                        itemData.ItemId = int.Parse(reader["ItemId"].ToString());
+
+                        itemData.ItemCode = reader["ItemCode"].ToString();
+                        itemData.ItemDescr = reader["ItemDescr"].ToString();
+                        itemData.MesUnit = reader["MesUnit"].ToString();
+                        itemData.Assembly = (BasicEnums.Assembly)Enum.Parse(typeof(BasicEnums.Assembly), reader["Assembly"].ToString());
+                        itemData.ItemType = (BasicEnums.ItemType)Enum.Parse(typeof(BasicEnums.ItemType), reader["ItemType"].ToString());
+                        itemData.LotPolicy.Code = reader["LotPolicyCode"].ToString();
+                        itemData.LotPolicy.LeadTime =double.Parse(reader["LeadTime"].ToString());
+                        itemData.LotPolicy.BatchSize = double.Parse(reader["BatchSize"].ToString());
+
+
+                        stockdata.StockItem = itemData;
+                        stockdata.Quantity = float.Parse(reader["Quantity"].ToString());
+
+
+                        DataList.Add(stockdata);
+                    }
+                }
+
+
+                connection.Close();
+            }
+            return DataList;
+        }
         #endregion
 
         #endregion
@@ -3678,6 +8117,65 @@ Where iDay Between  @DateStart AND @DateEnd and ItemId=@ItemId and InventoryId=@
         #endregion
 
         #region Data Analytics
+        #region Mrp Visualisation
+        public ObservableCollection<HeatMapData> GetPlannedOrdersData()
+        {
+            List<PlannedOrdersData> DataList = new List<PlannedOrdersData>();
+            ObservableCollection<HeatMapData> HeatmapDataList = new ObservableCollection<HeatMapData>();
+            HeatMapData heatdata = new HeatMapData();
+
+            using (var connection = GetConnection())
+            using (var command = new SqlCommand())
+            {
+                connection.Open();
+                command.Connection = connection;
+                command.CommandText = string.Format(@"select Rmaster.ItemCode,Orders.LotpolicyId,Orders.Quantity,Orders.DateStart,Orders.DateEnd
+from PlannedOrders as Orders
+Inner Join Rmaster on Rmaster.ItemId = Orders.ItemId
+Order By Orders.ItemId,Orders.DateStart");
+                using (var reader = command.ExecuteReader())
+                {
+                    var i = 1;
+                    heatdata = new HeatMapData();
+                    while (reader.Read())
+                    {
+                        PlannedOrdersData data = new PlannedOrdersData();
+
+                        data.ItemCode = reader["ItemCode"].ToString();
+                        data.LotPolicyId = int.Parse(reader["LotpolicyId"].ToString());
+                        data.Quantity = float.Parse(reader["Quantity"].ToString());
+                        data.DateStart = DateTime.Parse(reader["DateStart"].ToString());
+                        data.DateEnd = DateTime.Parse(reader["DateEnd"].ToString());
+
+                        DataList.Add(data);
+
+                        var property = heatdata.GetType().GetProperty($"D{i}");
+                        property.SetValue(heatdata, data.Quantity);
+
+
+
+                        if (i < 12)
+                        {
+                            i++;
+                        }
+                        else
+                        {
+                            heatdata.ItemCode = reader["ItemCode"].ToString();
+                            HeatmapDataList.Add(heatdata);
+                            i = 1;
+                            heatdata = new HeatMapData();
+                        }
+                    }
+                }
+
+                connection.Close();
+
+            }
+
+            return HeatmapDataList;
+
+        }
+        #endregion
 
         #region SalesDashBoard
         public ObservableCollection<OptimizationResultsInvData> GetItemsProfitData(string ItemCode, string InvCode, InvDiagramsSearchData FilterData)
@@ -3743,7 +8241,6 @@ Where iDay Between  @DateStart AND @DateEnd and ItemId=@ItemId and InventoryId=@
         #endregion
 
         #region Forecast
-
         public int SetMainForecastForMRP(ForecastInfoData FlatData)
         {
             try
@@ -3758,7 +8255,7 @@ Where iDay Between  @DateStart AND @DateEnd and ItemId=@ItemId and InventoryId=@
 
 
                     var MRPForecastquery = dbContext.ForecastInfo.Where(r => r.MRPForecast == true);
-                    var MainMRPForecast= MRPForecastquery.SingleOrDefault();
+                    var MainMRPForecast = MRPForecastquery.SingleOrDefault();
                     // Execute the query and get the result
 
 
@@ -3789,7 +8286,7 @@ Where iDay Between  @DateStart AND @DateEnd and ItemId=@ItemId and InventoryId=@
             }
             catch (Exception ex)
             {
-                LogError(ex, "SaveForecastData", "Notes");
+                LogError(ex, "SetMainForecastForMRP", "Notes");
                 return -1;
 
             }
@@ -3958,9 +8455,180 @@ Where iDay Between  @DateStart AND @DateEnd and ItemId=@ItemId and InventoryId=@
                 return false;
             }
         }
+        public ObservableCollection<ForecastInfoData> GetForecastInfoData(bool ShowDeleted)
+        {
+            ObservableCollection<ForecastInfoData> DataList = new ObservableCollection<ForecastInfoData>();
+
+
+            string FilterStr = "";
+
+
+            using (var connection = GetConnection())
+            using (var command = new SqlCommand())
+            {
+                connection.Open();
+                command.Connection = connection;
+
+                if (ShowDeleted == false)
+                {
+                    command.Parameters.AddWithValue("@ShowDeleted", ShowDeleted);
+                    FilterStr = String.Format(@"and IsDeleted = @ShowDeleted");
+
+                }
+
+                command.CommandText = string.Format(@"select ID,Forcode,ForDescr,TIMEBUCKET,PERIODTYPE,PeriodNum,HoursPerTimeBucket,NumberOfBuckets,IsDeleted,MRPForecast,
+ForDescr,Notes,Datefrom,DateTo from ForecastInfo
+Where  1=1 {0}", FilterStr);
+
+
+
+
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        ForecastInfoData data = new ForecastInfoData();
+
+                        data.ID = int.Parse(reader["ID"].ToString());
+                        data.ForCode = reader["Forcode"].ToString();
+                        data.ForDescr = reader["Fordescr"].ToString();
+                        data.Notes = reader["Notes"].ToString();
+
+                        data.TimeBucket = (BasicEnums.Timebucket)Enum.Parse(typeof(BasicEnums.Timebucket), reader["TIMEBUCKET"].ToString());
+                        data.PeriodType = (BasicEnums.PeriodType)Enum.Parse(typeof(BasicEnums.PeriodType), reader["PeriodType"].ToString());
+                        data.PeriodNumber = int.Parse(reader["PeriodNum"].ToString());
+                        data.HoursPerTimeBucket = int.Parse(reader["HoursPerTimeBucket"].ToString());
+
+                        data.DateFrom = Convert.ToDateTime(reader["Datefrom"]);
+                        data.DateTo = Convert.ToDateTime(reader["DateTo"]);
+                        data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
+                        data.MRPForecast = bool.Parse(reader["MRPForecast"].ToString());
+                        data.NumberOfBuckets = int.Parse(reader["NumberOfBuckets"].ToString());
+
+
+                        DataList.Add(data);
+                    }
+                }
+
+                connection.Close();
+            }
+
+            return DataList;
+        }
+
+
+        public ObservableCollection<DemandForecastData> GetDemandForecast(string ForCode)
+        {
+            ObservableCollection<DemandForecastData> DataList = new ObservableCollection<DemandForecastData>();
+            using (var connection = GetConnection())
+            using (var command = new SqlCommand())
+            {
+                connection.Open();
+                command.Connection = connection;
+
+                command.Parameters.AddWithValue("@Code", ForCode);
+
+                command.CommandText = string.Format(@"select D.ForCode,D.ForecastId,D.ItemId,D.Date,D.Demand,D.DateStr,
+a.ItemId,a.ItemCode,a.MesUnit,a.CanBeProduced,A.OutputOrderFlag,A.InputOrderFlag
+from DemandForecast as D
+Inner  Join Rmaster as A on A.ItemID = D.ItemId
+Where ForCode =@Code");
+
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+
+                        DemandForecastData data = new DemandForecastData();
+                        data.Item = new ItemData();
+
+                        data.ForCode = reader["Forcode"].ToString();
+
+                        data.Item.ItemId = int.Parse(reader["ItemId"].ToString());
+
+                        data.Item.ItemCode = reader["ItemCode"].ToString();
+
+
+                        data.Demand = decimal.Parse(reader["Demand"].ToString());
+                        data.Date = Convert.ToDateTime(reader["Date"]);
+
+                        data.DateStr = reader["DateStr"].ToString();
+
+
+                        DataList.Add(data);
+
+                    }
+                }
+
+                connection.Close();
+            }
+
+            return DataList;
+        }
+
+        public ForecastInfoData GetForecastInfoChooserData(int id, string Code)
+        {
+            ForecastInfoData data = new ForecastInfoData();
+
+            using (var connection = GetConnection())
+            using (var command = new SqlCommand())
+            {
+                connection.Open();
+                command.Connection = connection;
+
+                if (id > 0)
+                {
+                    command.Parameters.AddWithValue("@ID", id);
+
+                    command.CommandText = string.Format(@"select ID, Forcode, ForDescr, TIMEBUCKET, PERIODTYPE, PeriodNum, HoursPerTimeBucket,NumberOfBuckets,IsDeleted,MRPForecast,
+        ForDescr, Notes, Datefrom, DateTo from ForecastInfo
+        Where ID=@ID");
+                }
+                else if (!string.IsNullOrWhiteSpace(Code))
+                {
+                    command.Parameters.AddWithValue("@Code", Code); // Corrected variable name
+
+                    command.CommandText = string.Format(@"select ID, Forcode, ForDescr, TIMEBUCKET, PERIODTYPE, PeriodNum, HoursPerTimeBucket,NumberOfBuckets,IsDeleted,MRPForecast,
+        ForDescr, Notes, Datefrom, DateTo from ForecastInfo
+        Where Forcode=@Code"); // Corrected parameter name
+                }
+
+
+
+                using (var reader = command.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+
+                        data.ID = int.Parse(reader["ID"].ToString());
+                        data.ForCode = reader["Forcode"].ToString();
+                        data.ForDescr = reader["Fordescr"].ToString();
+                        data.Notes = reader["Notes"].ToString();
+
+                        data.TimeBucket = (BasicEnums.Timebucket)Enum.Parse(typeof(BasicEnums.Timebucket), reader["TIMEBUCKET"].ToString());
+                        data.PeriodType = (BasicEnums.PeriodType)Enum.Parse(typeof(BasicEnums.PeriodType), reader["PeriodType"].ToString());
+                        data.PeriodNumber = int.Parse(reader["PeriodNum"].ToString());
+                        data.HoursPerTimeBucket = int.Parse(reader["HoursPerTimeBucket"].ToString());
+
+                        data.DateFrom = Convert.ToDateTime(reader["Datefrom"]);
+                        data.DateTo = Convert.ToDateTime(reader["DateTo"]);
+                        data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
+                        data.MRPForecast = bool.Parse(reader["MRPForecast"].ToString());
+                        data.NumberOfBuckets = int.Parse(reader["NumberOfBuckets"].ToString());
+
+
+                    }
+                }
+
+                connection.Close();
+            }
+
+            return data;
+        }
+        #endregion
 
         #endregion
-        #endregion
+        
 
         #region Manufacture
 
@@ -4211,8 +8879,6 @@ Where iDay Between  @DateStart AND @DateEnd and ItemId=@ItemId and InventoryId=@
 
             }
         }
-
-
 
         public ObservableCollection<MPSInputData> GetMPSData(bool ShowDeleted)
         {
@@ -5439,7 +10105,8 @@ Where BOM.ItemId = @ItemId");
             {
                 connection.Open();
                 command.Connection = connection;
-                command.CommandText = @"SELECT * FROM MrpResults";
+                command.CommandText = @"select Rmaster.ItemCode,Rmaster.Assembly,MrpResults.* from MrpResults
+Inner Join Rmaster on Rmaster.ItemId = MrpResults.ItemId";
 
                 using (var reader = command.ExecuteReader())
                 {
@@ -5447,15 +10114,17 @@ Where BOM.ItemId = @ItemId");
 
                     while (reader.Read())
                     {
-                        MrpResultData data = new MrpResultData
-                        {
-                            Id = int.Parse(reader["Id"].ToString()),
-                            RowDescr = reader["Row Descr"].ToString(),
-                            ItemId = int.Parse(reader["ItemId"].ToString()),
-                            Quantities = new List<float>()
-                        };
+                        MrpResultData data = new MrpResultData();
+                        data.Item = new ItemData();
+                        data.Id = int.Parse(reader["Id"].ToString());
+                        data.RowDescr = reader["Row Descr"].ToString();
+                        data.ItemId = int.Parse(reader["ItemId"].ToString());
+                        data.Item.ItemCode = reader["ItemCode"].ToString();
+                        data.Item.Assembly = (BasicEnums.Assembly)Enum.Parse(typeof(BasicEnums.Assembly), reader["Assembly"].ToString());
+                        data.Quantities = new List<float>();
 
-                        for (int i = 3; i < totalColumns; i++) // loop through the remaining columns
+
+                        for (int i = 4; i < totalColumns; i++) // loop through the remaining columns
                         {
                             data.Quantities.Add(float.Parse(reader[i].ToString()));
                         }
@@ -5570,238 +10239,8 @@ Where BOM.ItemId = @ItemId");
         #endregion
 
         #region Data Analytics
-        #region Mrp Visualisation
-        public ObservableCollection<HeatMapData> GetPlannedOrdersData()
-        {
-            List<PlannedOrdersData> DataList = new List<PlannedOrdersData>();
-            ObservableCollection<HeatMapData> HeatmapDataList = new ObservableCollection<HeatMapData>();
-            HeatMapData heatdata = new HeatMapData();
-
-            using (var connection = GetConnection())
-            using (var command = new SqlCommand())
-            {
-                connection.Open();
-                command.Connection = connection;
-                command.CommandText = string.Format(@"select Rmaster.ItemCode,Orders.LotpolicyId,Orders.Quantity,Orders.DateStart,Orders.DateEnd
-from PlannedOrders as Orders
-Inner Join Rmaster on Rmaster.ItemId = Orders.ItemId
-Order By Orders.ItemId,Orders.DateStart");
-                using (var reader = command.ExecuteReader())
-                {
-                    var i = 1;
-                    heatdata = new HeatMapData();
-                    while (reader.Read())
-                    {
-                        PlannedOrdersData data = new PlannedOrdersData();
-
-                        data.ItemCode = reader["ItemCode"].ToString();
-                        data.LotPolicyId = int.Parse(reader["LotpolicyId"].ToString());
-                        data.Quantity = float.Parse(reader["Quantity"].ToString());
-                        data.DateStart = DateTime.Parse(reader["DateStart"].ToString());
-                        data.DateEnd = DateTime.Parse(reader["DateEnd"].ToString());
-
-                        DataList.Add(data);
-
-                        var property = heatdata.GetType().GetProperty($"D{i}");
-                        property.SetValue(heatdata, data.Quantity);
 
 
-
-                        if (i < 12)
-                        {
-                            i++;
-                        }
-                        else
-                        {
-                            heatdata.ItemCode = reader["ItemCode"].ToString();
-                            HeatmapDataList.Add(heatdata);
-                            i = 1;
-                            heatdata = new HeatMapData();
-                        }
-                    }
-                }
-
-                connection.Close();
-
-            }
-
-            return HeatmapDataList;
-
-        }
-        #endregion
-        #region Forecast
-
-        public ObservableCollection<ForecastInfoData> GetForecastInfoData(bool ShowDeleted)
-        {
-            ObservableCollection<ForecastInfoData> DataList = new ObservableCollection<ForecastInfoData>();
-
-
-            string FilterStr = "";
-
-
-            using (var connection = GetConnection())
-            using (var command = new SqlCommand())
-            {
-                connection.Open();
-                command.Connection = connection;
-
-                if (ShowDeleted == false)
-                {
-                    command.Parameters.AddWithValue("@ShowDeleted", ShowDeleted);
-                    FilterStr = String.Format(@"and IsDeleted = @ShowDeleted");
-
-                }
-
-                command.CommandText = string.Format(@"select ID,Forcode,ForDescr,TIMEBUCKET,PERIODTYPE,PeriodNum,HoursPerTimeBucket,NumberOfBuckets,IsDeleted,MRPForecast,
-ForDescr,Notes,Datefrom,DateTo from ForecastInfo
-Where  1=1 {0}", FilterStr);
-
-
-
-
-                using (var reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        ForecastInfoData data = new ForecastInfoData();
-
-                        data.ID = int.Parse(reader["ID"].ToString());
-                        data.ForCode = reader["Forcode"].ToString();
-                        data.ForDescr = reader["Fordescr"].ToString();
-                        data.Notes = reader["Notes"].ToString();
-
-                        data.TimeBucket = (BasicEnums.Timebucket)Enum.Parse(typeof(BasicEnums.Timebucket), reader["TIMEBUCKET"].ToString());
-                        data.PeriodType = (BasicEnums.PeriodType)Enum.Parse(typeof(BasicEnums.PeriodType), reader["PeriodType"].ToString());
-                        data.PeriodNumber = int.Parse(reader["PeriodNum"].ToString());
-                        data.HoursPerTimeBucket = int.Parse(reader["HoursPerTimeBucket"].ToString());
-
-                        data.DateFrom = Convert.ToDateTime(reader["Datefrom"]);
-                        data.DateTo = Convert.ToDateTime(reader["DateTo"]);
-                        data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
-                        data.MRPForecast = bool.Parse(reader["MRPForecast"].ToString());
-                        data.NumberOfBuckets = int.Parse(reader["NumberOfBuckets"].ToString());
-
-
-                        DataList.Add(data);
-                    }
-                }
-
-                connection.Close();
-            }
-
-            return DataList;
-        }
-
-
-        public ObservableCollection<DemandForecastData> GetDemandForecast(string ForCode)
-        {
-            ObservableCollection<DemandForecastData> DataList = new ObservableCollection<DemandForecastData>();
-            using (var connection = GetConnection())
-            using (var command = new SqlCommand())
-            {
-                connection.Open();
-                command.Connection = connection;
-
-                command.Parameters.AddWithValue("@Code", ForCode);
-
-                command.CommandText = string.Format(@"select D.ForCode,D.ForecastId,D.ItemId,D.Date,D.Demand,D.DateStr,
-a.ItemId,a.ItemCode,a.MesUnit,a.CanBeProduced,A.OutputOrderFlag,A.InputOrderFlag
-from DemandForecast as D
-Inner  Join Rmaster as A on A.ItemID = D.ItemId
-Where ForCode =@Code");
-
-                using (var reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-
-                        DemandForecastData data = new DemandForecastData();
-                        data.Item = new ItemData();
-
-                        data.ForCode = reader["Forcode"].ToString();
-
-                        data.Item.ItemId = int.Parse(reader["ItemId"].ToString());
-
-                        data.Item.ItemCode = reader["ItemCode"].ToString();
-
-
-                        data.Demand = decimal.Parse(reader["Demand"].ToString());
-                        data.Date = Convert.ToDateTime(reader["Date"]);
-
-                        data.DateStr = reader["DateStr"].ToString();
-
-
-                        DataList.Add(data);
-
-                    }
-                }
-
-                connection.Close();
-            }
-
-            return DataList;
-        }
-
-        public ForecastInfoData GetForecastInfoChooserData(int id, string Code)
-        {
-            ForecastInfoData data = new ForecastInfoData();
-
-            using (var connection = GetConnection())
-            using (var command = new SqlCommand())
-            {
-                connection.Open();
-                command.Connection = connection;
-
-                if (id > 0)
-                {
-                    command.Parameters.AddWithValue("@ID", id);
-
-                    command.CommandText = string.Format(@"select ID, Forcode, ForDescr, TIMEBUCKET, PERIODTYPE, PeriodNum, HoursPerTimeBucket,NumberOfBuckets,IsDeleted,MRPForecast,
-        ForDescr, Notes, Datefrom, DateTo from ForecastInfo
-        Where ID=@ID");
-                }
-                else if (!string.IsNullOrWhiteSpace(Code))
-                {
-                    command.Parameters.AddWithValue("@Code", Code); // Corrected variable name
-
-                    command.CommandText = string.Format(@"select ID, Forcode, ForDescr, TIMEBUCKET, PERIODTYPE, PeriodNum, HoursPerTimeBucket,NumberOfBuckets,IsDeleted,MRPForecast,
-        ForDescr, Notes, Datefrom, DateTo from ForecastInfo
-        Where Forcode=@Code"); // Corrected parameter name
-                }
-
-
-
-                using (var reader = command.ExecuteReader())
-                {
-                    if (reader.Read())
-                    {
-
-                        data.ID = int.Parse(reader["ID"].ToString());
-                        data.ForCode = reader["Forcode"].ToString();
-                        data.ForDescr = reader["Fordescr"].ToString();
-                        data.Notes = reader["Notes"].ToString();
-
-                        data.TimeBucket = (BasicEnums.Timebucket)Enum.Parse(typeof(BasicEnums.Timebucket), reader["TIMEBUCKET"].ToString());
-                        data.PeriodType = (BasicEnums.PeriodType)Enum.Parse(typeof(BasicEnums.PeriodType), reader["PeriodType"].ToString());
-                        data.PeriodNumber = int.Parse(reader["PeriodNum"].ToString());
-                        data.HoursPerTimeBucket = int.Parse(reader["HoursPerTimeBucket"].ToString());
-
-                        data.DateFrom = Convert.ToDateTime(reader["Datefrom"]);
-                        data.DateTo = Convert.ToDateTime(reader["DateTo"]);
-                        data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
-                        data.MRPForecast = bool.Parse(reader["MRPForecast"].ToString());
-                        data.NumberOfBuckets = int.Parse(reader["NumberOfBuckets"].ToString());
-
-
-                    }
-                }
-
-                connection.Close();
-            }
-
-            return data;
-        }
-        #endregion
         #endregion
 
         #region Supply Chain Management
@@ -6595,8 +11034,9 @@ ORDER BY Date ASC"
 
                     if (InputData.Forecast.TimeBucket != BasicEnums.Timebucket.Quarterly)
                     {
+
                         // Decision variables
-                        // Decision variables
+
                         GRBVar[,] make = new GRBVar[Dates.Length, Products.Length];
                         GRBVar[,] store = new GRBVar[Dates.Length, Products.Length];
                         GRBVar[,] sell = new GRBVar[Dates.Length, Products.Length];
@@ -6609,12 +11049,12 @@ ORDER BY Date ASC"
 
                                 // Add the data to the MaxDemand dictionary
 
-                                make[i, j] = model.AddVar(0.0, GRB.INFINITY, 0.0, GRB.INTEGER, "make_" + Dates[i] + "_" + Products[j]);
-                                store[i, j] = model.AddVar(0.0, ub: max_inventory[Products[j]], GRB.INFINITY, GRB.INTEGER, "store_" + Dates[i] + "_" + Products[j]);
+                                make[i, j] = model.AddVar(0.0, GRB.INFINITY, 0.0, GRB.CONTINUOUS, "make_" + Dates[i] + "_" + Products[j]);
+                                store[i, j] = model.AddVar(0.0, ub: max_inventory[Products[j]], GRB.INFINITY, GRB.CONTINUOUS, "store_" + Dates[i] + "_" + Products[j]);
 
                                 var upperboundsales = max_sales[key];
 
-                                sell[i, j] = model.AddVar(0.0, ub: upperboundsales, GRB.INFINITY, GRB.INTEGER, "sell_" + Dates[i] + "_" + Products[j]);
+                                sell[i, j] = model.AddVar(0.0, ub: upperboundsales, GRB.INFINITY, GRB.CONTINUOUS, "sell_" + Dates[i] + "_" + Products[j]);
 
                             }
                         }
@@ -6631,15 +11071,14 @@ ORDER BY Date ASC"
                                 string productCode = Products[j]; // Get the product code
                                 double productProfit = profit[productCode]; // Access the profit using the product code
 
-                                objective.AddTerm(productProfit, make[i, j]); // profit
-                                objective.AddTerm(holdingCost[productCode], store[i, j]); // holding cost
+                                objective.AddTerm(productProfit, sell[i, j]); // profit
+                                objective.AddTerm(-holdingCost[productCode], store[i, j]); // holding cost
                             }
                         }
 
 
                         model.SetObjective(objective, GRB.MAXIMIZE);
 
-                        // Constraints
                         // Constraints
 
                         // #1. Initial Balance
@@ -6649,6 +11088,7 @@ ORDER BY Date ASC"
                             var month = Dates[0];
 
                             model.AddConstr(make[0, j] == sell[0, j] + store[0, j], $"Initial_Balance_{product}");
+
                         }
 
                         // #2. Balance
@@ -7089,8 +11529,8 @@ ORDER BY Date ASC"
                                 string productCode = Products[j]; // Get the product code
                                 double productProfit = profit[productCode]; // Access the profit using the product code
 
-                                objective.AddTerm(productProfit, make[i, j]); // profit
-                                objective.AddTerm(holdingCost[productCode], store[i, j]); // holding cost
+                                objective.AddTerm(productProfit, sell[i, j]); // profit
+                                objective.AddTerm(-holdingCost[productCode], store[i, j]); // holding cost
                             }
                         }
 
@@ -7683,6 +12123,56 @@ ORDER BY Date ASC"
         }
 
 
+        public static void LogError(Exception ex, string methodName, string additionalInfo = "")
+        {
+            using (var dbContext = new ErpDbContext(ErpDbContext.DbOptions))
+            {
+                dbContext.Loge.Add(new Log
+                {
+                    ExceptionType = ex.GetType().ToString(),
+                    ExceptionMessage = ex.Message,
+                    StackTrace = ex.StackTrace,
+                    Source = ex.Source,
+                    MethodName = methodName,
+                    OccurredAt = DateTime.Now,
+                    AdditionalInfo = additionalInfo
+                });
+
+                dbContext.SaveChanges();
+            }
+        }
+
+        public UserModel GetByUserName(string userName)
+        {
+            UserModel user = null;
+            using (var connection = GetConnection())
+            using (var command = new SqlCommand())
+            {
+                connection.Open();
+                command.Connection = connection;
+                command.CommandText = "select * from [User] where username=@username";
+                command.Parameters.Add("@username", System.Data.SqlDbType.NVarChar).Value = userName;
+                using (var reader = command.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        user = new UserModel()
+                        {
+                            Id = reader[0].ToString(),
+                            UserName = reader[1].ToString(),
+                            Password = string.Empty,
+                            Name = reader[3].ToString(),
+                            LastName = reader[4].ToString(),
+                            Email = reader[5].ToString(),
+                        };
+                    }
+                }
+
+
+
+            }
+            return user;
+        }
 
     }
 }

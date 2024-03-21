@@ -16,12 +16,7 @@ using LiveCharts.Wpf;
 using Syncfusion.Data.Extensions;
 using Erp.Model.Manufacture.MPS;
 using Erp.Model.Manufacture;
-using System.Runtime.InteropServices.ComTypes;
-using DevExpress.Data.Filtering.Helpers;
 using Erp.Model.Data_Analytics.Forecast;
-using static IronPython.Runtime.Profiler;
-using System.Reflection.Emit;
-using Erp.Model.Data_Analytics;
 using static Erp.Model.Enums.BasicEnums;
 using Erp.Model.Enums;
 using Syncfusion.Windows.Controls;
@@ -162,7 +157,6 @@ namespace Erp.ViewModel.Manufacture
             this.sfGridColumns = new Columns();
             this.SfGridColumnsRepair = new Columns();
 
-            InsertDataCommand = new RelayCommand2(ExecuteInsertDataCommand);
             CalculateMps = new RelayCommand2(ExecuteCalculateMps);
             ShowForecastDemand = new RelayCommand2(ExecuteShowForecastDemand);
             ShowPriceListGridCommand = new RelayCommand2(ExecuteShowPriceListGridCommand);
@@ -783,10 +777,14 @@ namespace Erp.ViewModel.Manufacture
         }
         #endregion
         #endregion
-        #region InsertData For Optimisation
 
-        private void ExecuteInsertDataCommand(object obj)
+        #region Calculate MPS
+        public ICommand CalculateMps { get; }
+
+
+        private void ExecuteCalculateMps(object obj)
         {
+            #region Insert Data 
             #region Arxikopoihsh Dictionaries 
 
             InputData.ProfitDict = new Dictionary<string, double>();
@@ -964,7 +962,7 @@ namespace Erp.ViewModel.Manufacture
                     InputData.MachDownReq2[MachCode] = repairRequirements;
                 }
             }
-            else  if (InputData.NumberDatesOfRepairs == true)
+            else if (InputData.NumberDatesOfRepairs == true)
             {
                 foreach (MachineRepairData repairData in InputData.MachRepairDateData)
                 {
@@ -981,7 +979,7 @@ namespace Erp.ViewModel.Manufacture
 
             }
 
-                foreach (var i in InputData.PrimaryMachines)
+            foreach (var i in InputData.PrimaryMachines)
             {
                 if (i.PrimaryModel == true)
                 {
@@ -1069,16 +1067,8 @@ namespace Erp.ViewModel.Manufacture
 
             }
             #endregion
+            #endregion
 
-        }
-        #endregion
-
-        #region Calculate MPS
-        public ICommand CalculateMps { get; }
-
-
-        private void ExecuteCalculateMps(object obj)
-        {
             if (InputData.NumberDatesOfRepairs == true) //HardCoded Repair FactoryPlanning 1
             {
                 OutputData = CommonFunctions.CalculateMPS1(InputData);
@@ -1299,7 +1289,8 @@ namespace Erp.ViewModel.Manufacture
         private void ExecuteClearInputCommand(object commandParameter)
         {
 
-            InputData = new MPSInputData();
+            
+
         }
 
         #endregion

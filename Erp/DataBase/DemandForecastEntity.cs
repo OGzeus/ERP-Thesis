@@ -14,7 +14,6 @@ namespace Erp.DataBase
         [ForeignKey("ItemId")]
         public virtual ItemDataEntity Item { get; set; }
 
-
         [Column(TypeName = "datetime")]
         public DateTime? Date { get; set; }
 

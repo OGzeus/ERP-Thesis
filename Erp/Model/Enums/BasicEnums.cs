@@ -9,6 +9,51 @@ namespace Erp.Model.Enums
 {
     public class BasicEnums : INotifyPropertyChanged
     {
+        #region Thesis
+
+        public enum VPLogicType
+        {
+         Strict_Seniority,
+         Fair_Assignment,
+         Bid_By_Bid
+        }
+        public enum BidType
+        {
+            Specific,
+            Non_Specific,
+            Min_Max
+        }
+        public enum EmployeeType
+        {
+            Captain,
+            FO,
+            Cabin_Manager,
+            Flight_Attendant
+        }
+
+        public enum CertPosition
+        {
+            PNT, 
+            PNC
+        }
+
+        public enum Timebucket
+        {
+            Daily,
+            Weekly,
+            Monthly,
+            Quarterly,
+            Yearly
+        }
+
+        public enum AircraftType
+        {
+            Commercial,
+            Cargo
+        }
+        #endregion
+
+
         #region Inventory Control
 
 
@@ -17,14 +62,7 @@ namespace Erp.Model.Enums
          Monthly,
          Yearly
         }
-        public enum Timebucket
-        {
-            Daily,
-            Weekly,
-            Monthly,
-            Quarterly
 
-        }
         public enum ActivePanel
         {
             None,
@@ -70,6 +108,13 @@ namespace Erp.Model.Enums
             Retail,
             Wholesale
         }
+        public enum Gender
+        {
+            Male,
+            Female
+            
+        }
+
 
         public enum ItemType
         {

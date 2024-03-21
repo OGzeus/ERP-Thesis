@@ -2,17 +2,25 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:Erp"
+             xmlns:syncfusion="http://schemas.syncfusion.com/wpf"
+
              Startup="ApplicationStart">
     <Application.Resources>
 
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source ="/Styles/UIColors.xaml"/>
+                <ResourceDictionary Source="/Styles/UIColors.xaml"/>
                 <ResourceDictionary Source="/Styles/ButtonStyles.xaml"/>
                 <ResourceDictionary Source="F7TextBoxDictionary.xaml" />
+
+                <!-- Create a new ResourceDictionary for the SfDataGrid style -->
+                <ResourceDictionary>
+                    <Style TargetType="syncfusion:SfDataGrid">
+                        <Setter Property="FontSize" Value="18"/>
+                    </Style>
+                </ResourceDictionary>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
-        
 
     </Application.Resources>
 </Application>

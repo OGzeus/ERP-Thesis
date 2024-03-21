@@ -35,6 +35,7 @@ using Gurobi;
 using Erp.Model.Manufacture.MRP;
 using IronPython.Hosting;
 using Microsoft.Scripting.Hosting;
+using System.Diagnostics;
 
 namespace Erp.ViewModel.Manufacture
 {
@@ -237,7 +238,7 @@ namespace Erp.ViewModel.Manufacture
 
             ClearColumns();
 
-            var F7input = F7Common.F7MRPStock();
+            var F7input = F7Common.F7MRPItemsInfo();
             F7key = F7input.F7key;
             CollectionView = CollectionViewSource.GetDefaultView(InputData.Inventory.StockData.ToList());
             var a = F7input.SfGridColumns;
@@ -271,7 +272,7 @@ namespace Erp.ViewModel.Manufacture
 
             ClearColumns();
 
-            var F7input = F7Common.F7ItemMPSInput();
+            var F7input = F7Common.F7ItemMRPInput();
             F7key = F7input.F7key;
             CollectionView = CollectionViewSource.GetDefaultView(InputData.Items.ToList());
             var a = F7input.SfGridColumns;
@@ -394,7 +395,7 @@ namespace Erp.ViewModel.Manufacture
                 var InvCode = InputData.Inventory.InvCode;
                 var invId = InputData.Inventory.InvId;
                 InputData.Inventory = CommonFunctions.GetInventoryChooserData(invId, InvCode);
-                InputData.Inventory.StockData= CommonFunctions.GetStockData(InvCode, false);
+                InputData.Inventory.StockData= CommonFunctions.GetMRPItemData(InvCode);
                 #endregion
             }
             else if (F7key == "InvCode")
@@ -648,11 +649,12 @@ namespace Erp.ViewModel.Manufacture
 
         private void ExecuteCalculateMrp(object obj)
         {
-            ScriptEngine engine = Python.CreateEngine();
-            engine.ExecuteFile(@"C:\Users\npoly\Source\Repos\MrpPlanner2");
+            var a = CommonFunctions.CalculateMRP(InputData);
 
-            InputData.TotalDemandDict = new Dictionary<string, List<decimal>>(); 
-            var Finished = CommonFunctions.CalculateMRP(InputData);
+            ScriptEngine engine = Python.CreateEngine();
+            engine.ExecuteFile(@"C:\Users\npoly\Source\Repos\MrpPlanner2\MrpPlanner2.py");
+
+
 
         }
         #endregion

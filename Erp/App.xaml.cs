@@ -1,8 +1,11 @@
 ﻿using System;
+
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
+using System.Globalization;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using Erp.DataBase;
@@ -16,6 +19,19 @@ namespace Erp
     /// </summary>
     public partial class App : Application
     {
+
+        protected override void OnStartup(StartupEventArgs e)
+        {
+            base.OnStartup(e);
+
+            // Set the culture to use the DD/MM/YYYY date format
+
+            var culture = new CultureInfo("en-GB");
+            culture.DateTimeFormat.ShortDatePattern = "dd/MM/yyyy";
+
+            Thread.CurrentThread.CurrentCulture = culture;
+            Thread.CurrentThread.CurrentUICulture = culture;
+        }
 
         protected void ApplicationStart(object sender, EventArgs e)
         {

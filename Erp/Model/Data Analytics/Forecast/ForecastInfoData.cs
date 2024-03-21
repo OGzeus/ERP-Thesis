@@ -22,9 +22,6 @@ namespace Erp.Model.Data_Analytics.Forecast
 
         public int NumberOfBuckets { get; set; }
         public BasicEnums.PeriodType PeriodType { get; set; }
-
-
-
         public int PeriodNumber { get; set; }
 
         private DateTime _DateFrom { get; set; }

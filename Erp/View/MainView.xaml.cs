@@ -33,6 +33,9 @@ using Microsoft.Scripting.Utils;
 using DevExpress.Data.Helpers;
 using MahApps.Metro.Controls;
 using Syncfusion.Windows.Tools.Controls;
+using Syncfusion.Data.Extensions;
+using Erp.View.Thesis;
+using Microsoft.Scripting.Runtime;
 
 namespace Erp.View
 {
@@ -123,9 +126,9 @@ namespace Erp.View
 
             var menuProd = new List<SubItem>();
             menuProd.Add(new SubItem("Machines", new MachineView()));
-            menuProd.Add(new SubItem("Machine Maintenance Schedule", new MachMaintenaceView()));
+            menuProd.Add(new SubItem("Maintenance Schedule", new MachMaintenaceView()));
             menuProd.Add(new SubItem("MPS", new MPSView()));
-            menuProd.Add(new SubItem("Material Resource Planning", new MRPView()));
+            menuProd.Add(new SubItem("MRP", new MRPView()));
             menuProd.Add(new SubItem("MRP Results", new MRPResultsView()));
             //menuProd.Add(new SubItem("Gantt Diagram",new GanttChartView()));
             var Production = new ItemMenu("Production", menuProd, PackIconKind.Schedule);
@@ -160,13 +163,24 @@ namespace Erp.View
             var Schedules = new ItemMenu("Schedules", menuScdles, PackIconKind.Schedule);
             #endregion
 
+            #region Diplwmatikh Kozanidhs
 
+            var menuFlights = new List<SubItem>();
+
+            menuFlights.Add(new SubItem("Languages", new LanguageView()));
+            menuFlights.Add(new SubItem("Employees", new EmployeeView()));
+            menuFlights.Add(new SubItem("Requirements Schedule", new RequirementsScheduleView()));
+            menuFlights.Add(new SubItem("Vacation Planning", new VacationsPlanningView()));
+
+            var Thesis = new ItemMenu("Diplwmatikh", menuFlights, PackIconKind.Schedule);
+            #endregion
 
             SubItems = SubItems.Concat(menuBasic).ToList();
             SubItems = SubItems.Concat(menuCustomers).ToList();
             SubItems = SubItems.Concat(menuInv).ToList();
             SubItems = SubItems.Concat(menuProd).ToList();
             SubItems = SubItems.Concat(menuData).ToList();
+            SubItems = SubItems.Concat(menuFlights).ToList();
 
 
 
@@ -181,6 +195,8 @@ namespace Erp.View
             Menu.Children.Add(new UserControlMenuItem(Production, this));
             //Menu.Children.Add(new UserControlMenuItem(SupChain, this));
             Menu.Children.Add(new UserControlMenuItem(DataAnalysis, this));
+            Menu.Children.Add(new UserControlMenuItem(Thesis, this));
+
             //Menu.Children.Add(new UserControlMenuItem(Schedules, this));
 
         }
@@ -198,19 +214,26 @@ namespace Erp.View
 
         private void TabControlExt_OnCloseButtonClick(object sender, CloseTabEventArgs e)
         {
+
+            var selectedTab = MyTabControl.SelectedItem as TabItem;
+
+
+
             MyTabControl.Items.Remove(MyTabControl.SelectedItem);
+            #region To vlepoume
+            //            var currentscreen = selectedTab.Content;
 
-          //  var selectedTab = MyTabControl.SelectedItem as TabItem;
-          //  var currentscreen = selectedTab.Content;
+            //            var userControlMenuItem = Menu.Children
+            //.OfType<UserControlMenuItem>()
+            //.FirstOrDefault();
 
-          //  var userControlMenuItem = Menu.Children
-          //.OfType<UserControlMenuItem>()
-          //.FirstOrDefault(menuItem => menuItem.ExpanderMenu.Header == selectedTab.Header);
+            //            var ListViewItemMenu = userControlMenuItem.ListViewItemMenu;
 
-          //  var ListViewItemMenu = userControlMenuItem.ListViewItemMenu;
+            //            var ListViewMenu = userControlMenuItem.ListViewMenu.ItemsSource;
 
-          //  var ListViewMenu = userControlMenuItem.ListViewMenu.ItemsSource;
+            //            var SpecificSubItem = ((IEnumerable<SubItem>)ListViewMenu).FirstOrDefault();
 
+            #endregion
         }
 
 

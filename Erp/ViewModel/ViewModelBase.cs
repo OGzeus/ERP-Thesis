@@ -44,6 +44,7 @@ namespace Erp.ViewModel
 
 
 
+
         protected object selectedItem;
         public object SelectedItem
         {
@@ -88,7 +89,20 @@ namespace Erp.ViewModel
                 INotifyPropertyChanged("CollectionView");
             }
         }
+        private ICollectionView collectionview2;
 
+        public ICollectionView CollectionView2
+        {
+            get
+            {
+                return collectionview2;
+            }
+            set
+            {
+                collectionview2 = value;
+                INotifyPropertyChanged("CollectionView2");
+            }
+        }
         private ICollectionView resultcollectionview;
 
         public ICollectionView ResultCollectionView

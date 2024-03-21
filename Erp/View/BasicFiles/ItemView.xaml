@@ -143,7 +143,7 @@
                                                     ShowSortNumbers="True"
                                                     AllowFiltering="True"
                                                     AutoGenerateColumns="False"
-                                                    AllowEditing="True"
+                                                    AllowEditing="False"
                                                     AllowResizingColumns="True"
                                                     FilterRowPosition="FixedTop"
                                                     ScrollViewer.VerticalScrollBarVisibility="Visible"
@@ -187,15 +187,15 @@
                         </Grid.ColumnDefinitions>
 
                         <StackPanel Grid.Row="0" Grid.Column="0" HorizontalAlignment="Left" Orientation="Horizontal" >
-                            <Button x:Name="RefreshButton2"  Width="100" Margin="2"  HorizontalAlignment="Left" Command="{Binding RefreshCommand2}">
+                            <Button x:Name="RefreshButton2"  Width="120" Margin="1"  HorizontalAlignment="Left" Command="{Binding RefreshCommand2}">
                                 <TextBlock Text="Refresh"/>
                             </Button>
 
-                            <Button x:Name="SaveButton2"  Width="100" Margin="2" HorizontalAlignment="Left"  Command="{Binding SaveCommand2}">
+                            <Button x:Name="SaveButton2"  Width="120" Margin="1" HorizontalAlignment="Left"  Command="{Binding SaveCommand2}">
                                 <TextBlock Text="Save"/>
                             </Button>
-                            <Button x:Name="AddBomItem"  Width="100" Margin="2" HorizontalAlignment="Left"  Command="{Binding AddBomItem}">
-                                <TextBlock Text="Προσθήκη Είδους"/>
+                            <Button x:Name="AddBomItem"  Width="120" Margin="1" HorizontalAlignment="Left"  Command="{Binding AddBomItem}">
+                                <TextBlock Text="Add Item"/>
                             </Button>
                         </StackPanel>
                         <syncfusion:SfDataGrid x:Name="sfGrid2"
@@ -224,14 +224,14 @@
                                                     ShowGroupDropArea="True"
                                                 >
                             <syncfusion:SfDataGrid.Columns>
-                                <syncfusion:GridTextColumn MappingName="BomItem.ItemCode" HeaderText="Item Code"/>
-                                <syncfusion:GridTextColumn MappingName="BomItem.ItemDescr" HeaderText="Item Descr"/>
-                                <syncfusion:GridTextColumn MappingName="BomItem.ItemType" HeaderText="Item Type"/>
-                                <syncfusion:GridTextColumn MappingName="BomItem.Assembly" HeaderText="Assebly"/>
-                                <syncfusion:GridTextColumn MappingName="BomPercentage" HeaderText="Quantity Ratio"/>
-                                <syncfusion:GridTextColumn MappingName="BomItem.MesUnit" HeaderText="Measurement Unit"/>
+                                <syncfusion:GridTextColumn MappingName="BomItem.ItemCode" HeaderText="Item Code" AllowEditing="False"/>
+                                <syncfusion:GridTextColumn MappingName="BomItem.ItemDescr" HeaderText="Item Descr" AllowEditing="False"/>
+                                <syncfusion:GridTextColumn MappingName="BomItem.ItemType" HeaderText="Item Type" AllowEditing="False"/>
+                                <syncfusion:GridTextColumn MappingName="BomItem.Assembly" HeaderText="Assebly" AllowEditing="False"/>
+                                <syncfusion:GridTextColumn MappingName="BomPercentage" HeaderText="Quantity Ratio" AllowEditing="True"/>
+                                <syncfusion:GridTextColumn MappingName="BomItem.MesUnit" HeaderText="Measurement Unit" AllowEditing="False"/>
 
-                                <syncfusion:GridCheckBoxColumn MappingName="BomItemFlag" HeaderText="Select"/>
+                                <syncfusion:GridCheckBoxColumn MappingName="BomItemFlag" HeaderText="Select" AllowEditing="True"/>
 
                             </syncfusion:SfDataGrid.Columns>
                             <!--<i:Interaction.Triggers>
@@ -261,14 +261,14 @@
                         </Grid.ColumnDefinitions>
 
                         <StackPanel Grid.Row="0" Grid.Column="0" HorizontalAlignment="Left" Orientation="Horizontal">
-                            <Button x:Name="RefreshButton3"  Width="100" HorizontalAlignment="Left" Margin="2" Command="{Binding RefreshCommand3}">
+                            <Button x:Name="RefreshButton3"  Width="120" HorizontalAlignment="Left" Margin="1" Command="{Binding RefreshCommand3}">
                                 <TextBlock Text="Refresh"/>
                             </Button>
 
-                            <Button x:Name="SaveButton3"  Width="100" HorizontalAlignment="Left"  Margin="2" Command="{Binding SaveCommand3}">
+                            <Button x:Name="SaveButton3"  Width="120" HorizontalAlignment="Left"  Margin="1" Command="{Binding SaveCommand3}">
                                 <TextBlock Text="Save"/>
                             </Button>
-                            <Button x:Name="AddProcess"  Width="100" HorizontalAlignment="Left" Margin="2" Command="{Binding AddProcess}">
+                            <Button x:Name="AddProcess"  Width="120" HorizontalAlignment="Left" Margin="1" Command="{Binding AddProcess}">
                                 <TextBlock Text="Add Process"/>
                             </Button>
                         </StackPanel>
@@ -295,14 +295,14 @@
                                                     ShowGroupDropArea="True"
                                                 >
                             <syncfusion:SfDataGrid.Columns>
-                                <syncfusion:GridTextColumn MappingName="Machine.MachCode" HeaderText="Machine Code"/>
-                                <syncfusion:GridTextColumn MappingName="Machine.MachDescr" HeaderText="Machine Descr"/>
-                                <syncfusion:GridTextColumn MappingName="Machine.MachineType" HeaderText="Machine Type"/>
+                                <syncfusion:GridTextColumn MappingName="Machine.MachCode" HeaderText="Machine Code" AllowEditing="False"/>
+                                <syncfusion:GridTextColumn MappingName="Machine.MachDescr" HeaderText="Machine Descr" AllowEditing="False"/>
+                                <syncfusion:GridTextColumn MappingName="Machine.MachineType" HeaderText="Machine Type" AllowEditing="False"/>
 
-                                <syncfusion:GridTextColumn MappingName="ProductionTime" HeaderText="Production Time"/>
-                                <syncfusion:GridTextColumn MappingName="MachineOrder" HeaderText="Machine Order"/>
+                                <syncfusion:GridTextColumn MappingName="ProductionTime" HeaderText="Production Time" AllowEditing="True"/>
+                                <syncfusion:GridTextColumn MappingName="MachineOrder" HeaderText="Machine Order" AllowEditing="True"/>
 
-                                <syncfusion:GridCheckBoxColumn MappingName="ClassicFlag" HeaderText="Select"/>
+                                <syncfusion:GridCheckBoxColumn MappingName="ClassicFlag" HeaderText="Select" AllowEditing="True"/>
 
                             </syncfusion:SfDataGrid.Columns>
                             <!--<i:Interaction.Triggers>

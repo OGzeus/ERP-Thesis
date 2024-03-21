@@ -3,6 +3,7 @@ using Erp.Model;
 using Erp.Model.BasicFiles;
 using Erp.Model.Inventory.InvControl_TimeVaryingDemand;
 using Erp.Model.Manufacture.MPS;
+using Erp.Model.Thesis;
 using Syncfusion.Data.Extensions;
 using Syncfusion.UI.Xaml.Grid;
 using System;
@@ -24,6 +25,118 @@ namespace Erp.CommonFiles
 
         CommonFunctions CommonFunctions = new CommonFunctions();
 
+
+        #region Thesis
+
+        public F7Data F7VacationPlanning(bool ShowDeleted)
+        {
+            F7Data GridData = new F7Data();
+            GridData.SfGridColumns = new Columns();
+            var Data = CommonFunctions.GetVPInputData(ShowDeleted).ToList();
+            GridData.CollectionView = CollectionViewSource.GetDefaultView(Data);
+
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "VPCode", HeaderText = "VP Code" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "VPDescr", HeaderText = "VP Descr" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "EmployeeType", HeaderText = "Employee Type" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "VPLogicType", HeaderText = "VP Logic Type" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "MaxSatisfiedBids", HeaderText = "Max Satisfie dBids" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "SeparValue", HeaderText = "Separation Value" });
+
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Schedule.ReqCode", HeaderText = "Schedule Code" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Schedule.ReqDescr", HeaderText = "Schedule Descr" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Schedule.DateFrom", HeaderText = "Date From" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Schedule.DateTo", HeaderText = "Date To" });
+            GridData.SfGridColumns.Add(new GridCheckBoxColumn() { MappingName = "IsDeleted", HeaderText = "Deleted" });
+
+
+            GridData.F7key = "VPCode";
+            return GridData;
+        }
+        public F7Data F7ReqSchedule (bool ShowDeleted)
+        {
+            F7Data GridData = new F7Data();
+            GridData.SfGridColumns = new Columns();
+            var Data = CommonFunctions.GetReqScheduleInfoData(ShowDeleted).ToList();
+            GridData.CollectionView = CollectionViewSource.GetDefaultView(Data);
+
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "ID", HeaderText = "Id" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "ReqCode", HeaderText = "Schedule Code" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "ReqDescr", HeaderText = "Schedule Description" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Notes", HeaderText = "Notes" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "DateFrom", HeaderText = "Date From" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "DateTo", HeaderText = "Date To" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "LimitLineFixed", HeaderText = "Limit Line Fixed" });
+
+            GridData.SfGridColumns.Add(new GridCheckBoxColumn() { MappingName = "IsDeleted", HeaderText = "Deleted" });
+            GridData.SfGridColumns.Add(new GridCheckBoxColumn() { MappingName = "MainSchedule", HeaderText = " Main Schedule" });
+
+            GridData.F7key = "ReqSchedule";
+            return GridData;
+        }
+        public F7Data F7Employee(bool ShowDeleted)
+        {
+            F7Data GridData = new F7Data();
+            GridData.SfGridColumns = new Columns();
+            var Data = CommonFunctions.GetEmployeeData(ShowDeleted).ToList();
+            GridData.CollectionView = CollectionViewSource.GetDefaultView(Data);
+
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Code", HeaderText = "Employee Code" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Descr", HeaderText = "Employee Descr" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "FirstName", HeaderText = "First Name " });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "LastName", HeaderText = "Last Name " });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Gender", HeaderText = "Gender" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Position", HeaderText = "Position" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Seniority", HeaderText = "Seniority" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "TotalFlightHours", HeaderText = "Total Flight Hours" });
+            GridData.SfGridColumns.Add(new GridCheckBoxColumn() { MappingName = "IsDeleted", HeaderText = "Deleted" });
+
+
+            GridData.F7key = "Employee";
+            return GridData;
+        }
+
+        public F7Data F7Certification(bool ShowDeleted)
+        {
+            F7Data GridData = new F7Data();
+            GridData.SfGridColumns = new Columns();
+            var Data = CommonFunctions.GetCertificationData(ShowDeleted).ToList();
+            GridData.CollectionView = CollectionViewSource.GetDefaultView(Data);
+
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Code", HeaderText = "Code" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Descr", HeaderText = "Descr" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "CertPosition", HeaderText = "Certification Position" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "ValidityTimeBucket", HeaderText = "Validity TimeBucket" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "ValidityPeriod", HeaderText = "Validity Period" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "DateFrom", HeaderText = "Date From" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "DateTo", HeaderText = "Date To" });
+            GridData.SfGridColumns.Add(new GridCheckBoxColumn() { MappingName = "IsDeleted", HeaderText = "Deleted" });
+
+
+
+            GridData.F7key = "Certification";
+            return GridData;
+        }
+
+        public F7Data F7Airports(bool ShowDeleted)
+        {
+            F7Data GridData = new F7Data();
+            GridData.SfGridColumns = new Columns();
+            var Data = CommonFunctions.GetAirportsData(ShowDeleted).ToList();
+            GridData.CollectionView = CollectionViewSource.GetDefaultView(Data);
+
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Code", HeaderText = "Code" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Descr", HeaderText = "Descr" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "City.CityCode", HeaderText = "City Code" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "City.CityDescr", HeaderText = "City Descr" });
+
+            GridData.SfGridColumns.Add(new GridCheckBoxColumn() { MappingName = "IsDeleted", HeaderText = "Deleted" });
+
+
+
+            GridData.F7key = "Airport";
+            return GridData;
+        }
+        #endregion
 
         public F7Data F7RoutesCity(bool ShowDeleted)
         {
@@ -235,8 +348,9 @@ namespace Erp.CommonFiles
             var Data = CommonFunctions.GetMrpResultsData().ToList();
             GridData.CollectionView = CollectionViewSource.GetDefaultView(Data);
 
-            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "ItemId", HeaderText = "Item Id" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "ItemId", HeaderText = "Item Id" ,IsHidden = true });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Item.ItemCode", HeaderText = "Item Code" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Item.Assembly", HeaderText = "Assembly" });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "RowDescr", HeaderText = "Row Descritpion" });
             // Assuming that all items have the same number of values in the list
             int valuesCount = Data.FirstOrDefault()?.Quantities.Count ?? 0;
@@ -479,8 +593,34 @@ namespace Erp.CommonFiles
             GridData.F7key = "ItemMPSInput";
             return GridData;
         }
+        public F7Data F7ItemMRPInput()
+        {
+            F7Data GridData = new F7Data();
+            GridData.SfGridColumns = new Columns();
 
-        public F7Data F7MRPStock()
+            var List = new List<string>();
+            GridData.CollectionView = CollectionViewSource.GetDefaultView(List);
+
+
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "ItemId", HeaderText = "Item Id" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "ItemCode", HeaderText = "Item Code" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "ItemDescr", HeaderText = "Item Descr" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "ItemType", HeaderText = "Item Type" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "HoldingCost", HeaderText = "Holding Cost" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "MaxInventory", HeaderText = "Max Inventory" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "StoreTarget", HeaderText = "Store Target" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Profit", HeaderText = "Profit" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "SalesPrice", HeaderText = "Sales Price" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "ManufacturingCost", HeaderText = "Manufacturing Cost" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "ShortageCost", HeaderText = "Shortage Cost" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "LeadTime", HeaderText = "Lead Time" });
+
+
+            GridData.F7key = "ItemMRPInput";
+            return GridData;
+        }
+
+        public F7Data F7MRPItemsInfo()
         {
             F7Data GridData = new F7Data();
             GridData.SfGridColumns = new Columns();
@@ -489,13 +629,31 @@ namespace Erp.CommonFiles
             GridData.CollectionView = CollectionViewSource.GetDefaultView(List);
 
             // Assuming GridData is an instance of SfDataGrid
-            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Quantity", HeaderText = "Quantity" });
-            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "StockItem.ItemCode", HeaderText = "Item Code", IsReadOnly = true });
-            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "StockItem.ItemDescr", HeaderText = "Item Description", IsReadOnly = true });
-            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "StockItem.ItemType", HeaderText = "Item Type", IsReadOnly = true });
-            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "StockItem.Assembly", HeaderText = "Assembly", IsReadOnly = true });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "StockItem.ItemCode", HeaderText = "Item Code", AllowEditing = false });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "StockItem.ItemDescr", HeaderText = "Item Description", AllowEditing = false });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "StockItem.ItemType", HeaderText = "Item Type", AllowEditing = false });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "StockItem.Assembly", HeaderText = "Assembly", AllowEditing = false });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Quantity", HeaderText = "Quantity", AllowEditing = true });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "StockItem.LotPolicy.Code", HeaderText = "Lot Policy Code", AllowEditing = true });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "StockItem.LotPolicy.LeadTime", HeaderText = "Lead Time", AllowEditing = false });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "StockItem.LotPolicy.BatchSize", HeaderText = "Batch Size", AllowEditing = false });
 
+            #region MultiColumnDropDownList
 
+            //var LotPolicyList = new List<LotPolicyData>();
+            //LotPolicyList = CommonFunctions.GetLotPolicyChooserData(false).ToList();
+            //var LotPolicyMultiDropDownColumn= new GridMultiColumnDropDownList()
+            //{
+            //    MappingName = "StockItem.LotPolicy.Code",
+            //    HeaderText = "LotPolicy Code",
+            //    DisplayMember = "Code",
+            //    AutoGenerateColumns = true,
+            //    ItemsSource =LotPolicyList,
+            //    AllowEditing = true
+            //};
+            //GridData.SfGridColumns.Add(LotPolicyMultiDropDownColumn);
+
+            #endregion
             GridData.F7key = "MRPStock";
             return GridData;
         }

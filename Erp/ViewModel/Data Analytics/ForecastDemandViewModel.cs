@@ -21,6 +21,7 @@ using Erp.Model.Enums;
 using Erp.Model.Data_Analytics;
 using Erp.Model.Customers;
 using static Erp.Model.Enums.BasicEnums;
+using Erp.Model.Thesis;
 
 namespace Erp.ViewModel.Data_Analytics
 {
@@ -38,7 +39,7 @@ namespace Erp.ViewModel.Data_Analytics
                 INotifyPropertyChanged("SfGridColumns");
             }
         }
-
+        
         private ForecastInfoData flatData;
         public ForecastInfoData FlatData
         {
@@ -51,7 +52,18 @@ namespace Erp.ViewModel.Data_Analytics
 
             }
         }
+        private bool _CurrentMRPForecast;
+        public bool CurrentMRPForecast
+        {
+            get { return _CurrentMRPForecast; }
+            set
+            {
+                _CurrentMRPForecast = value;
+                INotifyPropertyChanged(nameof(CurrentMRPForecast));
 
+
+            }
+        }
 
         public void OnPropertyChanged(string propertyName)
         {
@@ -189,6 +201,7 @@ namespace Erp.ViewModel.Data_Analytics
                 FlatData = SelectedForecast;
 
                 FlatData.DemandForecast = CommonFunctions.GetDemandForecast(SelectedForecast.ForCode);
+                CurrentMRPForecast = FlatData.MRPForecast;
 
 
 
@@ -279,16 +292,9 @@ namespace Erp.ViewModel.Data_Analytics
 
         private void ExecuteClearCommand(object commandParameter)
         {
-            //ChooserData.ItemCode = "";
-            //ChooserData.ItemDescr = "";
-            //ChooserData.ItemId = -1;
 
-            //ChooserData = new ItemData();
 
-            //FlatData.ItemCode = "";
-            //FlatData.ItemDescr = "";
-            //FlatData.ItemId = 0;
-
+            FlatData = new ForecastInfoData();
 
 
         }
@@ -324,12 +330,12 @@ namespace Erp.ViewModel.Data_Analytics
             else if (Flag == -1)
             {
                 MessageBox.Show("Error during data processing", "", MessageBoxButton.OK, MessageBoxImage.Error);
-                FlatData.MRPForecast = false;
+                FlatData.MRPForecast = CurrentMRPForecast;
 
             }
             else if (Flag == 1)
             {
-                FlatData.MRPForecast = false;
+                FlatData.MRPForecast = CurrentMRPForecast;
             }
 
 

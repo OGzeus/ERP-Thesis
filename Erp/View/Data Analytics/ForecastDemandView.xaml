@@ -183,7 +183,7 @@
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="800"/>
                         <RowDefinition Height="Auto"/>
 
                     </Grid.RowDefinitions>
@@ -199,8 +199,8 @@
                                                     Grid.Row="0"
                                                     Grid.Column="0"
                                                     Grid.ColumnSpan="3">
-                        <Button x:Name="CreateHardCoded"  Width="100"  Margin="2" HorizontalAlignment="Left" Command="{Binding CreateDemandFCommand}">
-                            <TextBlock Text="Create HardCoded"/>
+                        <Button x:Name="CreateHardCoded"  Width="200"  Margin="2" HorizontalAlignment="Left" Command="{Binding CreateDemandFCommand}">
+                            <TextBlock Text="Create Hardcoded Data"/>
                         </Button>
 
                         <Button x:Name="RefreshButton2"  Width="100" Margin="2" HorizontalAlignment="Left" Command="{Binding RefreshCommand2}">

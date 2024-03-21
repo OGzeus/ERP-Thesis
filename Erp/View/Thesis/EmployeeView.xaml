@@ -1,0 +1,580 @@
+﻿<UserControl x:Class="Erp.View.Thesis.EmployeeView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Erp.View.Thesis" 
+             xmlns:converters="clr-namespace:Erp.Converters"
+
+             xmlns:syncfusion="http://schemas.syncfusion.com/wpf" 
+             xmlns:viewmodel="clr-namespace:Erp.ViewModel.Thesis" xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+
+    <UserControl.DataContext>
+        <viewmodel:EmployeeViewModel/>
+    </UserControl.DataContext>
+    <UserControl.Resources>
+        <viewmodel:ActivePanelToVisibilityLeaveTypeConverter x:Key="ActivePanelToVisibilityConverter"/>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+
+    </UserControl.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="5"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <TextBlock Text="Employee Code : " FontWeight="Bold" FontSize="14"  Grid.Row="1" Grid.Column="0" Margin="2" />
+        <StackPanel Grid.Row="1" Grid.Column="1" HorizontalAlignment="Left"  Orientation="Horizontal" Margin="2" >
+            <TextBox Text="{Binding FlatData.Code}" HorizontalAlignment="left" Width="115"   />
+            <Button Content="f" Width="20"                    Command="{Binding ShowEmployeeInfoGridCommand}"/>
+        </StackPanel>
+
+        <TextBlock Text="Employee Descr : " FontWeight="Bold" FontSize="14" Grid.Row="1" Grid.Column="2" Margin="2" />
+        <StackPanel Grid.Row="1" Grid.Column="3" HorizontalAlignment="Stretch"  Orientation="Horizontal" Margin="2" >
+            <TextBox Text="{Binding FlatData.Descr}" HorizontalAlignment="Stretch" Width="135" />
+        </StackPanel>
+        <StackPanel Grid.Row="1" Grid.Column="4"  HorizontalAlignment="Left" Orientation="Horizontal" Margin="1" >
+            <Button x:Name="AddPriceList"  Width="150" Margin = "1" HorizontalAlignment="Left" Command="{Binding AddEmployeeDataCommand}">
+                <TextBlock Text="Add New Employee"/>
+            </Button>
+
+            <ToggleButton x:Name = "tb" Content = "Show Deleted"  
+         IsChecked="{Binding ShowDeleted, Mode=TwoWay}"  Margin = "1" Background="Beige" BorderBrush="Black" 
+         Width = "120" HorizontalAlignment = "Center" >
+            </ToggleButton>
+            <TextBlock Text="Delete : " FontWeight="Bold" FontSize="14"  Margin="1"/>
+            <CheckBox IsChecked="{Binding FlatData.IsDeleted, Mode=TwoWay}"  Margin="1" VerticalAlignment="Center"  />
+
+        </StackPanel>
+        <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="8"  converters:MainStackPanelReadonly.IsEnabledBasedOnProperty="{Binding FlatData.Code}" >
+            <TabControl >
+                <TabItem Header="General Information">
+                    <StackPanel>
+
+
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+
+                            </Grid.ColumnDefinitions>
+
+
+
+                            <TextBlock Text="First Name : " Grid.Row="1" Grid.Column="0" Margin="2"/>
+                            <TextBlock Text="Last Name : " Grid.Row="1" Grid.Column="2" Margin="2"/>
+
+                            <TextBlock Text="Email : " Grid.Row="2" Grid.Column="0" Margin="2"/>
+                            <TextBlock Text="Contact Number : " Grid.Row="2" Grid.Column="2" Margin="2"/>
+
+
+                            <TextBlock Text="Adress : " Grid.Row="3" Grid.Column="0" Margin="2"/>
+                            <TextBlock Text="Date Of Birth : " Grid.Row="3" Grid.Column="2" Margin="2"/>
+                            
+                            <TextBlock Text="Gender : " Grid.Row="4" Grid.Column="0" Margin="2"/>
+                            <TextBlock Text="Language : " Grid.Row="4" Grid.Column="2" Margin="2"/>
+                            
+                            <TextBlock Text="Hire Date : " Grid.Row="5" Grid.Column="0" Margin="2"/>
+                            <TextBlock Text="Total Flight Hours : " Grid.Row="5" Grid.Column="2" Margin="2"/>
+
+                            <TextBlock Text="Seniority : " Grid.Row="6" Grid.Column="0" Margin="2"/>
+                            <TextBlock Text="Base Airport : " Grid.Row="6" Grid.Column="2" Margin="2"/>
+
+                            <TextBlock Text="Position: " Grid.Row="7" Grid.Column="0" Margin="2"/>
+                            <TextBlock Text="Certification: " Grid.Row="7" Grid.Column="2" Margin="2"/>
+
+                            <TextBox Text="{Binding FlatData.FirstName, Mode=TwoWay}" Grid.Row="1" Grid.Column="1" Margin="2" HorizontalAlignment="Stretch" Width="135" />
+                            <TextBox Text="{Binding FlatData.LastName, Mode=TwoWay}" Grid.Row="1" Grid.Column="3" Margin="2" HorizontalAlignment="Stretch" Width="135" />
+
+                            <TextBox Text="{Binding FlatData.Email, Mode=TwoWay}" Grid.Row="2" Grid.Column="1" Margin="2" HorizontalAlignment="Stretch" Width="135" />
+                            <TextBox Text="{Binding FlatData.ContactNumber, Mode=TwoWay}" Grid.Row="2" Grid.Column="3" Margin="2" HorizontalAlignment="Stretch" Width="135" />
+
+                            <TextBox Text="{Binding FlatData.Address, Mode=TwoWay}" Grid.Row="3" Grid.Column="1" Margin="2" HorizontalAlignment="Stretch" Width="135" />
+                            <DatePicker SelectedDate="{Binding FlatData.DateOfBirth, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" Grid.Row="3" Grid.Column="3" Margin="2" HorizontalAlignment="Stretch" Width="135" />
+
+                            <ComboBox ItemsSource="{Binding Genders}"  SelectedItem="{Binding FlatData.Gender , UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" Grid.Row="4" Grid.Column="1" Margin="2"/>
+                            <TextBox Text="{Binding FlatData.Language, Mode=TwoWay}" Grid.Row="4" Grid.Column="3" Margin="2" HorizontalAlignment="Stretch" Width="135" />
+
+                            <DatePicker SelectedDate="{Binding FlatData.HireDate, UpdateSourceTrigger=PropertyChanged ,Mode=TwoWay}" Grid.Row="5" Grid.Column="1" Margin="2" HorizontalAlignment="Stretch" Width="135" />
+                            <TextBox Text="{Binding FlatData.TotalFlightHours, Mode=TwoWay}" Grid.Row="5" Grid.Column="3" Margin="2" HorizontalAlignment="Stretch" Width="135" />
+
+                            <TextBox Text="{Binding FlatData.Seniority, Mode=TwoWay}" Grid.Row="6" Grid.Column="1" Margin="2" HorizontalAlignment="Stretch" Width="135" />
+                            
+                            <StackPanel Grid.Row="6" Grid.Column="3" HorizontalAlignment="Left"  Orientation="Horizontal" Margin="2" >
+                                <TextBox Text="{Binding FlatData.BaseAirport.Code , Mode=TwoWay}" HorizontalAlignment="left" Width="115"   />
+                                <Button Content="f" Width="20"                    Command="{Binding ShowAirportsGridCommand}"/>
+                            </StackPanel>
+                            <ComboBox ItemsSource="{Binding EmployeeTypes}"  SelectedItem="{Binding FlatData.Position , UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" Grid.Row="7" Grid.Column="1" Margin="2"/>
+                            
+                            <StackPanel Grid.Row="7" Grid.Column="3" HorizontalAlignment="Left"  Orientation="Horizontal" Margin="2" >
+                                <TextBox Text="{Binding FlatData.Certification.Code , Mode=TwoWay}" HorizontalAlignment="left" Width="115"   />
+                                <Button Content="f" Width="20"                    Command="{Binding ShowCertificationsGridCommand}"/>
+                            </StackPanel>
+
+                        </Grid>
+                        <StackPanel  HorizontalAlignment="Left" Orientation="Horizontal">
+                            <Button x:Name="ClearButton"  Width="100" Margin="2" HorizontalAlignment="Left" Command="{Binding ClearCommand}">
+                                <TextBlock Text="Clear"/>
+                            </Button>
+
+                            <Button x:Name="RefreshButton"  Width="100" Margin="2" HorizontalAlignment="Left" Command="{Binding RefreshCommand}">
+                                <TextBlock Text="Refresh"/>
+                            </Button>
+
+                            <Button x:Name="SaveButton"  Width="100" Margin="2" HorizontalAlignment="Left"  Command="{Binding SaveCommand}">
+                                <TextBlock Text="Save"/>
+                            </Button>
+
+                        </StackPanel>
+
+                        <syncfusion:SfDataGrid x:Name="sfGrid"
+                                                    ColumnSizer="Star"
+                                                    Background="White"
+                                                    AllowSorting="True"
+                                                    ShowSortNumbers="True"
+                                                    AllowFiltering="True"
+                                                    AutoGenerateColumns="False"
+                                                    SelectedItem="{Binding SelectedItem, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                    Columns="{Binding SfGridColumns, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                    ItemsSource="{Binding CollectionView , Mode=TwoWay , UpdateSourceTrigger=PropertyChanged}"
+                                                    ShowRowHeader="True" 
+                                                    FilterRowPosition="FixedTop"
+                                                    ScrollViewer.VerticalScrollBarVisibility="Visible"
+                                                    ScrollViewer.HorizontalScrollBarVisibility="Visible"
+                                                    ShowToolTip="True"
+                                                    AllowGrouping="True"
+                                                    ShowGroupDropArea="True" >
+                            <i:Interaction.Triggers>
+                                <i:EventTrigger EventName="MouseDoubleClick">
+                                    <i:InvokeCommandAction Command="{Binding Path=DataContext.RowDataCommand,ElementName=sfGrid}" CommandParameter="{Binding}"/>
+                                </i:EventTrigger>
+                            </i:Interaction.Triggers>
+                        </syncfusion:SfDataGrid>
+
+
+
+
+
+
+                    </StackPanel>
+                </TabItem>
+                <TabItem Header="Languages">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Row="0" Grid.Column="0" HorizontalAlignment="Left" Orientation="Horizontal" >
+                            <Button x:Name="RefreshButton2"  Width="120" Margin="1"  HorizontalAlignment="Left" Command="{Binding RefreshCommand2}">
+                                <TextBlock Text="Refresh"/>
+                            </Button>
+
+                            <Button x:Name="SaveButton2"  Width="120" Margin="1" HorizontalAlignment="Left"  Command="{Binding SaveCommand2}">
+                                <TextBlock Text="Save"/>
+                            </Button>
+                            <Button x:Name="AddEmpLangue"  Width="120" Margin="1" HorizontalAlignment="Left"  Command="{Binding AddEMPLanguage}">
+                                <TextBlock Text="Add Language"/>
+                            </Button>
+                        </StackPanel>
+                        <syncfusion:SfDataGrid x:Name="sfGrid2"
+                                                    Grid.Row="1"
+                                                    Grid.RowSpan="1"
+                                                    Grid.Column="0"
+                                                    ColumnSizer="Star"
+                                                    Background="White"
+                                                    AllowSorting="True"
+                                                    ShowSortNumbers="True"
+                                                    AllowEditing="True"
+
+                                           
+                                           
+                                                    AllowFiltering="True"
+                                                    AutoGenerateColumns="False"
+                                                    ItemsSource="{Binding EMPLanguageData , Mode=TwoWay , UpdateSourceTrigger=PropertyChanged}"
+                                                    ShowRowHeader="True" 
+                                                                                                                               
+                                                    AllowResizingColumns="True"
+                                                    FilterRowPosition="FixedTop"
+                                                    ScrollViewer.VerticalScrollBarVisibility="Visible"
+                                                    ScrollViewer.HorizontalScrollBarVisibility="Visible"
+                                                    ShowToolTip="True"
+                                                    AllowGrouping="True"
+                                                    ShowGroupDropArea="True"
+                                                >
+                            <syncfusion:SfDataGrid.Columns>
+                                <syncfusion:GridTextColumn MappingName="Language.Code" HeaderText="Language Code" AllowEditing="False"/>
+                                <syncfusion:GridTextColumn MappingName="Language.Descr" HeaderText="Language Descr" AllowEditing="False"/>
+
+                                <syncfusion:GridCheckBoxColumn MappingName="LanguageFlag" HeaderText="Select" AllowEditing="True"/>
+
+                            </syncfusion:SfDataGrid.Columns>
+                            <!--<i:Interaction.Triggers>
+                            <i:EventTrigger EventName="MouseDoubleClick">
+                                <i:InvokeCommandAction Command="{Binding Path=DataContext.RowDataCommand,ElementName=sfGrid}" CommandParameter="{Binding}"/>
+                            </i:EventTrigger>
+                        </i:Interaction.Triggers>-->
+                        </syncfusion:SfDataGrid>
+
+
+                    </Grid>
+                </TabItem>
+                <TabItem Header="Leave Preferance">
+                    <StackPanel>
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="600"/>
+                                <ColumnDefinition Width="350"/>
+                                <ColumnDefinition Width="350"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+
+                            </Grid.ColumnDefinitions>
+                            <Border BorderBrush="Black" BorderThickness="1" Grid.Row="0" Grid.Column ="0"  Margin="5" Background="Beige"  >
+                                <StackPanel>
+                                    <TextBlock Text="Insert/Update Leave Bid " FontWeight="Bold" HorizontalAlignment="Center" Margin="5"/>
+
+                                    <Grid >
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="Leave Type : " Grid.Row="0" Grid.Column="0" Margin="2" />
+                                        <TextBlock Text="Bid Code : " Grid.Row="1" Grid.Column="0" Margin="2" />
+                                        <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding BidTypes}"  SelectedItem="{Binding  FlatData.LeaveBidInfo.BidType, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"  Margin="2"/>
+                                        <TextBox Text="{Binding FlatData.LeaveBidInfo.BidCode, Mode=TwoWay}" Grid.Row="1" Grid.Column="1" Margin="2" HorizontalAlignment="Stretch" Width="135" IsReadOnly="True"/>
+                                        <Button Margin="1" x:Name="DeleteBidCommand"  Width="110" HorizontalAlignment="Left"  Command="{Binding DeleteBidCommand}">
+                                            <TextBlock Text="Delete Bid  "/>
+                                        </Button>
+                                        <StackPanel x:Name="Fixed_Date_Range"
+                            Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="4" Grid.RowSpan="3" Orientation="Horizontal" Background="Aqua"
+                                Visibility="{Binding FlatData.LeaveBidInfo.BidType, Converter={StaticResource ActivePanelToVisibilityConverter}, ConverterParameter= Specific}">
+
+                                            <Grid>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+
+
+                                                </Grid.RowDefinitions>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="5"/>
+
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Date From : " Grid.Row="1" Grid.Column="0" Margin="5"/>
+                                                <TextBlock Text="Date To : " Grid.Row="1" Grid.Column="2"  Margin="5"/>
+                                                <TextBlock Text="Bid Priority Level : " Grid.Row="2" Grid.Column="0" Margin="5"/>
+
+                                                <DatePicker SelectedDate="{Binding FlatData.LeaveBidInfo.DateFrom, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" 
+                                    Grid.Row="1" Grid.Column="1"   Margin="2" HorizontalAlignment="Stretch" />
+
+                                                <DatePicker SelectedDate="{Binding FlatData.LeaveBidInfo.DateTo, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" 
+                                    Grid.Row="1" Grid.Column="3"   Margin="2" HorizontalAlignment="Stretch" />
+
+                                                <TextBox Text="{Binding FlatData.LeaveBidInfo.PriorityLevel, Mode=TwoWay}" Grid.Row="2" Grid.Column="1" Margin="2" HorizontalAlignment="Stretch"  />
+
+
+
+
+                                            </Grid>
+                                        </StackPanel>
+                                        <StackPanel x:Name="Fixed_Number_Of_Days"
+                            Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="4" Grid.RowSpan="3" Orientation="Horizontal" Background="Aqua"
+                                Visibility="{Binding FlatData.LeaveBidInfo.BidType, Converter={StaticResource ActivePanelToVisibilityConverter}, ConverterParameter= Non_Specific}">
+
+                                            <Grid>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+
+
+                                                </Grid.RowDefinitions>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="5"/>
+
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Date From : " Grid.Row="1" Grid.Column="0" Margin="5"/>
+                                                <TextBlock Text="Date To : " Grid.Row="1" Grid.Column="2"  Margin="5"/>
+
+                                                <TextBlock Text="Number Of Days: " Grid.Row="2" Grid.Column="2" Margin="5"/>
+                                                <TextBlock Text="Bid Priority Level : " Grid.Row="2" Grid.Column="0" Margin="5"/>
+
+
+
+                                                <DatePicker SelectedDate="{Binding FlatData.LeaveBidInfo.DateFrom, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" 
+                                    Grid.Row="1" Grid.Column="1"   Margin="2" HorizontalAlignment="Stretch" />
+
+                                                <DatePicker SelectedDate="{Binding FlatData.LeaveBidInfo.DateTo, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" 
+                                    Grid.Row="1" Grid.Column="3"   Margin="2" HorizontalAlignment="Stretch" />
+
+                                                <TextBox Text="{Binding FlatData.LeaveBidInfo.PriorityLevel, Mode=TwoWay}" Grid.Row="2" Grid.Column="1" Margin="2" HorizontalAlignment="Stretch"  />
+                                                <TextBox Text="{Binding FlatData.LeaveBidInfo.NumberOfDays, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" 
+                                    Grid.Row="2" Grid.Column="3"   Margin="2" HorizontalAlignment="Stretch" />
+
+
+
+                                            </Grid>
+                                        </StackPanel>
+                                        <StackPanel x:Name="Range_Of_Days"
+                            Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="4" Grid.RowSpan="3" Orientation="Horizontal" Background="Aqua"
+                                Visibility="{Binding FlatData.LeaveBidInfo.BidType, Converter={StaticResource ActivePanelToVisibilityConverter}, ConverterParameter= Min_Max}">
+
+
+
+                                            <Grid>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+
+                                                </Grid.RowDefinitions>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Date From : " Grid.Row="1" Grid.Column="0" Margin="5"/>
+                                                <TextBlock Text="Date To : " Grid.Row="1" Grid.Column="2"  Margin="5"/>
+
+                                                <TextBlock Text="Bid Priority Level : " Grid.Row="2" Grid.Column="0" Margin="5"/>
+                                                <TextBlock Text="Min: " Grid.Row="2" Grid.Column="2" Margin="5"/>
+                                                <TextBlock Text="Max: " Grid.Row="2" Grid.Column="4" Margin="5"/>
+
+
+
+                                                <DatePicker SelectedDate="{Binding FlatData.LeaveBidInfo.DateFrom, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" 
+                                    Grid.Row="1" Grid.Column="1"   Margin="2" HorizontalAlignment="Stretch" />
+
+                                                <DatePicker SelectedDate="{Binding FlatData.LeaveBidInfo.DateTo, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" 
+                                    Grid.Row="1" Grid.Column="3"   Margin="2" HorizontalAlignment="Stretch" />
+
+
+                                                <TextBox Text="{Binding FlatData.LeaveBidInfo.PriorityLevel, Mode=TwoWay}" Grid.Row="2" Grid.Column="1" Margin="2" HorizontalAlignment="Stretch"  />
+
+                                                <TextBox Text="{Binding FlatData.LeaveBidInfo.NumberOfDaysMin, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" 
+                                    Grid.Row="2" Grid.Column="3"   Margin="2" HorizontalAlignment="Stretch" />
+
+                                                <TextBox Text="{Binding FlatData.LeaveBidInfo.NumberOfDaysMax, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" 
+                                    Grid.Row="2" Grid.Column="5"   Margin="2" HorizontalAlignment="Stretch" />
+
+
+
+
+                                            </Grid>
+                                        </StackPanel>
+
+                                    </Grid>
+                                    <StackPanel Margin="1"  HorizontalAlignment="Left" Orientation="Horizontal"  Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="5">
+                                        <Button Margin="1" x:Name="ClearBidsCommand"  Width="100" HorizontalAlignment="Left" Command="{Binding ClearCommand3}">
+                                            <TextBlock Text="Clear"/>
+                                        </Button>
+
+                                        <Button Margin="1" x:Name="RefreshBidsCommand"  Width="100" HorizontalAlignment="Left" Command="{Binding RefreshCommand3}">
+                                            <TextBlock Text="Refresh"/>
+                                        </Button>
+                                        <Button Margin="1" x:Name="SaveBidsCommand"  Width="110" HorizontalAlignment="Left"  Command="{Binding SaveCommand3}">
+                                            <TextBlock Text="Save Bids  "/>
+                                        </Button>
+                                        <Button Content="Add/Modify Leave Bid"  Width="169" Margin="1"  Command="{Binding UpdateLeaveBid}"/>
+                                    </StackPanel>
+
+                                </StackPanel>
+                            </Border>
+                            <Border BorderBrush="Black" BorderThickness="1" Grid.Row="0" Grid.Column ="1"  Margin="5" >
+                                <StackPanel>
+                                    <TextBlock Text="Main Schedule" FontWeight="Bold" HorizontalAlignment="Center" Margin="5"/>
+
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="Schedule Code : " Grid.Row="0" Grid.Column="0" Margin="2"/>
+                                        <TextBlock Text="Schedule Description : " Grid.Row="1" Grid.Column="0" Margin="2"/>
+                                        <TextBlock Text="Date From : " Grid.Row="2" Grid.Column="0" Margin="2"/>
+                                        <TextBlock Text="Date To : " Grid.Row="3" Grid.Column="0" Margin="2"/>
+                                        
+                                        <TextBox Text="{Binding FlatData.MainSchedule.ReqCode, Mode=TwoWay}" Grid.Row="0" Grid.Column="1" Margin="2" HorizontalAlignment="Stretch" Width="135" />
+                                        <TextBox Text="{Binding FlatData.MainSchedule.ReqDescr, Mode=TwoWay}" Grid.Row="1" Grid.Column="1" Margin="2" HorizontalAlignment="Stretch" Width="135" />
+
+                                        <TextBox Text="{Binding FlatData.MainSchedule.DateFrom, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay,StringFormat=dd/MM/yyyy}" Grid.Row="2" Grid.Column="1" Margin="2" HorizontalAlignment="Stretch" Width="135" />
+                                        <TextBox Text="{Binding FlatData.MainSchedule.DateTo, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay ,StringFormat=dd/MM/yyyy}" Grid.Row="3" Grid.Column="1" Margin="2" HorizontalAlignment="Stretch" Width="135" />
+
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+                            <Border BorderBrush="Black" BorderThickness="1" Grid.Row="0" Grid.Column ="2"  Margin="5" >
+                                <StackPanel>
+                                    <TextBlock Text="Current Leave Status" FontWeight="Bold" HorizontalAlignment="Center" Margin="5"/>
+
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="Total : " Grid.Row="0" Grid.Column="0" Margin="2"/>
+                                        <TextBlock Text="Used: " Grid.Row="1" Grid.Column="0" Margin="2"/>
+                                        <TextBlock Text="Current Balance : " Grid.Row="2" Grid.Column="0" Margin="2"/>
+                                        <TextBlock Text="Projected Balance : " Grid.Row="3" Grid.Column="0" Margin="2"/>
+
+                                        <TextBox Text="{Binding FlatData.LeaveStatus.Total, Mode=TwoWay}" Grid.Row="0" Grid.Column="1" Margin="2" HorizontalAlignment="Stretch" Width="135" />
+                                        <TextBox Text="{Binding FlatData.LeaveStatus.Used, Mode=TwoWay}" Grid.Row="1" Grid.Column="1" Margin="2" HorizontalAlignment="Stretch" Width="135" />
+                                        <TextBox Text="{Binding FlatData.LeaveStatus.CurrentBalance, Mode=OneWay}" Grid.Row="2" Grid.Column="1" Margin="2" HorizontalAlignment="Stretch" Width="135" IsReadOnly="True"/>
+                                        <TextBox Text="{Binding FlatData.LeaveStatus.ProjectedBalance, Mode=TwoWay}" Grid.Row="3" Grid.Column="1" Margin="2" HorizontalAlignment="Stretch" Width="135" IsReadOnly="True" />
+
+                                        
+
+                                    </Grid>
+
+                                    <StackPanel Margin="1"  HorizontalAlignment="Left" Orientation="Horizontal"  Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="5">
+                                        <Button Margin="1" x:Name="RefreshLeaveStatusCommand"  Width="100" HorizontalAlignment="Left" Command="{Binding RefreshCommandLeaveStatus}">
+                                            <TextBlock Text="Refresh"/>
+                                        </Button>
+                                        <Button Margin="1" x:Name="SaveLeaveStatusCommand"  Width="110" HorizontalAlignment="Left"  Command="{Binding SaveCommandLeaveStatus}">
+                                            <TextBlock Text="Save Leave Status  "/>
+                                        </Button>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+
+
+
+                        </Grid>
+
+
+                        <syncfusion:SfDataGrid x:Name="sfGrid3"
+                                                    Grid.Row="3" Grid.Column="0"
+                                                    ColumnSizer="Star"
+                                                    Background="White"
+                                                    AllowSorting="True"
+                                                    ShowSortNumbers="True"
+                                                    AllowFiltering="True"
+                                                    AutoGenerateColumns="False"
+                                                    AllowEditing="False"
+                                                    ItemsSource="{Binding FlatData.LeaveBidDataGridStatic , Mode=TwoWay , UpdateSourceTrigger=PropertyChanged}"
+                                                    SelectedItem="{Binding SelectedItem2, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+
+                                                    ShowRowHeader="True" 
+                                                >
+                            <syncfusion:SfDataGrid.Columns>
+                                <syncfusion:GridTextColumn MappingName="BidCode" HeaderText="Leave Bid Code"/>
+                                <syncfusion:GridTextColumn MappingName="PriorityLevel" HeaderText="Priority Level"/>
+                                <syncfusion:GridTextColumn MappingName="BidType" HeaderText="Bid Type"/>
+                                <syncfusion:GridTextColumn MappingName="DateFrom" HeaderText="Date From"  />
+                                <syncfusion:GridTextColumn MappingName="DateTo" HeaderText="Date To"  />
+
+                                <syncfusion:GridTextColumn MappingName="NumberOfDays" HeaderText="Number Of Days"/>
+                                <syncfusion:GridTextColumn MappingName="NumberOfDaysMin" HeaderText="MIN Number Of Days"/>
+                                <syncfusion:GridTextColumn MappingName="NumberOfDaysMax" HeaderText="MAX Number Of Days"/>
+                                <syncfusion:GridTextColumn MappingName="Schedule.ReqCode" HeaderText="Main Schedule Code"/>
+                            </syncfusion:SfDataGrid.Columns>
+                            <i:Interaction.Triggers>
+                                <i:EventTrigger EventName="MouseDoubleClick">
+                                    <i:InvokeCommandAction Command="{Binding Path=DataContext.RowDataCommand2,ElementName=sfGrid3}" CommandParameter="{Binding}"/>
+                                </i:EventTrigger>
+                            </i:Interaction.Triggers>
+                        </syncfusion:SfDataGrid>
+
+
+                    </StackPanel>
+
+                </TabItem>
+
+            </TabControl>
+        </StackPanel>
+
+
+    </Grid>
+</UserControl>

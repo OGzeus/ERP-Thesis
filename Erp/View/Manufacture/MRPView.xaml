@@ -155,7 +155,7 @@
 
                             <Border BorderBrush="Black" BorderThickness="1" Grid.Row="0" Grid.Column ="1"  Margin="5" >
                                 <StackPanel>
-                                    <TextBlock Text="Inventory" FontWeight="Bold" HorizontalAlignment="Center" Margin="5"/>
+                                    <TextBlock Text="Items Info / Inventory" FontWeight="Bold" HorizontalAlignment="Center" Margin="5"/>
 
                                     <Grid>
                                         <Grid.RowDefinitions>
@@ -188,7 +188,7 @@
 
                                         <StackPanel Margin="2"  HorizontalAlignment="Center" Orientation="Horizontal"   Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="5" >
 
-                                            <Button Content="Show Stock" Width="170" Margin="2" Command="{Binding ShowStockCommand}"/>
+                                            <Button Content="Show Items/Stock" Width="170" Margin="2" Command="{Binding ShowStockCommand}"/>
 
                                         </StackPanel>
 

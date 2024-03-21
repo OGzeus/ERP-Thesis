@@ -1,6 +1,8 @@
-﻿using Erp.Model;
+﻿using Erp.DataBase.Τhesis;
+using Erp.Model;
 using Erp.Model.BasicFiles;
 using Erp.Model.Customers;
+using Erp.Model.Thesis.VacationPlanning;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -28,16 +30,10 @@ namespace Erp.DataBase
         public DbSet<FactoryDataEntity> Factory { get; set; }
         public DbSet<MachineDataEntity> Machines { get; set; }
 
-
         public DbSet<MPSInputDataEntity> MPSInput { get; set; }
         public DbSet<NumberOfRepairsOnlyMPSEntity> NumberOfRepairsOnlyMPS { get; set; }
         public DbSet<NumberDatesOfRepairsMPSEntity> NumberDatesOfRepairsMPS { get; set; }
-
-
-
         public DbSet<MRPInputDataEntity> MRPInput { get; set; }
-
-
         public DbSet<CityDataEntity> City { get; set; }
         public DbSet<PrefectureEntity> Prefecture { get; set; }
         public DbSet<CountryDataEntity> Country { get; set; }      
@@ -46,6 +42,28 @@ namespace Erp.DataBase
 
         public DbSet<COrderCartEntity> COrder_Cart { get; set; }
         public DbSet<CustomerOrderEntity> CustomerOrder { get; set; }
+
+        #region Thesis
+
+        public DbSet<LeaveBidsDataEntity> LeaveBids { get; set; }
+        public DbSet<LeaveBidRowsDataEntity> LeaveBidsRows { get; set; }
+        public DbSet<LeaveStatusDataEntity> LeaveStatus { get; set; }
+        public DbSet<VPInputDataEntity> VPInput { get; set; }
+        public DbSet<VPYijzResultsDataEntity> VPYijzResults { get; set; }
+
+        public DbSet<EmployeeDataEntity> Employees { get; set; }
+        public DbSet<ReqScheduleInfoDataEntity> ReqScheduleInfo { get; set; }
+        public DbSet<ReqScheduleRowsDataEntity> ReqScheduleRows { get; set; }
+
+        public DbSet<EMPLanguagesDataEntity> EmpLanguages { get; set; }
+        public DbSet<LanguageDataEntity> Language { get; set; }
+
+        public DbSet<CertificationsDataEntity> Certifications { get; set; }
+        public DbSet<AirportsDataEntity> Airports { get; set; }
+        public DbSet<AircraftDataEntity> Aircrafts { get; set; }
+
+
+        #endregion
 
         public static DbContextOptions<ErpDbContext> DbOptions { get; set; }
 

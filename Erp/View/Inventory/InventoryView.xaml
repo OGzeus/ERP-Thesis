@@ -188,11 +188,11 @@
                                                     ShowGroupDropArea="True"
                                                 >
                             <syncfusion:SfDataGrid.Columns>
-                                <syncfusion:GridTextColumn MappingName="Quantity" HeaderText="Quantity" />
                                 <syncfusion:GridTextColumn MappingName="StockItem.ItemCode" HeaderText="Item Code " IsReadOnly="True"/>
                                 <syncfusion:GridTextColumn MappingName="StockItem.ItemDescr" HeaderText="Item Description" IsReadOnly="True"/>
                                 <syncfusion:GridTextColumn MappingName="StockItem.ItemType" HeaderText="Item Type" IsReadOnly="True"/>
                                 <syncfusion:GridTextColumn MappingName="StockItem.Assembly" HeaderText="Assembly" IsReadOnly="True"/>
+                                <syncfusion:GridTextColumn MappingName="Quantity" HeaderText="Quantity" />
                                 <syncfusion:GridCheckBoxColumn MappingName="StockItemFlag" HeaderText="Select"/>
 
                             </syncfusion:SfDataGrid.Columns>
