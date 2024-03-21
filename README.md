@@ -1,2 +1,2 @@
 # ERP-Thesis
-DotNet Restore in order to restore the nuGet Packages
+```dotnet restore``` in order to restore the nuGet Packages
