@@ -14,7 +14,6 @@ using System.ComponentModel;
 using Syncfusion.Windows.Tools.Controls;
 using System.Runtime.InteropServices.ComTypes;
 using Erp.Model.Enums;
-using static IronPython.Runtime.Profiler;
 using Syncfusion.Data.Extensions;
 
 namespace Erp.ViewModel.Customer

@@ -16,7 +16,6 @@ using System.Threading.Tasks;
 using System.Web.UI.WebControls;
 using System.Windows.Data;
 using System.Windows.Input;
-using static Community.CsharpSqlite.Sqlite3;
 
 namespace Erp.CommonFiles
 {

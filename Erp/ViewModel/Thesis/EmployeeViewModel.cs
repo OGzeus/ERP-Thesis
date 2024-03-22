@@ -11,7 +11,6 @@ using System.Threading.Tasks;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows;
-using Xceed.Wpf.Toolkit.Primitives;
 using System.ComponentModel;
 using Erp.Model.BasicFiles;
 using Erp.Model.Suppliers;
@@ -20,8 +19,6 @@ using Erp.Model.Interfaces;
 using Erp.Model.Enums;
 using Erp.Model.Thesis;
 using Syncfusion.Data.Extensions;
-using static IronPython.Runtime.Profiler;
-using DlhSoft.Windows.Data;
 using OxyPlot;
 using Syncfusion.Windows.Shared;
 

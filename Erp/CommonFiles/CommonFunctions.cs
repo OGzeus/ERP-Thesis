@@ -23,28 +23,20 @@ using Erp.View;
 using System.Windows.Markup;
 using System.Security.Cryptography.X509Certificates;
 using System.Runtime.InteropServices.ComTypes;
-using static DevExpress.Xpo.Helpers.AssociatedCollectionCriteriaHelper;
-using DevExpress.DashboardWeb.Native;
 using Erp.Model.Inventory;
 using Erp.ViewModel.Inventory;
-using static IronPython.Modules.PythonDateTime;
 using Erp.Model.Manufacture;
 using System.Windows.Forms;
 using System.Drawing;
 using static Erp.ViewModel.Data_Analytics.MRPVisualisationViewModel;
 using Erp.Model.Data_Analytics;
-using DevExpress.Utils;
 using Erp.Model.Customers;
-using IronPython.Runtime;
 using Erp.DataBase;
 using Microsoft.Extensions.Options;
 using Microsoft.EntityFrameworkCore;
 using Erp.Model.Enums;
-using Microsoft.Office.Interop.Excel;
-using static IronPython.Runtime.Profiler;
 using Gurobi;
 using Erp.Model.Inventory.InvControl_ConstantDemand;
-using Microsoft.Scripting.Hosting;
 using Erp.Model.Inventory.InvControl_TimeVaryingDemand;
 using System.Windows.Controls;
 using Deedle;
@@ -56,23 +48,17 @@ using Syncfusion.Windows.Controls.Input;
 using Erp.Model.Data_Analytics.Forecast;
 using OxyPlot;
 using Erp.Model.Manufacture.MPS;
-using Syncfusion.Windows.Controls.Gantt;
-using DevExpress.Data.Helpers;
 using System.Windows.Media;
-using static IronPython.Modules.PythonIterTools;
 using ControlzEx.Standard;
 using static Erp.Model.Enums.BasicEnums;
 using System.Globalization;
 using System.Reflection.Emit;
-using DevExpress.XtraReports.Native;
 using Erp.Model.Manufacture.MRP;
 using Syncfusion.Windows.Controls;
 using Erp.Model.Thesis;
 using Erp.DataBase.Τhesis;
-using DlhSoft.Windows.Data;
 using Erp.Model.Thesis.VacationPlanning;
 using Microsoft.EntityFrameworkCore.Internal;
-using DevExpress.Xpo;
 using Erp.View.Thesis.CustomButtons;
 
 namespace Erp.CommonFiles
@@ -2323,12 +2309,12 @@ Where 1=1 {0}", FilterStr);
 
                     var SelectedBid1 = emp.LeaveBidDataGridStatic.ElementAt(j1);
                     var SelectedBid2 = emp.LeaveBidDataGridStatic.ElementAt(j2);
-                    if (SelectedBid2.DateFrom.AddDays(z2) >= SelectedBid1.DateFrom.AddDays(SelectedBid1.NumberOfDaysMax + SeparValue + z1 - r1))
+                    if (SelectedBid2.DateFrom.AddDays(z2) >= SelectedBid1.DateFrom.AddDays(SelectedBid1.NumberOfDaysMax + SeparValue + z1 - r1 -1))
                     {
                         return false;
 
                     };
-                    if (SelectedBid2.DateFrom.AddDays(SelectedBid2.NumberOfDaysMax + z2 - r1) <= SelectedBid1.DateFrom.AddDays(-SeparValue))
+                    if (SelectedBid2.DateFrom.AddDays(SelectedBid2.NumberOfDaysMax + z2 - r1 - 1) <= SelectedBid1.DateFrom.AddDays(-SeparValue))
                     {
 
                         return false;
@@ -2381,32 +2367,7 @@ Where 1=1 {0}", FilterStr);
                 }
 
 
-                //#7. Connection Between Yij and Yijz 
-                // #1. Adding constraints for maximum number of satisfied bids dynamically
-                //for (int i = 0; i < Employees.Length; i++)
-                //{
-                //    for (int j = 0; j < MaxLeaveBidsPerEmployee[Employees[i]]; j++)
-                //    {
-                //        GRBLinExpr sumZPerBid = 0;
 
-                //        #region Find ZValue
-                //        int Zvalue = new int();
-                //        var EmployeeCode = Employees[i];
-                //        var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == Employees[i]);
-                //        var BidCode = specificEmployee.LeaveBidDataGridStatic[j].BidCode;
-                //        Zvalue = ZbidsDict.TryGetValue((Employees[i], BidCode), out int value) ? value : Zvalue;
-                //        #endregion
-
-                //        for (int z = 0; z < Zvalue; z++) //allagh
-                //        {
-                //            sumZPerBid.AddTerm(1.0, Y[i, j, z]); // Summing up the leave bids for each employee
-
-                //        }
-                //        // Adding the constraint for each Bid
-                //        model.AddConstr(sumZPerBid <= 1, "SumZPerBid_" + Employees[i]);
-                //    }
-
-                //}
 
                 #endregion
 
@@ -2434,7 +2395,7 @@ Where 1=1 {0}", FilterStr);
 
                     int j = NextBid[id];
 
-                    #region Change Z
+                    #region Change R,Z insert Xij
                     var z = 0;
                     var r = 0;
                     #region Find ZValue
@@ -2469,7 +2430,7 @@ Where 1=1 {0}", FilterStr);
 
                                 var SelectedBid = emp.LeaveBidDataGridStatic.ElementAt(j);
                                 var DateFrom = SelectedBid.DateFrom.AddDays(z).ToString("dd/MM/yyyy");
-                                var DateTo = SelectedBid.DateFrom.AddDays(SelectedBid.NumberOfDaysMax - r + z).ToString("dd/MM/yyyy");
+                                var DateTo = SelectedBid.DateFrom.AddDays(SelectedBid.NumberOfDaysMax - r + z -1).ToString("dd/MM/yyyy");
 
                                 string employee = Employees[id];
 
@@ -2795,8 +2756,8 @@ Where 1=1 {0}", FilterStr);
                                                 }
 
                                                 DateFrom = SpecificEmployee.LeaveBidDataGridStatic[j].DateFrom.AddDays(z);
-                                                NumberOfDays = SpecificEmployee.LeaveBidDataGridStatic[j].NumberOfDaysMax - r;
-                                                DateTo = DateFrom.AddDays(NumberOfDays);
+                                                NumberOfDays = SpecificEmployee.LeaveBidDataGridStatic[j].NumberOfDaysMax - r ;
+                                                DateTo = DateFrom.AddDays(NumberOfDays -1);
 
                                                 yijzDataRecord.DateFrom = DateFrom;
                                                 yijzDataRecord.DateTo = DateTo;

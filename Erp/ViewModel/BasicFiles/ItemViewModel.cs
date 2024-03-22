@@ -15,7 +15,6 @@ using System.Windows.Input;
 using System.Windows;
 using LiveCharts.Wpf;
 using Syncfusion.Data.Extensions;
-using static Community.CsharpSqlite.Sqlite3;
 using Erp.Model.Enums;
 
 namespace Erp.ViewModel.BasicFiles

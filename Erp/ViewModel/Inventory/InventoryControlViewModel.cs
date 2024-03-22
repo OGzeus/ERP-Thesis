@@ -11,7 +11,6 @@ using System.Threading.Tasks;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows;
-using Xceed.Wpf.Toolkit.Primitives;
 using System.ComponentModel;
 using Erp.Model.BasicFiles;
 using Erp.Model.Suppliers;
@@ -23,7 +22,6 @@ using System.Runtime.InteropServices.ComTypes;
 using LiveCharts;
 using LiveCharts.Wpf;
 using Erp.Model.Inventory.InvControl_TimeVaryingDemand;
-using static IronPython.Runtime.Profiler;
 using Deedle;
 using Syncfusion.Data.Extensions;
 

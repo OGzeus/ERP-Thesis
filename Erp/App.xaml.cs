@@ -51,10 +51,11 @@ namespace Erp
         public App()
         {
             ErpDbContext.DbOptions = new DbContextOptionsBuilder<ErpDbContext>()
-    .UseSqlServer("Server=DESKTOP-F2TG0LU\\SQLEXPRESS;Database=ERPDatabase;Trusted_Connection=True;")
+    .UseSqlServer("Server=DESKTOP-F2TG0LU\\SQLEXPRESS;Database=ERPDatabase;Trusted_Connection=True;Encrypt=False")
     .Options;
+
             //Register Syncfusion license
-            Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("MTQ2ODE0N0AzMjMxMmUzMTJlMzMzNWpUREZVSnc5a0hxMzA3WFo2ZWsxLzIrbWJDWmlEbERJczJtOENUTUtBWXM9");
+            Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("Ngo9BigBOggjHTQxAR8/V1NBaF5cXmZCfUx0TXxbf1x0ZFNMZFxbR3BPIiBoS35RckVgW35feHBVRWZUWUNy");
         }
     }
 }

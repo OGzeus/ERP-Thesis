@@ -6,7 +6,6 @@ using Erp.Model.Inventory;
 using Erp.Model.Suppliers;
 using Erp.ViewModel;
 using FontAwesome.Sharp;
-using GalaSoft.MvvmLight.Command;
 using MyControls;
 using OxyPlot;
 using Syncfusion.Data.Extensions;

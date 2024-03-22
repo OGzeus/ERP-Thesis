@@ -17,9 +17,7 @@ using Syncfusion.Data.Extensions;
 using Erp.Model.Manufacture.MPS;
 using Erp.Model.Manufacture;
 using System.Runtime.InteropServices.ComTypes;
-using DevExpress.Data.Filtering.Helpers;
 using Erp.Model.Data_Analytics.Forecast;
-using static IronPython.Runtime.Profiler;
 using System.Reflection.Emit;
 using Erp.Model.Data_Analytics;
 using static Erp.Model.Enums.BasicEnums;
@@ -33,8 +31,6 @@ using Erp.ViewModel.Inventory;
 using System.Windows.Data;
 using Gurobi;
 using Erp.Model.Manufacture.MRP;
-using IronPython.Hosting;
-using Microsoft.Scripting.Hosting;
 using System.Diagnostics;
 
 namespace Erp.ViewModel.Manufacture
@@ -650,12 +646,6 @@ namespace Erp.ViewModel.Manufacture
         private void ExecuteCalculateMrp(object obj)
         {
             var a = CommonFunctions.CalculateMRP(InputData);
-
-            ScriptEngine engine = Python.CreateEngine();
-            engine.ExecuteFile(@"C:\Users\npoly\Source\Repos\MrpPlanner2\MrpPlanner2.py");
-
-
-
         }
         #endregion
 

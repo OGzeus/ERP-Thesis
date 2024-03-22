@@ -1,5 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using Erp.Model.BasicFiles;
+﻿using Erp.Model.BasicFiles;
 using Erp.Model.Customers;
 using Erp.Model.Suppliers;
 using Erp.ViewModel.Inventory;

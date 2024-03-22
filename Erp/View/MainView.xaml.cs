@@ -29,13 +29,10 @@ using Erp.View.Customers;
 using System.ComponentModel;
 using Erp.View.Schedules;
 using System.Collections.ObjectModel;
-using Microsoft.Scripting.Utils;
-using DevExpress.Data.Helpers;
 using MahApps.Metro.Controls;
 using Syncfusion.Windows.Tools.Controls;
 using Syncfusion.Data.Extensions;
 using Erp.View.Thesis;
-using Microsoft.Scripting.Runtime;
 
 namespace Erp.View
 {

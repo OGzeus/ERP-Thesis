@@ -27,7 +27,6 @@ using LiveCharts;
 using Erp.ViewModel.Inventory;
 using System.Windows.Data;
 using Gurobi;
-using DevExpress.Xpo.DB;
 
 namespace Erp.ViewModel.Manufacture
 {

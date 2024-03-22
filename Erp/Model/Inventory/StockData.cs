@@ -1,5 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using Erp.Model.BasicFiles;
+﻿using Erp.Model.BasicFiles;
 using Erp.Model.Interfaces;
 using Erp.ViewModel;
 using System;
