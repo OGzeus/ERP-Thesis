@@ -4465,6 +4465,8 @@ ORDER BY E.Seniority", FilterStr);
         #endregion
         #endregion
 
+        #region ERP Factory Program
+
         #region BasicFiles
 
         #region Factory
@@ -12083,6 +12085,7 @@ ORDER BY Date ASC"
             return (date.Day - 1) / 7 + 1;
         }
 
+        #endregion
 
         public static void LogError(Exception ex, string methodName, string additionalInfo = "")
         {
