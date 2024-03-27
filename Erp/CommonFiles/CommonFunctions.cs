@@ -66,10 +66,6 @@ namespace Erp.CommonFiles
 
     public class CommonFunctions : RepositoryBase
     {
-        public DbContextOptions<ErpDbContext> options = new DbContextOptionsBuilder<ErpDbContext>()
-            .UseSqlServer("Server=DESKTOP-F2TG0LU\\SQLEXPRESS;Database=ERPDatabase;Trusted_Connection=True;MultipleActiveResultSets=True;Encrypt=false;")
-            .Options;
-
 
         #region Thesis
 
@@ -5691,7 +5687,7 @@ City.Latitude,City.IsDeleted
         {
             try
             {
-                using (var dbContext = new ErpDbContext(ErpDbContext.DbOptions))
+                using (var dbContext = new ErpDbContext(options))
                 {
                     // Get list of CityIds from the database
 

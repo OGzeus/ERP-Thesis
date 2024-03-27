@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Erp.DataBase;
 using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 
 namespace Erp.Repositories
 {
@@ -15,6 +17,11 @@ namespace Erp.Repositories
         {
             _connectionString = "Server=(local); Database =ERPDatabase;Encrypt=false; Integrated Security=true";
         }
+
+        public DbContextOptions<ErpDbContext> options = new DbContextOptionsBuilder<ErpDbContext>()
+    .UseSqlServer("Server=(local);Database=ERPDatabase;Trusted_Connection=True;MultipleActiveResultSets=True;Encrypt=false;")
+    .Options;
+
         protected SqlConnection GetConnection()
         {
             return new SqlConnection(_connectionString);

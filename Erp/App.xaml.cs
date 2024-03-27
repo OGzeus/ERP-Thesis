@@ -51,7 +51,7 @@ namespace Erp
         public App()
         {
             ErpDbContext.DbOptions = new DbContextOptionsBuilder<ErpDbContext>()
-    .UseSqlServer("Server=DESKTOP-F2TG0LU\\SQLEXPRESS;Database=ERPDatabase;Trusted_Connection=True;Encrypt=False")
+    .UseSqlServer("Server=(local);Database=ERPDatabase;Trusted_Connection=True;Encrypt=False")
     .Options;
 
             //Register Syncfusion license
