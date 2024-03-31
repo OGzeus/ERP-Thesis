@@ -2417,7 +2417,7 @@ Where 1=1 {0}", FilterStr);
                             if (solution)
                             {
                                 grant = true;
-                                string message = $"Crew member {id + 1} was awarded bid {j + 1} Yijrz = " + $"Y{id + 1}_{j + 1}_{r + 1}_{z + 1}";
+                                string message = $"Crew member {id + 1} was awarded bid {j + 1}";
                                 Console.WriteLine(message);
                                 outputLines.Add(message);
                                 Data.ObjValue = model.ObjVal;
@@ -2458,7 +2458,7 @@ Where 1=1 {0}", FilterStr);
                             {
                                 grant = false;
                                 K.LB = 0;
-                                string message = $"Crew member {id + 1} was not awarded bid {j + 1}Yijrz = " + $"Y{id + 1}_{j + 1}_{r + 1}_{z + 1}";
+                                string message = $"Crew member {id + 1} was not awarded bid {j + 1}";
                                 Console.WriteLine(message);
                                 outputLines.Add(message);
                             }

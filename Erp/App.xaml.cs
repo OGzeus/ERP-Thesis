@@ -55,7 +55,7 @@ namespace Erp
     .Options;
 
             //Register Syncfusion license
-            Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("Ngo9BigBOggjHTQxAR8/V1NBaF5cXmZCfUx0TXxbf1x0ZFNMZFxbR3BPIiBoS35RckVgW35feHBVRWZUWUNy");
+            Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("MzE5NDUzMEAzMjM1MmUzMDJlMzBFVm5sR2lkUm0zU2xOM1VzVjRrK1pvOWpwQ0xEN2pLalB3a1h5NzZjVHN3PQ==");
         }
     }
 }
