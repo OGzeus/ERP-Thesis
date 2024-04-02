@@ -83,8 +83,8 @@ namespace Erp.Model.Thesis.VacationPlanning
         private string[] datesstr;
         private DateTime[] dates;
 
-        public Dictionary<string, int> MaxLeaveBidsPerEmployee { get; set; } //Number of Machines (tha ftiaksw diaforetikes mixanes kai tha pe3w me to enum me to machinetype 
-        public Dictionary<string, string> BidsPerEmployee { get; set; } //Number of Machines (tha ftiaksw diaforetikes mixanes kai tha pe3w me to enum me to machinetype 
+        public Dictionary<string, int> MaxLeaveBidsPerEmployee { get; set; } 
+        public Dictionary<string, string> BidsPerEmployee { get; set; } 
 
 
         public List<(int, int)> OverlappingBids1 = new List<(int, int)>();

@@ -601,8 +601,8 @@ namespace Erp.ViewModel.Thesis
             #endregion
 
 
-            OutputData = CommonFunctions.CalculateVacationPlanningAdvanced3(InputData);
-
+            OutputData = CommonFunctions.CalculateVacationPlanningAdvanced(InputData);
+            //var b = CommonFunctions.CalculateColumnGeneration(OutputData);
 
 
             var result = System.Windows.MessageBox.Show($"Do you want to Create a Notepad as Python Input?", "Confirmation", MessageBoxButton.YesNo);
