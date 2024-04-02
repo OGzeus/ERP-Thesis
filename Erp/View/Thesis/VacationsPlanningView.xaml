@@ -246,8 +246,13 @@
                                                     AutoGenerateColumns="False"
                                                     ItemsSource="{Binding OutputData.VPYijResultsDataGrid , Mode=TwoWay , UpdateSourceTrigger=PropertyChanged}"
                                                     ShowRowHeader="True" 
+                                                    AutoExpandGroups="True"
+
                                                     FontSize="18">
-     
+                                    <syncfusion:SfDataGrid.GroupColumnDescriptions>
+                                        <syncfusion:GroupColumnDescription ColumnName="LeaveBidData.Employee.Code" />
+                                    </syncfusion:SfDataGrid.GroupColumnDescriptions>
+
                                     <syncfusion:SfDataGrid.Columns>
                                         <syncfusion:GridTextColumn MappingName="LeaveBidData.Employee.Code" HeaderText="Employee Code" AllowEditing="False"/>
                                         <syncfusion:GridTextColumn MappingName="LeaveBidData.Employee.Seniority" HeaderText="Employee Seniority" AllowEditing="False"/>
@@ -321,7 +326,11 @@
                                                     AutoGenerateColumns="False"
                                                     ItemsSource="{Binding OutputData.VPYijzResultsDataGrid , Mode=TwoWay , UpdateSourceTrigger=PropertyChanged}"
                                                     ShowRowHeader="True" 
+                                                    AutoExpandGroups="True"
                                                     FontSize="18">
+                                    <syncfusion:SfDataGrid.GroupColumnDescriptions>
+                                        <syncfusion:GroupColumnDescription ColumnName="LeaveBidData.Employee.Code" />
+                                    </syncfusion:SfDataGrid.GroupColumnDescriptions>
                                     <syncfusion:SfDataGrid.Columns>
                                         <syncfusion:GridTextColumn MappingName="LeaveBidData.Employee.Code" HeaderText="Employee Code" AllowEditing="False"/>
                                         <syncfusion:GridTextColumn MappingName="LeaveBidData.Employee.Seniority" HeaderText="Employee Seniority" AllowEditing="False"/>
@@ -384,6 +393,9 @@
                                                     ItemsSource="{Binding OutputData.VPXijResultsDataGrid , Mode=TwoWay , UpdateSourceTrigger=PropertyChanged}"
                                                     ShowRowHeader="True" 
                                                     FontSize="18">
+                                    <syncfusion:SfDataGrid.GroupColumnDescriptions>
+                                        <syncfusion:GroupColumnDescription ColumnName="Employee.Code" />
+                                    </syncfusion:SfDataGrid.GroupColumnDescriptions>
                                     <syncfusion:SfDataGrid.Columns>
                                         <syncfusion:GridTextColumn MappingName="Employee.Code" HeaderText="Employee Code" AllowEditing="False"/>
                                         <syncfusion:GridTextColumn MappingName="Employee.Seniority" HeaderText="Employee Seniority" AllowEditing="False"/>
