@@ -2798,16 +2798,16 @@ Where 1=1 {0}", FilterStr);
 
 
                                 #region Create c#sol.txt for python
-                                string filePath = @"C:\Users\npoly\Source\Repos\Bids_CrewScheduling_Kozanidis\c#sol.txt";
-                                File.WriteAllText(filePath, string.Empty);
+                                //string filePath = @"C:\Users\npoly\Source\Repos\Bids_CrewScheduling_Kozanidis\c#sol.txt";
+                                //File.WriteAllText(filePath, string.Empty);
 
-                                using (StreamWriter writer = new StreamWriter(filePath, true)) // 'true' parameter appends to the existing file if it exists
-                                {
-                                    foreach (string line in outputLines)
-                                    {
-                                        writer.WriteLine(line);
-                                    }
-                                }
+                                //using (StreamWriter writer = new StreamWriter(filePath, true)) // 'true' parameter appends to the existing file if it exists
+                                //{
+                                //    foreach (string line in outputLines)
+                                //    {
+                                //        writer.WriteLine(line);
+                                //    }
+                                //}
 
                                 #endregion
                             }
@@ -3500,89 +3500,89 @@ Where 1=1 {0}", FilterStr);
 
             #endregion
 
-
             #region Create Notepad For Python 2nd part
 
 
-            // Specify the file path
-            string filePath = @"C:\Users\npoly\Source\Repos\Bids_CrewScheduling_Kozanidis\vms_data.txt";
+            //// Specify the file path
+            //string filePath = @"C:\Users\npoly\Source\Repos\Bids_CrewScheduling_Kozanidis\vms_data.txt";
 
-            // Write data to the text file and print to console for debugging
-            using (StreamWriter writer = new StreamWriter(filePath))
-            {
-                // Write LimitLine, SeparValue, and MaxBids
-                for (int a = 0; a < generalxt.Length; a++)
-                {
-                    writer.Write($"{generalxt[a]} ");
-                    Console.Write($"{generalxt[a]} ");
+            //// Write data to the text file and print to console for debugging
+            //using (StreamWriter writer = new StreamWriter(filePath))
+            //{
+            //    // Write LimitLine, SeparValue, and MaxBids
+            //    for (int a = 0; a < generalxt.Length; a++)
+            //    {
+            //        writer.Write($"{generalxt[a]} ");
+            //        Console.Write($"{generalxt[a]} ");
 
-                }
-                writer.WriteLine("\n");
-                Console.WriteLine("\n");
+            //    }
+            //    writer.WriteLine("\n");
+            //    Console.WriteLine("\n");
 
-                // Write Entitlements
-                for (int a = 0; a < entitlementstxt.Length; a++)
-                {
-                    writer.Write($"{entitlementstxt[a]} ");
-                    Console.Write($"{entitlementstxt[a]} ");
+            //    // Write Entitlements
+            //    for (int a = 0; a < entitlementstxt.Length; a++)
+            //    {
+            //        writer.Write($"{entitlementstxt[a]} ");
+            //        Console.Write($"{entitlementstxt[a]} ");
 
-                }
-                writer.WriteLine("\n");
-                Console.WriteLine("\n");
+            //    }
+            //    writer.WriteLine("\n");
+            //    Console.WriteLine("\n");
 
-                // Write NumberOfBids
-                for (int a = 0; a < NumberOfBidstxt.Length; a++)
-                {
-                    writer.Write($"{NumberOfBidstxt[a]} ");
-                    Console.Write($"{NumberOfBidstxt[a]} ");
+            //    // Write NumberOfBids
+            //    for (int a = 0; a < NumberOfBidstxt.Length; a++)
+            //    {
+            //        writer.Write($"{NumberOfBidstxt[a]} ");
+            //        Console.Write($"{NumberOfBidstxt[a]} ");
 
-                }
-                writer.WriteLine("\n");
-                Console.WriteLine("\n");
+            //    }
+            //    writer.WriteLine("\n");
+            //    Console.WriteLine("\n");
 
-                // Write DateStart
-                int rowCount = dateStarttxt.Length;
-                int currentRow = 0;
-                foreach (int[] row in dateStarttxt)
-                {
-                    currentRow++;
-                    foreach (int value in row)
-                    {
-                        if (value > 0)
-                        {
-                            writer.Write($"{value} ");
-                            Console.Write($"{value} ");
-                        }
+            //    // Write DateStart
+            //    int rowCount = dateStarttxt.Length;
+            //    int currentRow = 0;
+            //    foreach (int[] row in dateStarttxt)
+            //    {
+            //        currentRow++;
+            //        foreach (int value in row)
+            //        {
+            //            if (value > 0)
+            //            {
+            //                writer.Write($"{value} ");
+            //                Console.Write($"{value} ");
+            //            }
 
-                    }
-                    if (currentRow < rowCount) // Check if it's not the last row
-                    {
-                        writer.WriteLine();
-                        Console.WriteLine();
-                    }
-                }
+            //        }
+            //        if (currentRow < rowCount) // Check if it's not the last row
+            //        {
+            //            writer.WriteLine();
+            //            Console.WriteLine();
+            //        }
+            //    }
 
-                writer.WriteLine("\n");
-                Console.WriteLine("\n");
+            //    writer.WriteLine("\n");
+            //    Console.WriteLine("\n");
 
-                // Write DateLength
-                foreach (int[] row in dateLengthtxt)
-                {
-                    foreach (int value in row)
-                    {
+            //    // Write DateLength
+            //    foreach (int[] row in dateLengthtxt)
+            //    {
+            //        foreach (int value in row)
+            //        {
 
-                        if (value > 0)
-                        {
-                            writer.Write($"{value} ");
-                            Console.Write($"{value} ");
-                        }
-                    }
-                    writer.WriteLine(" ");
-                    Console.WriteLine(" ");
-                }
-            }
+            //            if (value > 0)
+            //            {
+            //                writer.Write($"{value} ");
+            //                Console.Write($"{value} ");
+            //            }
+            //        }
+            //        writer.WriteLine(" ");
+            //        Console.WriteLine(" ");
+            //    }
+            //}
 
             #endregion
+
             return 1;
         }
 
