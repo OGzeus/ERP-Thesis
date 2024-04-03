@@ -38,7 +38,7 @@ namespace Erp.CommonFiles
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "VPDescr", HeaderText = "VP Descr" });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "EmployeeType", HeaderText = "Employee Type" });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "VPLogicType", HeaderText = "VP Logic Type" });
-            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "MaxSatisfiedBids", HeaderText = "Max Satisfie dBids" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "MaxSatisfiedBids", HeaderText = "Max Satisfied Bids" });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "SeparValue", HeaderText = "Separation Value" });
 
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Schedule.ReqCode", HeaderText = "Schedule Code" });

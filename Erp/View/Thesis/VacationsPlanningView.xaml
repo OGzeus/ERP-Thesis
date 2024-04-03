@@ -254,7 +254,7 @@
                                     </syncfusion:SfDataGrid.GroupColumnDescriptions>
 
                                     <syncfusion:SfDataGrid.Columns>
-                                        <syncfusion:GridTextColumn MappingName="LeaveBidData.Employee.Code" HeaderText="Employee Code" AllowEditing="False"/>
+                                        <syncfusion:GridTextColumn MappingName="LeaveBidData.Employee.Code" HeaderText="Emp Code" AllowEditing="False"/>
                                         <syncfusion:GridTextColumn MappingName="LeaveBidData.Employee.Seniority" HeaderText="Seniority" AllowEditing="False"/>
                                         <syncfusion:GridTextColumn MappingName="LeaveBidData.BidCode" HeaderText="Bid Code" AllowEditing="False"/>
                                         <syncfusion:GridTextColumn MappingName="LeaveBidData.BidType" HeaderText="Bid Type" AllowEditing="False"/>
