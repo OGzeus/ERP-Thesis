@@ -65,8 +65,11 @@
                                                     SelectedItem="{Binding SelectedItem, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                     Columns="{Binding SfGridColumns, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                     ItemsSource="{Binding CollectionView , Mode=TwoWay , UpdateSourceTrigger=PropertyChanged}"
-                                                    ShowRowHeader="True" 
-                                                >
+                                                    ShowRowHeader="True"                                                
+                                                   AutoExpandGroups="True">
+                    <syncfusion:SfDataGrid.GroupColumnDescriptions>
+                        <syncfusion:GroupColumnDescription ColumnName="Item.ItemCode" />
+                    </syncfusion:SfDataGrid.GroupColumnDescriptions>
 
                 </syncfusion:SfDataGrid>
 

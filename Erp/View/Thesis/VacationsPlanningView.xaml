@@ -392,7 +392,9 @@
                                                     AutoGenerateColumns="False"
                                                     ItemsSource="{Binding OutputData.VPXijResultsDataGrid , Mode=TwoWay , UpdateSourceTrigger=PropertyChanged}"
                                                     ShowRowHeader="True" 
-                                                    FontSize="18">
+                                                    FontSize="18"
+                                                    AutoExpandGroups="True">
+                                    
                                     <syncfusion:SfDataGrid.GroupColumnDescriptions>
                                         <syncfusion:GroupColumnDescription ColumnName="Employee.Code" />
                                     </syncfusion:SfDataGrid.GroupColumnDescriptions>
