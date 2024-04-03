@@ -2059,7 +2059,7 @@ Where 1=1 {0}", FilterStr);
                 Dictionary<string, int> MaxLeaveBidsPerEmployee = InputData.MaxLeaveBidsPerEmployee; 
                 Dictionary<string, string> BidsPerEmployee = InputData.BidsPerEmployee;
 
-                // Zvalue = Number Of Specific    .Για Specific Bids το Zvalue =1 Παντα
+                // Zvalue = Number Of Specific    .Για Specific Bids το Zvalue = 1 Παντα
                 // Rvalue = Number of NonSpecific . Για Specific,NonSpecific Bids to Rvalue = 1 Παντα
 
                 //ZBidsDict = <(Employee Code, LeaveBidCode ,Rvalue), Zvalue>
