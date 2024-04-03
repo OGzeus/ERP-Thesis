@@ -17,6 +17,34 @@
                 <ResourceDictionary>
                     <Style TargetType="syncfusion:SfDataGrid">
                         <Setter Property="FontSize" Value="18"/>
+                        <Setter Property="ColumnSizer" Value="Star"/>
+
+                        <Setter Property="AllowResizingColumns" Value="true" />
+                        <Setter Property="HeaderRowHeight" Value="50" />
+                        <Setter Property="HeaderLinesVisibility" Value="Both" />
+
+                    </Style>
+
+                    <Style TargetType="syncfusion:GridHeaderCellControl" >
+                        <Setter Property="FontWeight" Value="Bold"/>
+                        <Setter Property="FontSize" Value="17"/>
+                        <Setter Property="Foreground" Value="Black"/>
+                        <Setter Property="Background" Value="Bisque"/>
+                        <Setter Property="BorderBrush" Value="Black"/>
+                        <Setter Property="FontWeight" Value="Medium"/>
+                        <Setter Property="HorizontalContentAlignment" Value="Center" />
+
+                    </Style>
+
+                    <Style TargetType="syncfusion:CaptionSummaryRowControl" >
+                        <Setter Property="FontWeight" Value="SemiBold"/>
+                        <Setter Property="Background" Value="LightYellow"/>
+                        <Setter Property="FontSize" Value="16"/>
+                    </Style>
+                    <Style TargetType="syncfusion:HeaderRowControl" >
+                        <Setter Property="FontWeight" Value="SemiBold"/>
+                        <Setter Property="Background" Value="LightYellow"/>
+                        <Setter Property="FontSize" Value="16"/>
                     </Style>
                 </ResourceDictionary>
             </ResourceDictionary.MergedDictionaries>

@@ -3473,7 +3473,7 @@ Where 1=1 {0}", FilterStr);
             int[] NrOfBids = MaxLeaveBidsPerEmployee.Values.ToArray();
             NumberOfBidstxt = NrOfBids;
 
-            #region Python Inser Entiltements,NubmerOfBids
+            #region Python Insert Entiltements,NubmerOfBids
             var i = 0;
             foreach(var emp in InputData.Employees)
             {

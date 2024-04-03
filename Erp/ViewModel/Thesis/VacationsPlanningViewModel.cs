@@ -40,6 +40,21 @@ namespace Erp.ViewModel.Thesis
 
         #region DataProperties
 
+        private int _selectedTabIndex;
+
+        public int SelectedTabIndex
+        {
+            get { return _selectedTabIndex; }
+            set
+            {
+                if (_selectedTabIndex != value)
+                {
+                    _selectedTabIndex = value;
+                    INotifyPropertyChanged(nameof(SelectedTabIndex));
+                }
+            }
+        }
+
         private ICollectionView collectionviewD;
 
         public ICollectionView CollectionViewD
@@ -612,6 +627,8 @@ namespace Erp.ViewModel.Thesis
                 var a = CommonFunctions.CreatePythonTxt(InputData);
 
             }
+
+            SelectedTabIndex = 1;
 
         }
         #endregion

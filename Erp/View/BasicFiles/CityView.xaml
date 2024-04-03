@@ -48,7 +48,6 @@
                                 AllowEditing="True"
                                 AllowDeleting="True"    
                                 AddNewRowPosition ="FixedTop"
-                                ColumnSizer="Star"
                                 Background="White"
                                 Grid.Row="1"
                                 Grid.Column="0"

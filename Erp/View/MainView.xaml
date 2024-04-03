@@ -17,7 +17,7 @@
         WindowStartupLocation="CenterScreen"
         WindowStyle="None"
         Background="Transparent"
-        AllowsTransparency="True">
+        AllowsTransparency="True" >
     <Window.DataContext>
         <viewModel:MainViewModel/>
     </Window.DataContext>
@@ -256,6 +256,7 @@
                      CloseButtonType="Both"
                      OnCloseButtonClick="TabControlExt_OnCloseButtonClick"
                      EnableLabelEdit="False"
+                     Background="White"
                                 >
 
                     </syncfusion:TabControlExt>

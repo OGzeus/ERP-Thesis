@@ -9,7 +9,7 @@
              xmlns:local="clr-namespace:Erp.View.Thesis" 
              xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
+             d:DesignHeight="450" d:DesignWidth="800" FontSize="18">
 
     <UserControl.DataContext>
         <viewmodel:RequirementsScheduleViewModel/>
@@ -36,26 +36,26 @@
         </Grid.ColumnDefinitions>
 
 
-        <TextBlock Text="Schedule Code : " FontWeight="Bold" FontSize="14"  Grid.Row="1" Grid.Column="0" Margin="2"/>
+        <TextBlock Text="Schedule Code : " FontWeight="Bold"   Grid.Row="1" Grid.Column="0" Margin="2"/>
         <StackPanel Grid.Row="1" Grid.Column="1" Margin="2" HorizontalAlignment="Left"  Orientation="Horizontal">
             <TextBox Text="{Binding FlatData.ReqCode, Mode=TwoWay}" HorizontalAlignment="left" Width="115"  />
             <Button Content="f" Width="20"                        Command="{Binding ShowReqScheduleInfoDataGridCommand}"/>
         </StackPanel>
 
-        <TextBlock Text="Schedule Description  : " FontWeight="Bold" FontSize="14" Grid.Row="1" Grid.Column="2" Margin="2" />
+        <TextBlock Text="Schedule Description  : " FontWeight="Bold"  Grid.Row="1" Grid.Column="2" Margin="2" />
         <StackPanel Grid.Row="1" Grid.Column="3" HorizontalAlignment="Stretch"  Orientation="Horizontal" Margin="2">
             <TextBox Text="{Binding FlatData.ReqDescr, Mode=TwoWay}" HorizontalAlignment="Stretch" Width="135" />
         </StackPanel>
 
         <StackPanel Grid.Row="1" Grid.Column="4" HorizontalAlignment="Stretch"  Orientation="Horizontal" Margin="2" >
-            <Button x:Name="AddItem"  Width="110" HorizontalAlignment="Left" Margin="2" Command="{Binding AddScheduleCommand}">
+            <Button x:Name="AddItem"  Width="160" HorizontalAlignment="Left" Margin="2" Command="{Binding AddScheduleCommand}">
                 <TextBlock Text="Add New Schedule"/>
             </Button>
-            <TextBlock Text="Delete : " FontWeight="Bold" FontSize="14"  Margin="15,0,0,0"/>
+            <TextBlock Text="Delete : " FontWeight="Bold"   Margin="15,0,0,0"/>
             <CheckBox IsChecked="{Binding FlatData.IsDeleted, Mode=TwoWay}"  Margin="2" VerticalAlignment="Center"  />
             <ToggleButton x:Name = "tb" Content = "Show Deleted"  
          IsChecked="{Binding ShowDeleted, Mode=TwoWay}"  Margin = "2" Background="Beige" BorderBrush="Black" 
-         Width = "108" HorizontalAlignment = "Center" >
+         Width = "117" HorizontalAlignment = "Center" >
             </ToggleButton>
 
             <ToggleButton x:Name = "MainSchedule" Content = "Main Schedule"  
@@ -99,8 +99,8 @@
 
 
 
-                            <TextBlock Text="LimitLine Fixed : "  Grid.Row="2" Grid.Column="0" FontWeight="Bold" FontSize="14"  Margin="1"/>
-                            <TextBox Text="{Binding FlatData.LimitLineFixed, Mode=TwoWay}" Grid.Row="2" Grid.Column="1" FontWeight="Bold" FontSize="14"  Margin="1"/>
+                            <TextBlock Text="LimitLine Fixed : "  Grid.Row="2" Grid.Column="0" FontWeight="Bold"   Margin="1"/>
+                            <TextBox Text="{Binding FlatData.LimitLineFixed, Mode=TwoWay}" Grid.Row="2" Grid.Column="1" FontWeight="Bold"   Margin="1"/>
 
                         </Grid>
                         <StackPanel  HorizontalAlignment="Left" Orientation="Horizontal">
@@ -120,7 +120,6 @@
 
                         <syncfusion:SfDataGrid x:Name="sfGrid"
 
-                                                    ColumnSizer="Star"
                                                     Background="White"
                                                     AllowSorting="True"
                                                     ShowSortNumbers="True"
@@ -200,7 +199,6 @@
                                                     Grid.Row="1"
                                                     Grid.Column="0"
                                                     Grid.ColumnSpan="5"
-                                                    ColumnSizer="Star"
                                                     Background="White"
                                                     AllowSorting="True"
                                                     ShowSortNumbers="True"

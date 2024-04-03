@@ -11,7 +11,7 @@
              xmlns:converter="clr-namespace:Erp.Converters"
              xmlns:viewmodel="clr-namespace:Erp.ViewModel.Thesis"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
+             d:DesignHeight="450" d:DesignWidth="800" FontSize="18">
 
     <UserControl.DataContext>
         <viewmodel:VacationsPlanningViewModel/>
@@ -38,13 +38,13 @@
 
         </Grid.ColumnDefinitions>
 
-        <TextBlock Text="VP Code : " FontWeight="Bold" FontSize="14"  Grid.Row="1" Grid.Column="0"  Margin="2"/>
+        <TextBlock Text="VP Code : " FontWeight="Bold"   Grid.Row="1" Grid.Column="0"  Margin="2"/>
         <StackPanel Grid.Row="1" Grid.Column="1" HorizontalAlignment="Left"  Orientation="Horizontal"  Margin="2">
             <TextBox Text="{Binding InputData.VPCode, Mode=TwoWay}" HorizontalAlignment="left" Width="115"  />
             <Button Content="f" Width="20"                        Command="{Binding ShowVPCommand}"/>
         </StackPanel>
 
-        <TextBlock Text="VP Description : " FontWeight="Bold" FontSize="14" Grid.Row="1" Grid.Column="2"  Margin="2"/>
+        <TextBlock Text="VP Description : " FontWeight="Bold" Grid.Row="1" Grid.Column="2"  Margin="2"/>
         <StackPanel Grid.Row="1" Grid.Column="3" HorizontalAlignment="Stretch"  Orientation="Horizontal"  Margin="2">
             <TextBox Text="{Binding InputData.VPDescr, Mode=TwoWay}" HorizontalAlignment="Stretch" Width="135" />
         </StackPanel>
@@ -57,9 +57,9 @@
             </Button>
             <ToggleButton x:Name = "tb" Content = "Show Deleted"  
          IsChecked="{Binding ShowDeleted, Mode=TwoWay}"  Margin = "1" Background="Beige" BorderBrush="Black" 
-         Width = "108" HorizontalAlignment = "Center" >
+         Width = "120" HorizontalAlignment = "Center" >
             </ToggleButton>
-            <TextBlock Text="Delete : " FontWeight="Bold" FontSize="14"  Margin="1"/>
+            <TextBlock Text="Delete : " FontWeight="Bold"   Margin="1"/>
             <CheckBox IsChecked="{Binding InputData.IsDeleted, Mode=TwoWay}"  Margin="1" VerticalAlignment="Center"  />
 
 
@@ -67,7 +67,7 @@
 
         </StackPanel>
         <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="6"  converters:MainStackPanelReadonly.IsEnabledBasedOnProperty="{Binding InputData.VPCode}" >
-            <TabControl >
+            <TabControl SelectedIndex="{Binding SelectedTabIndex}">
                 <TabItem Header="Insert Vacation Planning Input">
                     <StackPanel>
                         <Grid  Margin="0,0,-193,0">
@@ -167,11 +167,11 @@
 
                         <syncfusion:SfDataGrid x:Name="sfGrid"
 
-                                                    ColumnSizer="Star"
                                                     Background="White"
                                                     AllowSorting="True"
                                                     ShowSortNumbers="True"
                                                     AllowFiltering="True"
+                                                    HeaderStyle="{DynamicResource headerStyle}"
 
                                                     AllowResizingColumns="True"
                                                     FilterRowPosition="FixedTop"
@@ -227,10 +227,10 @@
 
                                 <syncfusion:SfDataGrid x:Name="sfGridYij"
                                                     Grid.Row="1"
-                                                       
+                                                    HeaderStyle="{DynamicResource headerStyle}"
+
                                                     Grid.Column="0"
                                                     Grid.ColumnSpan="7"
-                                                    ColumnSizer="Star"
                                                     Background="White"
                                                     AllowSorting="True"
                                                     ShowSortNumbers="True"
@@ -255,7 +255,7 @@
 
                                     <syncfusion:SfDataGrid.Columns>
                                         <syncfusion:GridTextColumn MappingName="LeaveBidData.Employee.Code" HeaderText="Employee Code" AllowEditing="False"/>
-                                        <syncfusion:GridTextColumn MappingName="LeaveBidData.Employee.Seniority" HeaderText="Employee Seniority" AllowEditing="False"/>
+                                        <syncfusion:GridTextColumn MappingName="LeaveBidData.Employee.Seniority" HeaderText="Seniority" AllowEditing="False"/>
                                         <syncfusion:GridTextColumn MappingName="LeaveBidData.BidCode" HeaderText="Bid Code" AllowEditing="False"/>
                                         <syncfusion:GridTextColumn MappingName="LeaveBidData.BidType" HeaderText="Bid Type" AllowEditing="False"/>
                                         <syncfusion:GridTextColumn MappingName="LeaveBidData.PriorityLevel" HeaderText="Priority Level" AllowEditing="False"/>
@@ -307,10 +307,10 @@
 
                                 <syncfusion:SfDataGrid x:Name="sfGridYijz"
                                                     Grid.Row="1"
-                                                       
+                                                     HeaderStyle="{DynamicResource headerStyle}"
+
                                                     Grid.Column="0"
                                                     Grid.ColumnSpan="7"
-                                                    ColumnSizer="Star"
                                                     Background="White"
                                                     AllowSorting="True"
                                                     ShowSortNumbers="True"
@@ -332,8 +332,8 @@
                                         <syncfusion:GroupColumnDescription ColumnName="LeaveBidData.Employee.Code" />
                                     </syncfusion:SfDataGrid.GroupColumnDescriptions>
                                     <syncfusion:SfDataGrid.Columns>
-                                        <syncfusion:GridTextColumn MappingName="LeaveBidData.Employee.Code" HeaderText="Employee Code" AllowEditing="False"/>
-                                        <syncfusion:GridTextColumn MappingName="LeaveBidData.Employee.Seniority" HeaderText="Employee Seniority" AllowEditing="False"/>
+                                        <syncfusion:GridTextColumn MappingName="LeaveBidData.Employee.Code" HeaderText="Emp Code" AllowEditing="False"/>
+                                        <syncfusion:GridTextColumn MappingName="LeaveBidData.Employee.Seniority" HeaderText="Seniority" AllowEditing="False"/>
                                         <syncfusion:GridTextColumn MappingName="LeaveBidData.BidCode" HeaderText="Bid Code" AllowEditing="False"/>
                                         <syncfusion:GridTextColumn MappingName="LeaveBidData.BidType" HeaderText="Bid Type" AllowEditing="False"/>
                                         <syncfusion:GridTextColumn MappingName="LeaveBidData.PriorityLevel" HeaderText="Priority Level" AllowEditing="False"/>
@@ -376,8 +376,8 @@
                                                     Grid.Row="1"
                                                     Grid.Column="0"
                                                     Grid.ColumnSpan="5"
-                                                    ColumnSizer="Star"
                                                     Background="White"
+
                                                     AllowSorting="True"
                                                     ShowSortNumbers="True"
                                                     AllowEditing="True"
@@ -399,9 +399,9 @@
                                         <syncfusion:GroupColumnDescription ColumnName="Employee.Code" />
                                     </syncfusion:SfDataGrid.GroupColumnDescriptions>
                                     <syncfusion:SfDataGrid.Columns>
-                                        <syncfusion:GridTextColumn MappingName="Employee.Code" HeaderText="Employee Code" AllowEditing="False"/>
-                                        <syncfusion:GridTextColumn MappingName="Employee.Seniority" HeaderText="Employee Seniority" AllowEditing="False"/>
-                                        <syncfusion:GridTextColumn MappingName="Date" HeaderText="Date" AllowEditing="False"/>
+                                        <syncfusion:GridTextColumn MappingName="Employee.Code" HeaderText="Emp Code" AllowEditing="False"/>
+                                        <syncfusion:GridTextColumn MappingName="Employee.Seniority" HeaderText="Seniority" AllowEditing="False"/>
+                                        <syncfusion:GridTextColumn Width="110"  MappingName="Date" HeaderText="Date" AllowEditing="False"/>
                                         <syncfusion:GridTextColumn MappingName="Xij" HeaderText="Xij" AllowEditing="False"/>
                                         <syncfusion:GridCheckBoxColumn MappingName="XijFlag" HeaderText="Confirmed " AllowEditing="False"/>
 
@@ -438,8 +438,9 @@
                                 <syncfusion:SfDataGrid x:Name="sfGrid6"
                                                     Grid.Row="1"
                                                     Grid.Column="0"
+                                                    HeaderStyle="{DynamicResource headerStyle}"
                                                     Grid.ColumnSpan="5"
-                                                    ColumnSizer="Star"
+                                                    
                                                     Background="White"
                                                     AllowSorting="True"
                                                     ShowSortNumbers="True"
@@ -457,7 +458,7 @@
                                                     ShowRowHeader="True" 
                                                     FontSize="18">
                                     <syncfusion:SfDataGrid.Columns>
-                                        <syncfusion:GridTextColumn MappingName="Code" HeaderText="Employee Code " AllowEditing="False"/>
+                                        <syncfusion:GridTextColumn MappingName="Code" HeaderText="Emp Code " AllowEditing="False"/>
                                         <syncfusion:GridTextColumn MappingName="Seniority" HeaderText="Seniority " AllowEditing="False"/>
                                         <syncfusion:GridTextColumn MappingName="LeaveStatus.CurrentBalance" HeaderText=" Leave Current Balance" AllowEditing="False"/>
 
