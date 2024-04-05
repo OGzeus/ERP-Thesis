@@ -14,6 +14,7 @@ namespace Erp.DataBase
 {
     public class ErpDbContext : Microsoft.EntityFrameworkCore.DbContext
     {
+        #region Erp Factory Planning
         public DbSet<ItemDataEntity> Rmaster { get; set; }
         public DbSet<ItemProcessDataEntity> ProductionProcessFlow { get; set; }
         public DbSet<ForecastInfoDataEntity> ForecastInfo { get; set; }
@@ -42,6 +43,8 @@ namespace Erp.DataBase
 
         public DbSet<COrderCartEntity> COrder_Cart { get; set; }
         public DbSet<CustomerOrderEntity> CustomerOrder { get; set; }
+
+        #endregion
 
         #region Thesis
 

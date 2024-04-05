@@ -562,8 +562,8 @@ namespace Erp.ViewModel.Thesis
                 }
                 #endregion
 
-                #region Zbids 
-                foreach(var Bid in emp.LeaveBidDataGridStatic)
+                #region Zbids Dict ,Rbids Dict
+                foreach (var Bid in emp.LeaveBidDataGridStatic)
                 {
 
                     InputData.BidsPerEmployee[emp.Code] = Bid.BidCode; //Fill BidsPerEmployee Dictionary
@@ -583,7 +583,7 @@ namespace Erp.ViewModel.Thesis
 
                         InputData.RBidsDict[(emp.Code, Bid.BidCode)] = 1;
 
-                        int Z = totalDaysInRange - Bid.NumberOfDays + 1;
+                        int Z = totalDaysInRange - Bid.NumberOfDays + 2;
                         InputData.ZBidsDict[(emp.Code, Bid.BidCode,1)] = Z;
 
 
@@ -601,7 +601,7 @@ namespace Erp.ViewModel.Thesis
                         for (int i = 0; i < Max - Min + 1; i++)
                         {
                             Bid.NumberOfDays = Max - i;
-                            int Z = totalDaysInRange - Bid.NumberOfDays + 1;
+                            int Z = totalDaysInRange - Bid.NumberOfDays + 2;
 
                             InputData.ZBidsDict[(emp.Code, Bid.BidCode, i+1)] = Z;
 
