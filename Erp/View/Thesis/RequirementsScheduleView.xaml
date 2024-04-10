@@ -218,15 +218,14 @@
                                                     ShowGroupDropArea="True"
                                            
                                                 >
-                            <syncfusion:SfDataGrid.Columns>
+                            <syncfusion:SfDataGrid.SortColumnDescriptions>
+                                <syncfusion:SortColumnDescription ColumnName="DateStr"/>
+                            </syncfusion:SfDataGrid.SortColumnDescriptions>
+                                <syncfusion:SfDataGrid.Columns>
                                 <syncfusion:GridTextColumn MappingName="DateStr" HeaderText="Date "  IsReadOnly="True" />
                                 <syncfusion:GridTextColumn MappingName="LimitLine" HeaderText="Limit Line " />
                             </syncfusion:SfDataGrid.Columns>
-                            <!--<i:Interaction.Triggers>
-                            <i:EventTrigger EventName="MouseDoubleClick">
-                                <i:InvokeCommandAction Command="{Binding Path=DataContext.RowDataCommand,ElementName=sfGrid}" CommandParameter="{Binding}"/>
-                            </i:EventTrigger>
-                        </i:Interaction.Triggers>-->
+
                         </syncfusion:SfDataGrid>
 
 

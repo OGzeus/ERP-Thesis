@@ -142,7 +142,6 @@ namespace Erp.ViewModel.Thesis
         public void ResetEmployeeViewModelData()
         {
             FlatData.LeaveStatus = new LeaveStatusData();
-            FlatData.Code = " ";
             FlatData.HireDate = DateTime.Now;
             FlatData.DateOfBirth = DateTime.Now.AddYears(-20);
             FlatData.BaseAirport = new AirportData();
@@ -487,7 +486,9 @@ namespace Erp.ViewModel.Thesis
                     MessageBox.Show($"Ο Αποθηκεύτηκε νέος Υπάλληλος με Κωδικό : {FlatData.Code}");
                     ExecuteShowEmployeeInfoGridCommand(obj);
                     FlatData.EmployeeId = 0;
+                    FlatData.MainSchedule = CommonFunctions.GetMainScheduleInfoData();
                     ExecuteRefreshCommand(obj);
+
                 }
                 else if (Flag == 1)
                 {
@@ -686,9 +687,24 @@ namespace Erp.ViewModel.Thesis
 
         public void ExecuteRefreshCommand3(object commandParameter)
         {
-
             FlatData.LeaveBidDataGridStatic = CommonFunctions.GetLeaveBids(FlatData.Code, FlatData.MainSchedule.ReqCode);
+            #region Reset Values
+            FlatData.LeaveBidInfo.BidCode = null;
+            FlatData.LeaveBidInfo.DateFrom = DateTime.Now;
+            FlatData.LeaveBidInfo.DateTo = DateTime.Now.AddDays(10);
+            FlatData.LeaveBidInfo.NumberOfDays = 10;
+            FlatData.LeaveBidInfo.NumberOfDaysMin = 8;
+            FlatData.LeaveBidInfo.NumberOfDaysMax = 10;
+            if(FlatData.LeaveBidDataGridStatic.Count != 0)
+            {
+                FlatData.LeaveBidInfo.PriorityLevel = FlatData.LeaveBidDataGridStatic.Select(item => item.PriorityLevel).Max() + 1;
+            }
+            else
+            {
+                FlatData.LeaveBidInfo.PriorityLevel = 1;
+            }
 
+            #endregion
         }
 
         #endregion
@@ -713,6 +729,18 @@ namespace Erp.ViewModel.Thesis
         {
 
             FlatData.LeaveBidInfo = new LeaveBidsData();
+            FlatData.LeaveBidDataGridStatic = new ObservableCollection<LeaveBidsDataStatic>();
+
+            #region Reset Values
+            FlatData.LeaveBidInfo.BidCode = null;
+            FlatData.LeaveBidInfo.DateFrom = DateTime.Now;
+            FlatData.LeaveBidInfo.DateTo = DateTime.Now.AddDays(10);
+            FlatData.LeaveBidInfo.NumberOfDays = 10;
+            FlatData.LeaveBidInfo.NumberOfDaysMin = 8;
+            FlatData.LeaveBidInfo.NumberOfDaysMax = 10;
+            FlatData.LeaveBidInfo.PriorityLevel =  1;
+
+            #endregion
         }
 
         #endregion
@@ -737,7 +765,8 @@ namespace Erp.ViewModel.Thesis
         private void ExecuteUpdateLeaveBid(object commandParameter)
         {
             //var result = System.Windows.MessageBox.Show($"The Forecast with Code {FlatData.ForCode}  will be set as the Main Forecast for the MRP . Proceed?", "Confirmation", MessageBoxButton.YesNo);
-
+            bool add = string.IsNullOrWhiteSpace(FlatData.LeaveBidInfo.BidCode);
+            bool modify = !string.IsNullOrWhiteSpace(FlatData.LeaveBidInfo.BidCode);
             #region Error Messages
 
             #region Wrong Input
@@ -790,14 +819,18 @@ namespace Erp.ViewModel.Thesis
             #endregion
 
             #region Same Bid Priority
-            foreach (var row in FlatData.LeaveBidDataGridStatic)
+            if( add ==true )
             {
-                if (row.PriorityLevel == FlatData.LeaveBidInfo.PriorityLevel)
+                foreach (var row in FlatData.LeaveBidDataGridStatic)
                 {
-                    System.Windows.MessageBox.Show($"There is an already added Leave Bid with Priority = {FlatData.LeaveBidInfo.PriorityLevel} .Leave BidCode = {row.BidCode} ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                    return;
+                    if (row.PriorityLevel == FlatData.LeaveBidInfo.PriorityLevel)
+                    {
+                        System.Windows.MessageBox.Show($"There is an already added Leave Bid with Priority = {FlatData.LeaveBidInfo.PriorityLevel} .Leave BidCode = {row.BidCode} ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
+                    }
                 }
             }
+
             #endregion
 
             #region Date Errors 
@@ -848,12 +881,14 @@ namespace Erp.ViewModel.Thesis
 
             #endregion
 
-            bool add = string.IsNullOrWhiteSpace(FlatData.LeaveBidInfo.BidCode);
-            bool modify = !string.IsNullOrWhiteSpace(FlatData.LeaveBidInfo.BidCode);
+
 
             if (add == true)
             {
                 FlatData.LeaveBidInfo.BidCode = FlatData.Code + "-" + FlatData.MainSchedule.ReqCode + "-" + FlatData.LeaveBidInfo.PriorityLevel;
+                FlatData.LeaveBidInfo.ExistingFlag = false;
+                FlatData.LeaveBidInfo.NewBidFlag = true;
+                FlatData.LeaveBidInfo.Bidflag = true;
             }
             else if (modify == true)
             {
@@ -861,8 +896,12 @@ namespace Erp.ViewModel.Thesis
                 if (RowToRemove != null)
                 {
                     FlatData.LeaveBidDataGridStatic.Remove(RowToRemove);
+
                 }
                 FlatData.LeaveBidInfo.BidCode = FlatData.Code + "-" + FlatData.MainSchedule.ReqCode + "-" + FlatData.LeaveBidInfo.PriorityLevel;
+                FlatData.LeaveBidInfo.ExistingFlag = true;
+                FlatData.LeaveBidInfo.NewBidFlag = false;
+                FlatData.LeaveBidInfo.Bidflag = true;
             }
 
             FlatData.LeaveBidInfo.Schedule = FlatData.MainSchedule;
@@ -889,6 +928,9 @@ namespace Erp.ViewModel.Thesis
 
                 FlatData.LeaveBidInfo.NumberOfDays = 0;
             }
+
+
+
             #region LeaveBidsInfoStatic
 
             FlatData.LeaveBidsInfoStatic.Schedule = FlatData.LeaveBidInfo.Schedule;
@@ -900,9 +942,9 @@ namespace Erp.ViewModel.Thesis
             FlatData.LeaveBidsInfoStatic.NumberOfDays = FlatData.LeaveBidInfo.NumberOfDays;
             FlatData.LeaveBidsInfoStatic.NumberOfDaysMin = FlatData.LeaveBidInfo.NumberOfDaysMin;
             FlatData.LeaveBidsInfoStatic.NumberOfDaysMax = FlatData.LeaveBidInfo.NumberOfDaysMax;
-            FlatData.LeaveBidsInfoStatic.ExistingFlag = false;
-            FlatData.LeaveBidsInfoStatic.NewBidFlag = true;
-            FlatData.LeaveBidsInfoStatic.Bidflag = true;
+            FlatData.LeaveBidsInfoStatic.ExistingFlag = FlatData.LeaveBidInfo.ExistingFlag; 
+            FlatData.LeaveBidsInfoStatic.NewBidFlag = FlatData.LeaveBidInfo.NewBidFlag;
+            FlatData.LeaveBidsInfoStatic.Bidflag = FlatData.LeaveBidInfo.Bidflag;
 
             FlatData.LeaveBidDataGridStatic.Add(FlatData.LeaveBidsInfoStatic);
             var orderedCollection = new ObservableCollection<LeaveBidsDataStatic>(
@@ -911,7 +953,7 @@ namespace Erp.ViewModel.Thesis
             FlatData.LeaveBidDataGridStatic = orderedCollection;
 
             FlatData.LeaveBidsInfoStatic = new LeaveBidsDataStatic();
-            FlatData.LeaveBidInfo.PriorityLevel = FlatData.LeaveBidInfo.PriorityLevel + 1;
+
             #region Reset Values
             FlatData.LeaveBidInfo.BidCode = null;
             FlatData.LeaveBidInfo.DateFrom = DateTime.Now;
@@ -919,6 +961,8 @@ namespace Erp.ViewModel.Thesis
             FlatData.LeaveBidInfo.NumberOfDays = 10;
             FlatData.LeaveBidInfo.NumberOfDaysMin = 8;
             FlatData.LeaveBidInfo.NumberOfDaysMax = 10;
+            FlatData.LeaveBidInfo.PriorityLevel = FlatData.LeaveBidDataGridStatic.Select(item => item.PriorityLevel).Max() + 1;
+
             #endregion
             #endregion
         }
@@ -966,6 +1010,7 @@ namespace Erp.ViewModel.Thesis
                     FlatData.LeaveBidInfo.NumberOfDays = 10;
                     FlatData.LeaveBidInfo.NumberOfDaysMin = 8;
                     FlatData.LeaveBidInfo.NumberOfDaysMax = 10;
+                    FlatData.LeaveBidInfo.PriorityLevel = RowToRemove.PriorityLevel;
                     #endregion
                 }
                 else if(Flag ==1) 
@@ -978,6 +1023,8 @@ namespace Erp.ViewModel.Thesis
                     FlatData.LeaveBidInfo.NumberOfDays = 10;
                     FlatData.LeaveBidInfo.NumberOfDaysMin = 8;
                     FlatData.LeaveBidInfo.NumberOfDaysMax = 10;
+                    FlatData.LeaveBidInfo.PriorityLevel = RowToRemove.PriorityLevel;
+
                     #endregion;
                 }
                 else if(Flag==0)

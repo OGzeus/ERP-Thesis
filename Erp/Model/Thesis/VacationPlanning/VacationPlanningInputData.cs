@@ -90,8 +90,10 @@ namespace Erp.Model.Thesis.VacationPlanning
         public List<(int, int)> OverlappingBids1 = new List<(int, int)>();
         public List<(int, int)> OverlappingBids2 = new List<(int, int)>();
         public Dictionary<(string, string,int), int> ZBidsDict { get; set; }
-        //public Dictionary<(string, string), int> ZBidsDict { get; set; }
         public Dictionary<(string, string), int> RBidsDict { get; set; }
+
+        public Dictionary<(int, int, int), int> ZBidsDictInt { get; set; }
+        public Dictionary<(int, int), int> RBidsDictInt { get; set; }
 
         public int MaxLeaveBids
         {

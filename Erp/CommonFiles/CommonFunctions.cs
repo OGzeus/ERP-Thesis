@@ -660,6 +660,8 @@ Where  1=1 {0}", FilterStr);
                         data.LimitLineFixed = int.Parse(reader["LimitLineFixed"].ToString());
                         data.DateFrom = Convert.ToDateTime(reader["DATEFROM"]);
                         data.DateTo = Convert.ToDateTime(reader["DATETO"]);
+                        data.DateFromStr = data.DateFrom.ToString("dd/MM/yyyy"); 
+                        data.DateToStr = data.DateTo.ToString("dd/MM/yyyy");
                         data.IsDeleted = bool.Parse(reader["ISDELETED"].ToString());
                         data.MainSchedule = bool.Parse(reader["MAINSCHEDULE"].ToString());
                         data.Notes = reader["NOTES"].ToString();
@@ -1940,8 +1942,8 @@ Where 1=1 {0}", FilterStr);
                         data.Schedule.DateTo = DateTime.Parse(reader["DateTo"].ToString());
                         data.Schedule.LimitLineFixed = int.Parse(reader["LimitLineFixed"].ToString());
 
-                        data.Schedule.DateFromStr = data.Schedule.DateFrom.ToString(); //THELEI ALAGH
-                        data.Schedule.DateToStr = data.Schedule.DateTo.ToString();
+                        data.Schedule.DateFromStr = data.Schedule.DateFrom.ToString("dd/MM/yyyy"); //THELEI ALAGH
+                        data.Schedule.DateToStr = data.Schedule.DateTo.ToString("dd/MM/yyyy");
 
 
 
@@ -2025,7 +2027,7 @@ Where 1=1 {0}", FilterStr);
 
 
         #region  Optimization
-        public VacationPlanningOutputData CalculateVacationPlanningAdvanced(VacationPlanningInputData InputData)
+        public VacationPlanningOutputData CalculateVacationPlanningAdvanced2(VacationPlanningInputData InputData)
         {
             GRBEnv env = new GRBEnv("vplogfile.log");
             GRBModel model = new GRBModel(env);
@@ -2056,7 +2058,7 @@ Where 1=1 {0}", FilterStr);
 
 
 
-                Dictionary<string, int> MaxLeaveBidsPerEmployee = InputData.MaxLeaveBidsPerEmployee; 
+                Dictionary<string, int> MaxLeaveBidsPerEmployee = InputData.MaxLeaveBidsPerEmployee;
                 Dictionary<string, string> BidsPerEmployee = InputData.BidsPerEmployee;
 
                 // Zvalue = Number Of Specific    .Για Specific Bids το Zvalue = 1 Παντα
@@ -2190,7 +2192,7 @@ Where 1=1 {0}", FilterStr);
                                 sumLeaveBids.AddTerm(1.0, Y[i, j, r, z]);
 
                             }
-                        } 
+                        }
 
 
                     }
@@ -2216,10 +2218,10 @@ Where 1=1 {0}", FilterStr);
                         Rvalue = RBidsDict.TryGetValue((Employees[i], BidCode), out int valueR) ? valueR : Zvalue;
                         Zvalue = ZbidsDict.TryGetValue((Employees[i], BidCode, Rvalue), out int value) ? value : Zvalue;
                         #endregion
-                        for (int r = 0; r < Rvalue; r++) 
+                        for (int r = 0; r < Rvalue; r++)
                         {
                             NumberOfDays = NumberOfDays - r;
-                            for (int z = 0; z < Zvalue; z++) 
+                            for (int z = 0; z < Zvalue; z++)
                             {
                                 sumLeaveBidDays.AddTerm(NumberOfDays, Y[i, j, r, z]); // Summing up the leavebidsDays for each employee
                             }
@@ -2651,7 +2653,7 @@ Where 1=1 {0}", FilterStr);
                                             {
                                                 int bidIndex = j;
                                                 double yValue = y_plan.ContainsKey((employee, bidIndex, r, z)) ? y_plan[(employee, bidIndex, r, z)] : 0.0;
-              
+
                                                 Console.WriteLine($"Employee: {employee}, BidIndex: {bidIndex + 1}, Value: {yValue} -> Employee: {employee}, BidIndex: {bidIndex + 1}, Value: {yValue} Y{(Array.IndexOf(Employees, employee) + 1)}{(bidIndex + 1)}");
 
                                                 #region Populate VP Yij
@@ -2675,7 +2677,7 @@ Where 1=1 {0}", FilterStr);
 
                                                 var DateFrom = SpecificEmployee.LeaveBidDataGridStatic[j].DateFrom;
                                                 var NumberOfDays = SpecificEmployee.LeaveBidDataGridStatic[j].NumberOfDaysMax - r;
-                                                var NumberOfDaysMax = SpecificEmployee.LeaveBidDataGridStatic[j].NumberOfDaysMax ;
+                                                var NumberOfDaysMax = SpecificEmployee.LeaveBidDataGridStatic[j].NumberOfDaysMax;
                                                 var NumberOfDaysMin = SpecificEmployee.LeaveBidDataGridStatic[j].NumberOfDaysMin;
 
                                                 var BidType = SpecificEmployee.LeaveBidDataGridStatic[j].BidType;
@@ -2764,8 +2766,8 @@ Where 1=1 {0}", FilterStr);
                                                 }
 
                                                 DateFrom = SpecificEmployee.LeaveBidDataGridStatic[j].DateFrom.AddDays(z);
-                                                NumberOfDays = SpecificEmployee.LeaveBidDataGridStatic[j].NumberOfDaysMax - r ;
-                                                DateTo = DateFrom.AddDays(NumberOfDays -1);
+                                                NumberOfDays = SpecificEmployee.LeaveBidDataGridStatic[j].NumberOfDaysMax - r;
+                                                DateTo = DateFrom.AddDays(NumberOfDays - 1);
 
                                                 yijzDataRecord.DateFrom = DateFrom;
                                                 yijzDataRecord.DateTo = DateTo;
@@ -2865,6 +2867,999 @@ Where 1=1 {0}", FilterStr);
                 return Data;
             }
         }
+
+        public VacationPlanningOutputData CalculateVacationPlanningAdvanced(VacationPlanningInputData InputData)
+        {
+            GRBEnv env = new GRBEnv("vplogfile.log");
+            GRBModel model = new GRBModel(env);
+            GRBEnv finalenv = new GRBEnv("vplogfilefinal.log");
+            VacationPlanningOutputData Data = new VacationPlanningOutputData();
+            Data.VPYijResultsDataGrid = new ObservableCollection<VPYijResultsData>();
+            Data.VPYijzResultsDataGrid = new ObservableCollection<VPYijResultsData>();
+            Data.VPXijResultsDataGrid = new ObservableCollection<VPXijResultsData>();
+            Data.EmpLeaveStatusData = new ObservableCollection<EmployeeData>();
+
+            List<string> rows = new List<string>();
+            List<string> columns = new List<string>();
+            Dictionary<(string, string), double> make_plan = new Dictionary<(string, string), double>();
+            double bigM = 10000;
+
+            try
+            {
+                #region Optimization
+
+                #region Optimization paramaters
+
+                int MaxSatisfiedBids = InputData.MaxSatisfiedBids; //Max αριθμος ικανοποιημένων Bids ανα υπάλληλο
+                int SeparValue = InputData.SeparValue; // Seperation Value
+
+                string[] Employees = InputData.Employees.Select(d => d.Code).ToArray(); //Πινακας με τους Κωδικους Υπαλληλων
+                string[] Dates = InputData.DatesStr; //Πινακας με τα Dates
+
+
+
+
+                Dictionary<string, int> MaxLeaveBidsPerEmployee = InputData.MaxLeaveBidsPerEmployee;
+                Dictionary<string, string> BidsPerEmployee = InputData.BidsPerEmployee;
+
+                // Zvalue = Number Of Specific    .Για Specific Bids το Zvalue = 1 Παντα
+                // Rvalue = Number of NonSpecific . Για Specific,NonSpecific Bids to Rvalue = 1 Παντα
+
+                //ZBidsDict = <(Employee Code, LeaveBidCode ,Rvalue), Zvalue>
+                Dictionary<(string, string, int), int> ZbidsDict = InputData.ZBidsDict;
+
+                //RBidsDict = <(Employee Code, LeaveBidCode ),Rvalue>
+                Dictionary<(string, string), int> RBidsDict = InputData.RBidsDict;
+
+
+
+                int MaxLeaveBids = InputData.MaxLeaveBids; //Μεγιστος αριθμός Bids υπαλλήλου απο ολούς τους υπαλλήλους
+
+                int LimitLineFixed = InputData.Schedule.LimitLineFixed; // Σταθερό Limit Line σε όλες τις ημέρες
+
+                int Zmax = ZbidsDict.Max(kvp => kvp.Value); //Μεγιστο Zvalue , το χρειαζόμαστε για την δήλωση της Yijrz
+                int MaxNonSpecific = RBidsDict.Max(kvp => kvp.Value); //Μεγιστο Rvalue , το χρειαζόμαστε για την δήλωση της Yijrz
+
+                #endregion
+
+                #region Optimization Algorithm
+
+                #region Decision Variables 
+                // Decision variables
+                GRBVar[,,,] Y = new GRBVar[Employees.Length, MaxLeaveBids, MaxNonSpecific, Zmax];
+                GRBVar[,] X = new GRBVar[Employees.Length, Dates.Length ];
+
+                GRBVar[,,] R = new GRBVar[Employees.Length, MaxLeaveBids, MaxNonSpecific];
+
+
+                // Create decision variables X
+                for (int i = 0; i < Employees.Length; i++)
+                {
+                    for (int t = 0; t < Dates.Length; t++)
+                    {
+                        // Define the variable name
+                        string varNameX = $"X{i + 1}_{t + 1}";
+
+                        // Create the binary variable with a name
+                        X[i, t] = model.AddVar(0.0, 1.0, 0.0, GRB.BINARY, varNameX);
+                    }
+                }
+
+                // Create decision variables Y
+                for (int i = 0; i < Employees.Length; i++)
+                {
+                    for (int j = 0; j < MaxLeaveBidsPerEmployee[Employees[i]]; j++)
+                    {
+                        #region Find ZValue,RValue
+
+                        int Rvalue = new int();
+                        int Zvalue = new int();
+                        var EmployeeCode = Employees[i];
+                        var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == Employees[i]);
+                        var BidCode = specificEmployee.LeaveBidDataGridStatic[j].BidCode;
+                        Rvalue = RBidsDict.TryGetValue((Employees[i], BidCode), out int valueR) ? valueR : Zvalue;
+                        #endregion
+                        for (int r = 0; r < Rvalue; r++) //allagh
+                        {
+                            Zvalue = ZbidsDict.TryGetValue((Employees[i], BidCode, r+1), out int value) ? value : Zvalue;
+
+                            for (int z = 0; z < Zvalue; z++) //allagh
+                            {
+                                // Define the variable name
+                                string varNameY = $"Y{i + 1}_{j + 1}_{r + 1}_{z + 1}";
+
+                                // Create the binary variable with a name
+                                Y[i, j, r, z] = model.AddVar(0.0, 1.0, 0.0, GRB.BINARY, varNameY);
+                            }
+
+                        }
+                    }
+                }
+
+                // Create decision variables Y
+                for (int i = 0; i < Employees.Length; i++)
+                {
+                    for (int j = 0; j < MaxLeaveBidsPerEmployee[Employees[i]]; j++)
+                    {
+                        #region Find ZValue,RValue
+
+                        int Rvalue = new int();
+                        int Zvalue = new int();
+                        var EmployeeCode = Employees[i];
+                        var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == Employees[i]);
+                        var BidCode = specificEmployee.LeaveBidDataGridStatic[j].BidCode;
+                        Rvalue = RBidsDict.TryGetValue((Employees[i], BidCode), out int valueR) ? valueR : Zvalue;
+                        #endregion
+                        for (int r = 0; r < Rvalue; r++) //allagh
+                        {
+
+                                // Define the variable name
+                                string varNameR = $"R{i + 1}_{j + 1}_{r + 1}";
+
+                                // Create the binary variable with a name
+                                R[i, j, r] = model.AddVar(0.0, 1.0, 0.0, GRB.BINARY, varNameR);
+                            
+                        }
+                    }
+                }
+
+                #endregion
+
+                #region Objective Function
+
+                GRBLinExpr objective = 0;
+
+                for (int i = Employees.Length - 1; i >= 0; i--)
+                {
+                    for (int j = MaxLeaveBidsPerEmployee[Employees[i]] - 1; j >= 0; j--)
+                    {
+                        #region Find ZValue,RValue
+                        int Rvalue = new int();
+                        int Zvalue = new int();
+                        var EmployeeCode = Employees[i];
+                        var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == Employees[i]);
+                        var BidCode = specificEmployee.LeaveBidDataGridStatic[j].BidCode;
+                        Rvalue = RBidsDict.TryGetValue((Employees[i], BidCode), out int valueR) ? valueR : Zvalue;
+                        #endregion
+                        for (int r = 0; r < Rvalue; r++) //allagh
+                        {
+                            Zvalue = ZbidsDict.TryGetValue((Employees[i], BidCode, r+1), out int value) ? value : Zvalue;
+
+                            for (int z = 0; z < Zvalue; z++) //allagh
+                            {
+                                // Define the variable name
+
+                                // Create the binary variable with a name
+                                objective.AddTerm(1, Y[i, j, r, z]);
+
+                            }
+
+                        }
+
+
+                    }
+                }
+
+
+                model.SetObjective(objective, GRB.MAXIMIZE);
+
+                #endregion
+
+                #region Constrains
+                // #1. Adding constraints for maximum number of satisfied bids 
+                for (int i = 0; i < Employees.Length; i++)
+                {
+                    GRBLinExpr sumLeaveBids = 0;
+                    for (int j = 0; j < MaxLeaveBidsPerEmployee[Employees[i]]; j++)
+                    {
+
+                        #region Find ZValue ,RValue
+                        int Zvalue = new int();
+                        int Rvalue = new int();
+                        var EmployeeCode = Employees[i];
+                        var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == Employees[i]);
+                        var BidCode = specificEmployee.LeaveBidDataGridStatic[j].BidCode;
+                        Rvalue = RBidsDict.TryGetValue((Employees[i], BidCode), out int valueR) ? valueR : Zvalue;
+                        #endregion
+                        for (int r = 0; r < Rvalue; r++)
+                        {
+                            Zvalue = ZbidsDict.TryGetValue((Employees[i], BidCode, r+1), out int value) ? value : Zvalue;
+
+                            for (int z = 0; z < Zvalue; z++)
+                            {
+                                sumLeaveBids.AddTerm(1.0, Y[i, j, r, z]);
+
+                            }
+                        }
+
+
+                    }
+
+                    // Adding the constraint for the current employee
+                    model.AddConstr(sumLeaveBids <= MaxSatisfiedBids, "MaxSatisfiedBids_" + Employees[i]);
+                }
+
+
+                // #2. Entitlements
+                for (int i = 0; i < Employees.Length; i++)
+                {
+                    var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == Employees[i]);
+                    GRBLinExpr sumLeaveBidDays = 0;
+                    for (int j = 0; j < MaxLeaveBidsPerEmployee[Employees[i]]; j++)
+                    {
+                        var NumberOfDays = specificEmployee.LeaveBidDataGridStatic[j].NumberOfDaysMax;
+                        #region Find ZValue ,RValue
+                        int Zvalue = new int();
+                        int Rvalue = new int();
+                        var EmployeeCode = Employees[i];
+                        var BidCode = specificEmployee.LeaveBidDataGridStatic[j].BidCode;
+                        Rvalue = RBidsDict.TryGetValue((Employees[i], BidCode), out int valueR) ? valueR : Zvalue;
+                        #endregion
+                        for (int r = 0; r < Rvalue; r++)
+                        {
+                            Zvalue = ZbidsDict.TryGetValue((Employees[i], BidCode, r+1), out int value) ? value : Zvalue;
+
+                            NumberOfDays = NumberOfDays - r;
+                            for (int z = 0; z < Zvalue; z++)
+                            {
+                                sumLeaveBidDays.AddTerm(NumberOfDays, Y[i, j, r, z]); // Summing up the leavebidsDays for each employee
+                            }
+                        }
+
+
+                    }
+
+                    var MaxLeaveDays = specificEmployee.LeaveStatus.CurrentBalance;
+
+                    // Adding the constraint for the current employee
+                    model.AddConstr(sumLeaveBidDays <= MaxLeaveDays, "MaxLeaveDays_" + Employees[i]);
+
+
+                }
+
+                // #3. Limit Lines
+
+                for (int t = 0; t < Dates.Length; t++)
+                {
+                    GRBLinExpr expr = 0;
+                    int sumdays = 0; 
+                    //Ξεχωριστό LimitLine για κάθε ημέρα 
+                    var LimitLine = InputData.Schedule.ReqScheduleRowsData.ElementAt(t).LimitLine;
+
+                    for (int i = 0; i < Employees.Length; i++)
+                    {
+
+                        expr.AddTerm(1, X[i, t]);
+                        sumdays = sumdays + 1;
+
+                    }
+                    if(sumdays > LimitLine)
+                    {
+                        model.AddConstr(expr <= LimitLine, "LimitLine_" + Dates[t]);
+                    }
+                }
+
+                //#5. Overlapping
+                #region  OverLapping
+
+                for (int i = 0; i < Employees.Length; i++)
+                {
+                    for (int j1 = 0; j1 < MaxLeaveBidsPerEmployee[Employees[i]] - 1; j1++)
+                    {
+                        for (int j2 = j1 + 1; j2 < MaxLeaveBidsPerEmployee[Employees[i]]; j2++)
+                        {
+                            var EmployeeCode = Employees[i];
+                            var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == Employees[i]);
+
+                            #region Find z1,z2
+                            int Z1value = new int();
+                            int Z2value = new int();
+                            int R1value = new int();
+                            int R2value = new int();
+
+                            var BidCode1 = specificEmployee.LeaveBidDataGridStatic[j1].BidCode;
+                            R1value = RBidsDict.TryGetValue((Employees[i], BidCode1), out int valueR1) ? valueR1 : R1value;
+
+                            var BidCode2 = specificEmployee.LeaveBidDataGridStatic[j2].BidCode;
+                            R2value = RBidsDict.TryGetValue((Employees[i], BidCode2), out int valueR2) ? valueR2 : R2value;
+                            #endregion
+
+                            for (int r1 = 0; r1 < R1value; r1++)
+                            {
+                                Z1value = ZbidsDict.TryGetValue((Employees[i], BidCode1, r1 + 1), out int value1) ? value1 : Z1value;
+
+                                for (int r2 = 0; r2 < R2value; r2++)
+                                {
+                                    Z2value = ZbidsDict.TryGetValue((Employees[i], BidCode2, r2 + 1), out int value2) ? value2 : Z2value;
+
+                                    for (int z1 = 0; z1 < Z1value; z1++)
+                                    {
+                                        for (int z2 = 0; z2 < Z2value; z2++)
+                                        {
+                                            if (SeparOrOverlap(i, j1, j2, z1, z2, r1, r2))
+                                            {
+                                                GRBLinExpr expr = Y[i, j1, r1, z1] + Y[i, j2, r2, z2];
+                                                model.AddConstr(expr <= 1, $"SO{i + 1}_{j1 + 1}_{z1 + 1}_{j2 + 1}_{z2 + 1}");
+                                            }
+                                        }
+                                    }
+                                }
+
+
+                            }
+
+
+
+
+                        }
+                    }
+                }
+                bool SeparOrOverlap(int i, int j1, int j2, int z1, int z2, int r1, int r2)
+                {
+
+                    var emp = InputData.Employees.ElementAt(i);
+
+                    var SelectedBid1 = emp.LeaveBidDataGridStatic.ElementAt(j1);
+                    var SelectedBid2 = emp.LeaveBidDataGridStatic.ElementAt(j2);
+
+                    //if int(BidStart[i][j2]) >= int(BidStart[i][j1]) + int(BidLength[i][j1]) + separvalue:
+                    if (SelectedBid2.DateFrom.AddDays(z2) >= SelectedBid1.DateFrom.AddDays(SelectedBid1.NumberOfDaysMax + SeparValue + z1 - r1 - 1))
+                    {
+                        return false;
+
+                    };
+                    //if int(BidStart[i][j2]) + int(BidLength[i][j2]) <= int(BidStart[i][j1]) - separvalue:
+                    if (SelectedBid2.DateFrom.AddDays(SelectedBid2.NumberOfDaysMax + z2 - r1 - 1) <= SelectedBid1.DateFrom.AddDays(-SeparValue))
+                    {
+
+                        return false;
+
+                    };
+
+                    return true;
+                }
+
+                #endregion
+                //#6.Connection Between Y and X
+                for (int i = 0; i < Employees.Length; i++)
+                {
+                    var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == Employees[i]);
+                    var maxBids = MaxLeaveBidsPerEmployee[Employees[i]];
+
+                    for (int j = 0; j < maxBids; j++)
+                    {
+                        var bid = specificEmployee.LeaveBidDataGridStatic[j];
+                        var NumberOfDays = bid.NumberOfDaysMax;
+
+                        #region Find ZValue, RValue
+                        int Zvalue = new int();
+                        int Rvalue = new int();
+                        var EmployeeCode = Employees[i];
+                        var BidCode = specificEmployee.LeaveBidDataGridStatic[j].BidCode;
+                        Rvalue = RBidsDict.TryGetValue((Employees[i], BidCode), out int valueR) ? valueR : Zvalue;
+                        #endregion
+                        GRBLinExpr sumDays = 0;
+                        for (int r = 0; r < Rvalue; r++) //allagh
+                        {
+                            Zvalue = ZbidsDict.TryGetValue((Employees[i], BidCode, r+1), out int value) ? value : Zvalue;
+                            NumberOfDays = NumberOfDays - r;
+                            for (int z = 0; z < Zvalue; z++) //allagh
+                            {
+                                #region neo
+                                var startDateIndex = Array.IndexOf(Dates, bid.DateFrom.ToString("dd/MM/yyyy"));
+
+                                GRBLinExpr expr = 0;
+                                expr = Y[i, j, r, z] * NumberOfDays;
+
+                                int start = startDateIndex + z;
+                                int end = start + NumberOfDays ;
+
+                                for (int t = start; t < end; t++)
+                                {
+                                    expr = expr - X[i, t]; // Add X variables for each day of the bid
+                                }
+                                // Add the constraint
+                                model.AddConstr(expr <= 0, $"BidDaysConstraint_{Employees[i]}_{j}_{r}_{z}");
+
+                                #endregion
+                                #region Palio
+                                //var startDateIndex = Array.IndexOf(Dates, bid.DateFrom.ToString("dd/MM/yyyy"));
+
+                                //NumberOfDays = NumberOfDays - r;
+                                //startDateIndex = startDateIndex + z;
+                                //for (int k = 0; k < NumberOfDays; k++)
+                                //{
+                                //    sumDays.AddTerm(1, X[i, startDateIndex + k ]); // Add X variables for each day of the bid
+                                //}
+                                //// Add the constraint
+                                //model.AddConstr(NumberOfDays * Y[i, j, r, z] <= sumDays, $"BidDaysConstraint_{Employees[i]}_{j}_{z}");
+                                #endregion
+                            }
+
+                        }
+
+
+                    }
+                }
+
+                //#7.Connection Betweer Y and R -- Yijrz and Yijr . 
+                for (int i = 0; i < Employees.Length; i++)
+                {
+                    for (int j = 0; j < MaxLeaveBidsPerEmployee[Employees[i]]; j++)
+                    {
+                        GRBLinExpr sumYijrz = 0;
+                        #region Find ZValue ,RValue
+                        int Zvalue = new int();
+                        int Rvalue = new int();
+                        var EmployeeCode = Employees[i];
+                        var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == Employees[i]);
+                        var BidCode = specificEmployee.LeaveBidDataGridStatic[j].BidCode;
+                        Rvalue = RBidsDict.TryGetValue((Employees[i], BidCode), out int valueR) ? valueR : Zvalue;
+                        #endregion
+                        for (int r = 0; r < Rvalue; r++)
+                        {
+                            Zvalue = ZbidsDict.TryGetValue((Employees[i], BidCode, r+1), out int value) ? value : Zvalue;
+
+                            for (int z = 0; z < Zvalue; z++)
+                            {
+                                sumYijrz.AddTerm(1.0, Y[i, j, r, z]);
+
+                            }
+                            // Adding the constraint for the current employee
+                            model.AddConstr(R[i, j, r] == sumYijrz, "Y_R_Connection" + Employees[i]);
+                        }
+
+
+                    }
+
+
+                }
+                //#8.if Rvalue >1  => Σ(Rijr) <=1 
+                for (int i = 0; i < Employees.Length; i++)
+                {
+                    for (int j = 0; j < MaxLeaveBidsPerEmployee[Employees[i]]; j++)
+                    {
+                        GRBLinExpr sumRijr = 0;
+                        #region Find ZValue ,RValue
+                        int Zvalue = new int();
+                        int Rvalue = new int();
+                        var EmployeeCode = Employees[i];
+                        var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == Employees[i]);
+                        var BidCode = specificEmployee.LeaveBidDataGridStatic[j].BidCode;
+                        Rvalue = RBidsDict.TryGetValue((Employees[i], BidCode), out int valueR) ? valueR : Zvalue;
+                        #endregion
+                        if (Rvalue > 1)
+                        {
+                            for (int r = 0; r < Rvalue; r++)
+                            {
+
+                                sumRijr.AddTerm(1.0, R[i, j, r]);
+
+                            }
+                            model.AddConstr(sumRijr <= 1, "Sum Rijr <=1" + Employees[i]);
+
+                        }
+
+
+
+                    }
+
+
+                }
+                #endregion
+
+                #endregion
+
+                #region New Optimize settings
+                bool grant = false;
+                BasicEnums.VPLogicType logic = InputData.VPLogicType; // Λογικη Ανάθεσης π.χ Strict Seniority
+
+                int FinishedEmpIds = 0; //Το αντιστοιχο FinishedIds στο κωδικα της Python
+                int FinishedBidIds = 1; //Μετρητής για τα ολοκληρωμέναBids
+
+                int id = 0;
+                var numRowsPerEmployee = InputData.Employees.Select(e => e.LeaveBidDataGridStatic.Count);
+                var numOfEmployes = InputData.Employees.Count; //Το αντιστοιχο N της python
+
+                int N = numRowsPerEmployee.Sum(); //Το N εδω ειναι o αριθμος των συνολικών Bids.
+                int[] NextBid = new int[N];
+                int[] NrOfBids = MaxLeaveBidsPerEmployee.Values.ToArray();
+                List<string> outputLines = new List<string>();
+
+
+                model.Update();
+
+                while (FinishedEmpIds <= numOfEmployes) // Kozani
+                {
+
+
+                    int j = NextBid[id];
+
+                    #region Check Bid
+                    var z = 0;
+                    var r = 0;
+                    #region Find ZValue,RValue
+                    int Zvalue = new int();
+                    int Rvalue = new int();
+                    var EmployeeCode = Employees[id];
+                    var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == Employees[id]);
+
+                    var BidCode = specificEmployee.LeaveBidDataGridStatic[j].BidCode;
+                    Rvalue = RBidsDict.TryGetValue((Employees[id], BidCode), out int valueR) ? valueR : Zvalue;
+                    Zvalue = ZbidsDict.TryGetValue((Employees[id], BidCode, Rvalue), out int value) ? value : Zvalue;
+                    #endregion
+                    for (r = 0; r < Rvalue; r++)
+                    {
+
+                        for (z = 0; z < Zvalue; z++)
+                        {
+                            #region Check Bid
+                            //GRBVar K = model.GetVarByName($"Y{id + 1}_{j + 1}_{r + 1}_{z + 1}");
+                            //K.LB = 1;
+
+                            GRBVar Rijr = model.GetVarByName($"R{id + 1}_{j + 1}_{r + 1}");
+                            Rijr.LB = 1;
+
+                            model.Update();
+                            model.Optimize();
+                            bool solution = (model.Status == GRB.Status.OPTIMAL);
+                            if (solution)
+                            {
+                                double rValue = R[id, j, r].X;
+
+                                grant = true;
+                                string message = $"Crew member {id + 1} was awarded bid {j + 1}";
+                                Console.WriteLine(message);
+                                outputLines.Add(message);
+                                Data.ObjValue = model.ObjVal;
+
+                                #region Set Xit LB = 1
+                                //var emp = InputData.Employees.ElementAt(id);
+
+                                //var SelectedBid = emp.LeaveBidDataGridStatic.ElementAt(j);
+                                //var DateFrom = SelectedBid.DateFrom.AddDays(z).ToString("dd/MM/yyyy");
+                                //var DateTo = SelectedBid.DateFrom.AddDays(SelectedBid.NumberOfDaysMax - r + z - 1).ToString("dd/MM/yyyy");
+
+                                //string employee = Employees[id];
+
+                                //var DateFromIndex = Dates.IndexOf(DateFrom);
+                                //var DateToIdIndex = Dates.IndexOf(DateTo);
+                                //if (DateFromIndex != -1 && DateToIdIndex != -1)
+                                //{
+                                //    for (int t = DateFromIndex; t <= DateToIdIndex && t < Dates.Length; t++)
+                                //    {
+                                //        GRBVar Xit = model.GetVarByName($"X{id + 1}_{t + 1}");
+                                //        Xit.LB = 1;
+                                //    }
+
+                                //}
+                                //else
+                                //{
+                                //    // Handle the case where DateFrom or DateTo is not found in the Dates list
+                                //    Console.WriteLine("DateFrom or DateTo not found in the Dates list.");
+                                //}
+
+                                #endregion
+
+                            }
+                            else
+                            {
+                                grant = false;
+                                Rijr.LB = 0;
+                                string message = $"Crew member {id + 1} was not awarded bid {j + 1}";
+                                Console.WriteLine(message);
+                                outputLines.Add(message);
+                            }
+
+                            #endregion
+
+                        }
+                    }
+
+                    #endregion
+                    NextBid[id]++;
+                    if (NextBid[id] == NrOfBids[id])
+                    {
+                        FinishedEmpIds++;
+
+                    }
+                    if (model.Status == GRB.Status.OPTIMAL)
+                    {
+                        Data.ObjValue = model.ObjVal;
+                        model.Update();
+                        model.Write("out.mst");
+                        model.Write("out.sol");
+                        model.Write("VPFeasable.lp");
+                        model.Write("VPFeasableMPS.mps");
+
+
+                    }
+                    if (FinishedBidIds == N)
+                    {
+                        break;
+                    }
+                    FinishedBidIds = FinishedBidIds + 1;
+                    if (FinishedBidIds <= N)
+                    {
+                        id = GetNextId(id, grant, numOfEmployes, NextBid, NrOfBids, FinishedEmpIds, logic);
+                    }
+                }
+                #endregion
+
+                #endregion
+
+                #region Save,Show Results
+                var Upgrade = new bool();
+                var flag = new bool();
+                var customMessageBox = new CustomMessageBox("Do you want to Save the Results or Search for a better Solution?");
+                if (customMessageBox.ShowDialog() == true)
+                {
+                    // User clicked Save Only or Save and Upgrade
+                    if (customMessageBox.DialogResult == true)
+                    {
+                        // User clicked Save Only or Save and Upgrade
+                        var result = customMessageBox.Message.Contains("Save and Upgrade") ? "Save and Upgrade" : "Save Only";
+                        Console.WriteLine($"User clicked {result}");
+
+                        if (result == "Save and Upgrade" || result == "Save Only")
+                        {
+                            #region OutputResults
+                            if (Data.ObjValue > 0)
+                            {
+
+                                // Read the model from the files
+                                using (GRBModel modelFromFiles = new GRBModel(finalenv, "VPFeasableMPS.mps"))
+                                {
+                                    modelFromFiles.Optimize();
+                                    modelFromFiles.Update();
+                                    Data.ObjValue = modelFromFiles.ObjVal;
+
+                                    #region Insert Xij
+                                    // Extract the optimal solution for the 'X' variables
+                                    for (int i = 0; i < Employees.Length; i++)
+                                    {
+                                        for (int t = 0; t < Dates.Length; t++)
+                                        {
+                                            string employee = Employees[i];
+                                            string date = Dates[t];
+                                            GRBVar Xit = modelFromFiles.GetVarByName($"X{i + 1}_{t + 1}");
+
+                                            double xValue = Xit.X;
+                                            if (xValue == 1)
+                                            {
+                                                Console.WriteLine($"Employee: {employee}, Date: {date}, Value: {xValue}");
+                                            }
+                                            // Store the optimal 'X' value in the data structure
+                                            make_plan[(employee, date)] = xValue;
+
+                                            // Add 'employee' and 'date' to the respective lists if they are not already there
+                                            if (!rows.Contains(employee))
+                                                rows.Add(employee);
+                                            if (!columns.Contains(date))
+                                                columns.Add(date);
+                                        }
+                                    }
+                                    #endregion
+                              
+
+
+
+
+                                // Print the optimal solution for 'X' variables
+                                Console.WriteLine("Optimal Solution for X Variables:");
+                                foreach (var employee in rows)
+                                {
+                                    foreach (var date in columns)
+                                    {
+                                        double xValue = make_plan.ContainsKey((employee, date)) ? make_plan[(employee, date)] : 0.0;
+                                        Console.WriteLine($"Employee: {employee}, Date: {date}, Value: {xValue} -> Employee: {employee}, Date: {date}, Value: {xValue} X{(Array.IndexOf(Employees, employee) + 1)}{(Array.IndexOf(Dates, date) + 1)}");
+
+
+                                        #region Populate VP Xij
+                                        VPXijResultsData singleDataRecord = new VPXijResultsData();
+
+
+                                        singleDataRecord.Xij = $"X{(Array.IndexOf(Employees, employee) + 1)}{(Array.IndexOf(Dates, date) + 1)}";
+                                        singleDataRecord.XijFlag = xValue;
+                                        singleDataRecord.Date = date;
+
+
+
+
+                                        var SpecificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == employee);
+                                        singleDataRecord.Employee = SpecificEmployee;
+
+                                        Data.VPXijResultsDataGrid.Add(singleDataRecord);
+                                        #endregion
+                                    }
+                                }
+
+                                // Extract the optimal solution for the 'Y' variables
+                                Dictionary<(string, int, int, int), double> y_plan = new Dictionary<(string, int, int, int), double>();
+                                for (int i = 0; i < Employees.Length; i++)
+                                {
+                                    for (int j = 0; j < MaxLeaveBidsPerEmployee[Employees[i]]; j++)
+                                    {
+                                        var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == Employees[i]);
+
+                                        #region Find ZValue
+                                        int Zvalue = new int();
+                                        int Rvalue = new int();
+                                        var EmployeeCode = Employees[i];
+                                        var BidCode = specificEmployee.LeaveBidDataGridStatic[j].BidCode;
+                                        Rvalue = RBidsDict.TryGetValue((Employees[i], BidCode), out int valueR) ? valueR : Zvalue;
+                                        #endregion
+                                        for (int r = 0; r < Rvalue; r++)
+                                        {
+                                            Zvalue = ZbidsDict.TryGetValue((Employees[i], BidCode, r + 1), out int value) ? value : Zvalue;
+                                            GRBVar Rijr = modelFromFiles.GetVarByName($"R{i + 1}_{j + 1}_{r + 1}");
+
+                                            double rValue = Rijr.X;
+
+
+                                            for (int z = 0; z < Zvalue; z++) //allagh
+                                            {
+                                                string employee = Employees[i];
+                                                int bidIndex = j;
+                                                GRBVar Yijrz = modelFromFiles.GetVarByName($"Y{i + 1}_{j + 1}_{r + 1}_{z + 1}");
+
+                                               double yValue = Yijrz.X;
+  
+                                                // Store the optimal 'Y' value in the data structure
+                                                y_plan[(employee, bidIndex, r, z)] = yValue;
+                                            }
+                                        }
+
+
+
+
+
+
+
+                                    }
+                                }
+
+                                // Print the optimal solution for 'Y' variables
+                                Console.WriteLine("\nOptimal Solution for Y Variables:");
+                                int counter = 0;
+                                foreach (var employee in rows)
+                                {
+                                    var TotalNumberOfDays = 0;
+
+                                    for (int j = 0; j < MaxLeaveBidsPerEmployee[employee]; j++)
+                                    {
+                                        #region Find ZValue
+                                        int Zvalue = new int();
+                                        int Rvalue = new int();
+                                        var EmployeeCode = employee;
+                                        var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == EmployeeCode);
+                                        var BidCode = specificEmployee.LeaveBidDataGridStatic[j].BidCode;
+                                        Rvalue = RBidsDict.TryGetValue((EmployeeCode, BidCode), out int valueR) ? valueR : Zvalue;
+                                        #endregion
+
+                                        for (int r = 0; r < Rvalue; r++)
+                                        {
+                                            Zvalue = ZbidsDict.TryGetValue((EmployeeCode, BidCode, r + 1), out int value) ? value : Zvalue;
+                                            for (int z = 0; z < Zvalue; z++) //allagh
+                                            {
+                                                int bidIndex = j;
+                                                double yValue = y_plan.ContainsKey((employee, bidIndex, r, z)) ? y_plan[(employee, bidIndex, r, z)] : 0.0;
+
+                                                Console.WriteLine($"Employee: {employee}, BidIndex: {bidIndex + 1}, Value: {yValue} -> Employee: {employee}, BidIndex: {bidIndex + 1}, Value: {yValue} Y{(Array.IndexOf(Employees, employee) + 1)}{(bidIndex + 1)}");
+
+                                                #region Populate VP Yij
+                                                VPYijResultsData yijDataRecord = new VPYijResultsData();
+                                                yijDataRecord.LeaveBidData = new LeaveBidsDataStatic();
+
+
+                                                yijDataRecord.Yij = $"Y{(Array.IndexOf(Employees, employee) + 1)}{(bidIndex + 1)}";
+                                                yijDataRecord.Yijr = $"Y{(Array.IndexOf(Employees, employee) + 1)}{(bidIndex + 1)}{(r + 1)}";
+                                                yijDataRecord.Yijrz = $"Y{(Array.IndexOf(Employees, employee) + 1)}{(bidIndex + 1)}{(r + 1)}{(z + 1)}";
+
+                                                yijDataRecord.YijFlag = yValue;
+                                                yijDataRecord.ConfirmedBidFlag = yValue;
+
+                                                var SpecificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == employee);
+                                                yijDataRecord.Employee = SpecificEmployee;
+
+                                                yijDataRecord.LeaveBidData = SpecificEmployee.LeaveBidDataGridStatic[j];
+
+                                                #region Edit Dates
+
+                                                var DateFrom = SpecificEmployee.LeaveBidDataGridStatic[j].DateFrom;
+                                                var NumberOfDays = SpecificEmployee.LeaveBidDataGridStatic[j].NumberOfDaysMax - r;
+                                                var NumberOfDaysMax = SpecificEmployee.LeaveBidDataGridStatic[j].NumberOfDaysMax;
+                                                var NumberOfDaysMin = SpecificEmployee.LeaveBidDataGridStatic[j].NumberOfDaysMin;
+
+                                                var BidType = SpecificEmployee.LeaveBidDataGridStatic[j].BidType;
+                                                var DateTo = SpecificEmployee.LeaveBidDataGridStatic[j].DateTo;
+
+                                                yijDataRecord.DateFrom = DateFrom;
+                                                yijDataRecord.DateTo = DateTo;
+
+                                                if (BidType == BasicEnums.BidType.Min_Max)
+                                                {
+                                                    NumberOfDays = 0;
+                                                }
+                                                else if (BidType == BasicEnums.BidType.Non_Specific)
+                                                {
+                                                    NumberOfDaysMax = 0;
+                                                    NumberOfDaysMin = 0;
+
+                                                }
+                                                else if (BidType == BasicEnums.BidType.Specific)
+                                                {
+                                                    NumberOfDaysMax = 0;
+                                                    NumberOfDaysMin = 0;
+                                                }
+
+                                                yijDataRecord.NumberOfDays = NumberOfDays;
+                                                yijDataRecord.NumberOfDaysMax = NumberOfDaysMax;
+                                                yijDataRecord.NumberOfDaysMin = NumberOfDaysMin;
+
+                                                yijDataRecord.DateFromStr = DateFrom.ToString("dd/MM/yyyy");
+                                                yijDataRecord.DateToStr = DateTo.ToString("dd/MM/yyyy");
+
+                                                #endregion
+
+                                                #region ADD RECORD 
+                                                var existingRecord = Data.VPYijResultsDataGrid.FirstOrDefault(record => record.Yij == yijDataRecord.Yij);
+
+                                                if (existingRecord != null)
+                                                {
+                                                    if (existingRecord.YijFlag == 1)
+                                                    {
+
+                                                    }
+                                                    else if (existingRecord.YijFlag == 0 && yijDataRecord.YijFlag == 0)
+                                                    {
+
+                                                    }
+                                                    else if (existingRecord.YijFlag == 0 && yijDataRecord.YijFlag == 1)
+                                                    {
+                                                        // Insert the new record and remove the existing record
+                                                        Data.VPYijResultsDataGrid.Remove(existingRecord);
+                                                        Data.VPYijResultsDataGrid.Add(yijDataRecord);
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    Data.VPYijResultsDataGrid.Add(yijDataRecord);
+
+                                                }
+
+                                                #endregion
+
+
+
+                                                #endregion
+
+                                                #region Populate VP Yijz
+                                                VPYijResultsData yijzDataRecord = new VPYijResultsData();
+                                                yijzDataRecord.LeaveBidData = new LeaveBidsDataStatic();
+
+
+                                                yijzDataRecord.Yij = $"Y{(Array.IndexOf(Employees, employee) + 1)}{(bidIndex + 1)}";
+                                                yijzDataRecord.Yijr = $"Y{(Array.IndexOf(Employees, employee) + 1)}{(bidIndex + 1)}{(r + 1)}";
+                                                yijzDataRecord.Yijrz = $"Y{(Array.IndexOf(Employees, employee) + 1)}{(bidIndex + 1)}{(r + 1)}{(z + 1)}";
+
+                                                yijzDataRecord.YijFlag = yValue;
+                                                yijzDataRecord.ConfirmedBidFlag = yValue;
+
+                                                yijzDataRecord.Employee = SpecificEmployee;
+
+                                                yijzDataRecord.LeaveBidData = SpecificEmployee.LeaveBidDataGridStatic[j];
+
+                                                #region Edit Dates
+
+                                                if (SpecificEmployee.LeaveBidDataGridStatic[j].BidType == BasicEnums.BidType.Min_Max)
+                                                {
+                                                }
+
+                                                DateFrom = SpecificEmployee.LeaveBidDataGridStatic[j].DateFrom.AddDays(z);
+                                                NumberOfDays = SpecificEmployee.LeaveBidDataGridStatic[j].NumberOfDaysMax - r;
+                                                DateTo = DateFrom.AddDays(NumberOfDays - 1);
+
+                                                yijzDataRecord.DateFrom = DateFrom;
+                                                yijzDataRecord.DateTo = DateTo;
+                                                yijzDataRecord.NumberOfDays = NumberOfDays;
+                                                yijzDataRecord.DateFromStr = DateFrom.ToString("dd/MM/yyyy");
+                                                yijzDataRecord.DateToStr = DateTo.ToString("dd/MM/yyyy");
+
+                                                #endregion
+                                                Data.VPYijzResultsDataGrid.Add(yijzDataRecord);
+
+
+
+                                                #endregion
+                                                if (yValue == 1)
+                                                {
+                                                    TotalNumberOfDays = TotalNumberOfDays + NumberOfDays;
+
+                                                }
+                                            }
+                                        } //allagh
+
+                                        counter++;
+                                    }
+
+                                    var UpdatedEmp = InputData.Employees.FirstOrDefault(emp => emp.Code == employee);
+                                    UpdatedEmp.LeaveStatus.ProjectedBalance = UpdatedEmp.LeaveStatus.CurrentBalance - TotalNumberOfDays;
+                                    Data.EmpLeaveStatusData.Add(UpdatedEmp);
+
+                                }
+
+
+                                #region Create c#sol.txt for python
+                                //string filePath = @"C:\Users\npoly\Source\Repos\Bids_CrewScheduling_Kozanidis\c#sol.txt";
+                                //File.WriteAllText(filePath, string.Empty);
+
+                                //using (StreamWriter writer = new StreamWriter(filePath, true)) // 'true' parameter appends to the existing file if it exists
+                                //{
+                                //    foreach (string line in outputLines)
+                                //    {
+                                //        writer.WriteLine(line);
+                                //    }
+                                //}
+
+                                #endregion
+                            }
+                            #endregion
+                        }
+                        if (result == "Save and Upgrade")
+                        {
+                            // Handle Save and Upgrade scenario
+                            Console.WriteLine("Saving and upgrading...");
+                            flag = SaveVpVijResultData(Data, 1, InputData.VPId);
+                            Console.WriteLine(flag);
+                            Upgrade = true;
+                        }
+                        else
+                        {
+                            // Handle Save Only scenario
+                            Console.WriteLine("Saving only...");
+                            flag = SaveVpVijResultData(Data, 1, InputData.VPId);
+                            Console.WriteLine(flag);
+                            Upgrade = false;
+
+                        }
+                    }
+                    else
+                    {
+                        // User clicked Upgrade Only
+                        Console.WriteLine("User clicked Upgrade Only");
+                        // Handle Upgrade Only scenario
+                        //flag = SaveVpVijResultData(Data, -1, InputData.VPId);
+                        Console.WriteLine(flag);
+                        Upgrade = true;
+
+                    }
+                }
+                while (Upgrade == true)
+                {
+                    var CurrentObjectiveValue = Data.ObjValue;
+                    var NewInputData = InputData;
+
+
+                    //Data = CalculateVacationPlanningAdvanced2(NewInputData,Yijk);
+                }
+                }
+                model.Dispose();
+                env.Dispose();
+
+                #endregion
+
+                return Data;
+
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("An error occurred: " + ex.Message);
+                return Data;
+            }
+        }
+
 
         public VacationPlanningOutputData CalculateVacationPlanning(VacationPlanningInputData InputData)
         {
@@ -3185,7 +4180,6 @@ Where 1=1 {0}", FilterStr);
                     // Create a data structure to store the optimal solution
                     model.Update();
 
-
                     #region Insert Xij
                     // Extract the optimal solution for the 'X' variables
                     for (int i = 0; i < Employees.Length; i++)
@@ -3341,8 +4335,6 @@ Where 1=1 {0}", FilterStr);
                 return Data;
             }
         }
-
-
 
         public bool SaveVpVijResultData(VacationPlanningOutputData Data, int ReplicationNumber, int VPID)
         {

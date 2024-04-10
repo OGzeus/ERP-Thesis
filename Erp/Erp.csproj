@@ -90,6 +90,7 @@
     <Compile Include="CommonFiles\CommonFunctions.cs" />
     <Compile Include="CommonFiles\F7Common.cs" />
     <Compile Include="Converters\ColorConverter.cs" />
+    <Compile Include="Converters\CustomRowStyleConverter.cs" />
     <Compile Include="Converters\CustomRowStyleSelector.cs" />
     <Compile Include="Converters\InvertBoolConverter.cs" />
     <Compile Include="Converters\MainStackPanelReadonly.cs" />
@@ -646,6 +647,8 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
     </EmbeddedResource>
+    <None Include="bin\Debug\VPFeasable.lp" />
+    <None Include="bin\Debug\VPFeasableMPS.mps" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>

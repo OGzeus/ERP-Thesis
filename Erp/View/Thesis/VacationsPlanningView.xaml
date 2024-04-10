@@ -7,6 +7,7 @@
              xmlns:converters="clr-namespace:Erp.Converters"
              xmlns:syncfusion="http://schemas.syncfusion.com/wpf"
              xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity" 
+             xmlns:syncfusionSfDataGrid="clr-namespace:Syncfusion.UI.Xaml.Grid;assembly=Syncfusion.SfGrid.WPF"       
 
              xmlns:converter="clr-namespace:Erp.Converters"
              xmlns:viewmodel="clr-namespace:Erp.ViewModel.Thesis"
@@ -19,7 +20,15 @@
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
         <converter:InvertBoolConverter x:Key="InvertBoolConverter" />
+        <converter:CustomRowStyleConverter x:Key="CustomRowStyleConverter" />
 
+
+        <Style x:Key="Yijflagstylecolor" TargetType="syncfusionSfDataGrid:VirtualizingCellsControl">
+            <Setter Property="Background" Value="{Binding Path=YijFlag, Converter={StaticResource CustomRowStyleConverter}, UpdateSourceTrigger=PropertyChanged}" />
+        </Style>
+        <Style x:Key="Xijflagstylecolor" TargetType="syncfusionSfDataGrid:VirtualizingCellsControl">
+            <Setter Property="Background" Value="{Binding Path=XijFlag, Converter={StaticResource CustomRowStyleConverter}, UpdateSourceTrigger=PropertyChanged}" />
+        </Style>
     </UserControl.Resources>
     <Grid>
         <Grid.RowDefinitions>
@@ -116,27 +125,27 @@
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Text="Schedule Code : " Grid.Row="1" Grid.Column="0" Margin="2"/>
-                                        <TextBlock Text="Schedule Descr: " Grid.Row="1" Grid.Column="2" Margin="2"/>
-                                        <TextBlock Text="DateFrom : " Grid.Row="2" Grid.Column="0" Margin="2"/>
-                                        <TextBlock Text="DateTo : " Grid.Row="2" Grid.Column="2" Margin="2"/>
-                                        <TextBlock Text="Max Satisfied Bids: " Grid.Row="3" Grid.Column="0" Margin="2"/>
-                                        <TextBlock Text="Separation Value: " Grid.Row="3" Grid.Column="2" Margin="2"/>
+                                        <TextBlock Text="Schedule Descr : " Grid.Row="1" Grid.Column="2" Margin="2"/>
+                                        <TextBlock Text="Date From : " Grid.Row="2" Grid.Column="0" Margin="2"/>
+                                        <TextBlock Text="Date To : " Grid.Row="2" Grid.Column="2" Margin="2"/>
+                                        <TextBlock Text="Max Satisfied Bids : " Grid.Row="3" Grid.Column="0" Margin="2"/>
+                                        <TextBlock Text="Separation Value : " Grid.Row="3" Grid.Column="2" Margin="2"/>
 
                                         <TextBlock Text="Employee Type : " Grid.Row="4" Grid.Column="0" Margin="2"/>
-                                        <TextBlock Text="Bid Reward Logic Type: " Grid.Row="4" Grid.Column="2" Margin="2"/>
+                                        <TextBlock Text="Bid Reward Logic Type : " Grid.Row="4" Grid.Column="2" Margin="2"/>
 
                                         <StackPanel Grid.Row="1" Grid.Column="1" HorizontalAlignment="Left"  Orientation="Horizontal" Margin="2" >
-                                            <TextBox Text="{Binding InputData.Schedule.ReqCode , Mode=TwoWay}" HorizontalAlignment="left" Width="115" IsReadOnly="True" />
+                                            <TextBox Text="{Binding InputData.Schedule.ReqCode , Mode=TwoWay}" HorizontalAlignment="left" Width="145" IsReadOnly="True" />
                                             <Button Content="f" Width="20"                    Command="{Binding ShowScheduleGridCommand}"/>
                                         </StackPanel>
-                                        <TextBox Text="{Binding InputData.Schedule.ReqDescr, Mode=TwoWay}" Grid.Row="1" Grid.Column="3" Margin="2" HorizontalAlignment="Stretch" Width="135" IsReadOnly="True" />
-                                        <TextBox Text="{Binding InputData.Schedule.DateFrom, Mode=TwoWay}" Grid.Row="2" Grid.Column="1" Margin="2" HorizontalAlignment="Stretch" Width="135" IsReadOnly="True"/>
-                                        <TextBox Text="{Binding InputData.Schedule.DateTo, Mode=TwoWay}" Grid.Row="2" Grid.Column="3" Margin="2" HorizontalAlignment="Stretch" Width="135" IsReadOnly="True"/>
-                                        <TextBox Text="{Binding InputData.MaxSatisfiedBids, Mode=TwoWay}" Grid.Row="3" Grid.Column="1" Margin="2" HorizontalAlignment="Stretch" Width="135" />
-                                        <TextBox Text="{Binding InputData.SeparValue, Mode=TwoWay}" Grid.Row="3" Grid.Column="3" Margin="2" HorizontalAlignment="Stretch" Width="135" />
+                                        <TextBox Text="{Binding InputData.Schedule.ReqDescr, Mode=TwoWay}" Grid.Row="1" Grid.Column="3" Margin="2" HorizontalAlignment="Stretch" IsReadOnly="True" />
+                                        <TextBox Text="{Binding InputData.Schedule.DateFromStr, Mode=TwoWay}" Grid.Row="2" Grid.Column="1" Margin="2" HorizontalAlignment="Stretch"  IsReadOnly="True"/>
+                                        <TextBox Text="{Binding InputData.Schedule.DateToStr, Mode=TwoWay}" Grid.Row="2" Grid.Column="3" Margin="2" HorizontalAlignment="Stretch"  IsReadOnly="True"/>
+                                        <TextBox Text="{Binding InputData.MaxSatisfiedBids, Mode=TwoWay}" Grid.Row="3" Grid.Column="1" Margin="2" HorizontalAlignment="Stretch"  />
+                                        <TextBox Text="{Binding InputData.SeparValue, Mode=TwoWay}" Grid.Row="3" Grid.Column="3" Margin="2" HorizontalAlignment="Stretch" />
 
                                         <ComboBox ItemsSource="{Binding EmployeeTypes}"  SelectedItem="{Binding InputData.EmployeeType , UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" Grid.Row="4" Grid.Column="1" Margin="2"/>
-                                        <ComboBox ItemsSource="{Binding VPLogicTypes}"  SelectedItem="{Binding InputData.VPLogicType , UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" Grid.Row="4" Grid.Column="3" Margin="2"/>
+                                        <ComboBox ItemsSource="{Binding VPLogicTypes}"  SelectedItem="{Binding InputData.VPLogicType , UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" Grid.Row="4" Grid.Column="3" Margin="2" Width="155"/>
 
                                     </Grid>
                                 </StackPanel>
@@ -148,19 +157,19 @@
                         </Grid>
 
                         <StackPanel  HorizontalAlignment="Left" Orientation="Horizontal">
-                            <Button x:Name="ClearButton"  Width="100" HorizontalAlignment="Left" Margin="2"  Command="{Binding ClearInputCommand}">
+                            <Button x:Name="ClearButton"  Width="100" HorizontalAlignment="Left" Margin="4"  Command="{Binding ClearInputCommand}">
                                 <TextBlock Text="Clear"/>
                             </Button>
 
-                            <Button x:Name="RefreshButton"  Width="100" HorizontalAlignment="Left" Margin="2"  Command="{Binding RefreshInputCommand}">
+                            <Button x:Name="RefreshButton"  Width="100" HorizontalAlignment="Left" Margin="4"  Command="{Binding RefreshInputCommand}">
                                 <TextBlock Text="Refresh"/>
                             </Button>
-                            <Button x:Name="SaveData"  Width="100" HorizontalAlignment="Left"  Margin="2"  Command="{Binding SaveInputCommand}">
+                            <Button x:Name="SaveData"  Width="100" HorizontalAlignment="Left"  Margin="4"  Command="{Binding SaveInputCommand}">
                                 <TextBlock Text="Save"/>
                             </Button>
 
 
-                            <Button x:Name="CalculateMPS"  Width="210"  HorizontalAlignment="Left" Margin="2"  Command="{Binding CalculateVacationPlanning}">
+                            <Button x:Name="CalculateMPS"   HorizontalAlignment="Left" Margin="4"  Command="{Binding CalculateVacationPlanning}">
                                 <TextBlock Text="Calculate Vacation Planning" FontWeight="Bold"/>
                             </Button>
                         </StackPanel>
@@ -172,7 +181,6 @@
                                                     ShowSortNumbers="True"
                                                     AllowFiltering="True"
                                                     HeaderStyle="{DynamicResource headerStyle}"
-
                                                     AllowResizingColumns="True"
                                                     FilterRowPosition="FixedTop"
                                                     ScrollViewer.VerticalScrollBarVisibility="Visible"
@@ -228,7 +236,7 @@
                                 <syncfusion:SfDataGrid x:Name="sfGridYij"
                                                     Grid.Row="1"
                                                     HeaderStyle="{DynamicResource headerStyle}"
-
+                                                    RowStyle="{DynamicResource Yijflagstylecolor}"
                                                     Grid.Column="0"
                                                     Grid.ColumnSpan="7"
                                                     Background="White"
@@ -249,13 +257,15 @@
                                                     AutoExpandGroups="True"
 
                                                     FontSize="18">
+
+                                    
                                     <syncfusion:SfDataGrid.GroupColumnDescriptions>
-                                        <syncfusion:GroupColumnDescription ColumnName="LeaveBidData.Employee.Code" />
+                                        <syncfusion:GroupColumnDescription ColumnName="Employee.Code" />
                                     </syncfusion:SfDataGrid.GroupColumnDescriptions>
 
                                     <syncfusion:SfDataGrid.Columns>
-                                        <syncfusion:GridTextColumn MappingName="LeaveBidData.Employee.Code" HeaderText="Emp Code" AllowEditing="False"/>
-                                        <syncfusion:GridTextColumn MappingName="LeaveBidData.Employee.Seniority" HeaderText="Seniority" AllowEditing="False"/>
+                                        <syncfusion:GridTextColumn MappingName="Employee.Code" HeaderText="Emp Code" AllowEditing="False"/>
+                                        <syncfusion:GridTextColumn MappingName="Employee.Seniority" HeaderText="Seniority" AllowEditing="False"/>
                                         <syncfusion:GridTextColumn MappingName="LeaveBidData.BidCode" HeaderText="Bid Code" AllowEditing="False"/>
                                         <syncfusion:GridTextColumn MappingName="LeaveBidData.BidType" HeaderText="Bid Type" AllowEditing="False"/>
                                         <syncfusion:GridTextColumn MappingName="LeaveBidData.PriorityLevel" HeaderText="Priority Level" AllowEditing="False"/>
@@ -307,8 +317,8 @@
 
                                 <syncfusion:SfDataGrid x:Name="sfGridYijz"
                                                     Grid.Row="1"
-                                                     HeaderStyle="{DynamicResource headerStyle}"
-
+                                                    HeaderStyle="{DynamicResource headerStyle}"
+                                                    RowStyle="{DynamicResource Yijflagstylecolor}"
                                                     Grid.Column="0"
                                                     Grid.ColumnSpan="7"
                                                     Background="White"
@@ -329,11 +339,11 @@
                                                     AutoExpandGroups="True"
                                                     FontSize="18">
                                     <syncfusion:SfDataGrid.GroupColumnDescriptions>
-                                        <syncfusion:GroupColumnDescription ColumnName="LeaveBidData.Employee.Code" />
+                                        <syncfusion:GroupColumnDescription ColumnName="Employee.Code" />
                                     </syncfusion:SfDataGrid.GroupColumnDescriptions>
                                     <syncfusion:SfDataGrid.Columns>
-                                        <syncfusion:GridTextColumn MappingName="LeaveBidData.Employee.Code" HeaderText="Emp Code" AllowEditing="False"/>
-                                        <syncfusion:GridTextColumn MappingName="LeaveBidData.Employee.Seniority" HeaderText="Seniority" AllowEditing="False"/>
+                                        <syncfusion:GridTextColumn MappingName="Employee.Code" HeaderText="Emp Code" AllowEditing="False"/>
+                                        <syncfusion:GridTextColumn MappingName="Employee.Seniority" HeaderText="Seniority" AllowEditing="False"/>
                                         <syncfusion:GridTextColumn MappingName="LeaveBidData.BidCode" HeaderText="Bid Code" AllowEditing="False"/>
                                         <syncfusion:GridTextColumn MappingName="LeaveBidData.BidType" HeaderText="Bid Type" AllowEditing="False"/>
                                         <syncfusion:GridTextColumn MappingName="LeaveBidData.PriorityLevel" HeaderText="Priority Level" AllowEditing="False"/>
@@ -377,7 +387,7 @@
                                                     Grid.Column="0"
                                                     Grid.ColumnSpan="5"
                                                     Background="White"
-
+                                                    RowStyle="{DynamicResource Xijflagstylecolor}"
                                                     AllowSorting="True"
                                                     ShowSortNumbers="True"
                                                     AllowEditing="True"

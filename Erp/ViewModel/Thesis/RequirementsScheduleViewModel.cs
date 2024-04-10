@@ -71,7 +71,7 @@ namespace Erp.ViewModel.Thesis
         {
 
             FlatData = new ReqScheduleInfoData();
-            FlatData.ReqCode = " ";
+            FlatData.ReqCode ="";
             FlatData.ReqScheduleRowsData = new ObservableCollection<ReqScheduleRowsData>();
             FlatData.DateFrom = DateTime.Now;
             FlatData.DateTo = DateTime.Now.AddMonths(6);
@@ -182,7 +182,7 @@ namespace Erp.ViewModel.Thesis
                 if (Flag == 0)
                 {
                     MessageBox.Show($"New Schedule saved with Code: {FlatData.ReqCode}");
-
+                    ExecuteShowReqScheduleInfoDataGridCommand(obj);
                     FlatData.ID = 0;
                     ExecuteRefreshCommand(obj);
                 }
@@ -236,6 +236,72 @@ namespace Erp.ViewModel.Thesis
         #region Save
 
 
+
+
+        private ViewModelCommand savecommand;
+
+        public ICommand SaveCommand
+        {
+            get
+            {
+                if (savecommand == null)
+                {
+                    savecommand = new ViewModelCommand(ExecuteSaveCommand);
+                }
+
+                return savecommand;
+            }
+        }
+
+        private void ExecuteSaveCommand(object obj)
+        {
+            int Flag = CommonFunctions.SaveReqScheduleInfoData(FlatData);
+
+            if (Flag == 1)
+            {
+                MessageBox.Show($"Saving/Updating completed for the Schedule with Code: {FlatData.ReqCode}");
+                ExecuteShowReqScheduleInfoDataGridCommand(obj);
+                FlatData.ID = 0;
+                ExecuteRefreshCommand(obj);
+            }
+            else if (Flag == -1)
+            {
+                MessageBox.Show("Error during data processing", "", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+
+
+
+        #endregion
+        #region Refresh
+
+        private ViewModelCommand refreshCommand;
+
+        public ICommand RefreshCommand
+        {
+            get
+            {
+                if (refreshCommand == null)
+                {
+                    refreshCommand = new ViewModelCommand(ExecuteRefreshCommand);
+                }
+
+                return refreshCommand;
+            }
+        }
+
+        private void ExecuteRefreshCommand(object commandParameter)
+        {
+
+
+            FlatData = CommonFunctions.GetReqScheduleInfoChooserData(FlatData.ID, FlatData.ReqCode);
+
+
+        }
+
+        #endregion
+        #region Main Schedule
         private ViewModelCommand _MainScheduleCommand;
 
         public ICommand MainScheduleCommand
@@ -275,69 +341,7 @@ namespace Erp.ViewModel.Thesis
 
 
         }
-
-        private ViewModelCommand savecommand;
-
-        public ICommand SaveCommand
-        {
-            get
-            {
-                if (savecommand == null)
-                {
-                    savecommand = new ViewModelCommand(ExecuteSaveCommand);
-                }
-
-                return savecommand;
-            }
-        }
-
-        private void ExecuteSaveCommand(object obj)
-        {
-            int Flag = CommonFunctions.SaveReqScheduleInfoData(FlatData);
-
-            if (Flag == 1)
-            {
-                MessageBox.Show($"Saving/Updating completed for the Schedule with Code: {FlatData.ReqCode}");
-
-            }
-            else if (Flag == -1)
-            {
-                MessageBox.Show("Error during data processing", "", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-
-
-
         #endregion
-        #region Refresh
-
-        private ViewModelCommand refreshCommand;
-
-        public ICommand RefreshCommand
-        {
-            get
-            {
-                if (refreshCommand == null)
-                {
-                    refreshCommand = new ViewModelCommand(ExecuteRefreshCommand);
-                }
-
-                return refreshCommand;
-            }
-        }
-
-        private void ExecuteRefreshCommand(object commandParameter)
-        {
-
-
-            FlatData = CommonFunctions.GetReqScheduleInfoChooserData(FlatData.ID, FlatData.ReqCode);
-
-
-        }
-
-        #endregion
-
         #endregion
 
         #region 2nd Tab

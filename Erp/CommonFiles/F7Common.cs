@@ -43,8 +43,8 @@ namespace Erp.CommonFiles
 
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Schedule.ReqCode", HeaderText = "Schedule Code" });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Schedule.ReqDescr", HeaderText = "Schedule Descr" });
-            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Schedule.DateFrom", HeaderText = "Date From" });
-            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Schedule.DateTo", HeaderText = "Date To" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Schedule.DateFromStr", HeaderText = "Date From" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Schedule.DateToStr", HeaderText = "Date To" });
             GridData.SfGridColumns.Add(new GridCheckBoxColumn() { MappingName = "IsDeleted", HeaderText = "Deleted" });
 
 

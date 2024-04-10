@@ -172,7 +172,7 @@ namespace Erp.ViewModel.Thesis
 
 
             InputData = new VacationPlanningInputData();
-            InputData.VPCode = " ";
+            InputData.VPCode = "";
             InputData.Schedule = new ReqScheduleInfoData();
             InputData.Schedule.ReqScheduleRowsData = new ObservableCollection<ReqScheduleRowsData>();
 
@@ -413,23 +413,8 @@ namespace Erp.ViewModel.Thesis
 
                 #region Dates, DatesStr List  
 
-                // Materialize the distinct dates into a list
-                var distinctDates = InputData.Schedule.ReqScheduleRowsData
-                    .Select(df => df.Date)
-                    .Distinct()
-                    .ToList();
-
-                // Convert the list to a DateTime array
-                InputData.Dates = distinctDates.ToArray();
-
-                // Materialize the distinct date strings into a list
-                var distinctDateStrings = InputData.Schedule.ReqScheduleRowsData
-                    .Select(df => df.DateStr)
-                    .Distinct()
-                    .ToList();
-
-                // Convert the list to a string array
-                InputData.DatesStr = distinctDateStrings.ToArray();
+                InputData.Dates = InputData.Schedule.ReqScheduleRowsData.Select(df => df.Date).OrderBy(date => date).ToArray();
+                InputData.DatesStr = InputData.Schedule.ReqScheduleRowsData.Select(df => df.DateStr).OrderBy(dateStr => DateTime.ParseExact(dateStr, "dd/MM/yyyy", CultureInfo.InvariantCulture)).ToArray();
 
                 #endregion
             }
@@ -530,7 +515,8 @@ namespace Erp.ViewModel.Thesis
             InputData.ZBidsDict = new Dictionary<(string, string,int), int>();
             InputData.RBidsDict = new Dictionary<(string, string), int>();
 
-            //InputData.ZBidsDict = new Dictionary<(string, string), int>();
+            InputData.ZBidsDictInt = new Dictionary<(int, int, int), int>();
+            InputData.RBidsDictInt = new Dictionary<(int, int), int>();
 
 
             #region Employee Insert Data
@@ -573,6 +559,8 @@ namespace Erp.ViewModel.Thesis
                         InputData.RBidsDict[(emp.Code, Bid.BidCode)] = 1;
                         InputData.ZBidsDict[(emp.Code, Bid.BidCode,1)] = 1;
 
+                        InputData.RBidsDictInt[(emp.Seniority, Bid.PriorityLevel)] = 1;
+                        InputData.ZBidsDictInt[(emp.Seniority, Bid.PriorityLevel, 1)] = 1;
                     }
                     else if (Bid.BidType == BasicEnums.BidType.Non_Specific)
                     {
@@ -584,8 +572,11 @@ namespace Erp.ViewModel.Thesis
                         InputData.RBidsDict[(emp.Code, Bid.BidCode)] = 1;
 
                         int Z = totalDaysInRange - Bid.NumberOfDays + 2;
+
                         InputData.ZBidsDict[(emp.Code, Bid.BidCode,1)] = Z;
 
+                        InputData.RBidsDictInt[(emp.Seniority, Bid.PriorityLevel)] = 1;
+                        InputData.ZBidsDictInt[(emp.Seniority, Bid.PriorityLevel, 1)] = Z;
 
                     }
                     else if (Bid.BidType == BasicEnums.BidType.Min_Max)
@@ -597,6 +588,7 @@ namespace Erp.ViewModel.Thesis
                         var Max = Bid.NumberOfDaysMax;
 
                         InputData.RBidsDict[(emp.Code, Bid.BidCode)] = Max - Min + 1;
+                        InputData.RBidsDictInt[(emp.Seniority, Bid.PriorityLevel)] = Max - Min + 1;
 
                         for (int i = 0; i < Max - Min + 1; i++)
                         {
@@ -604,6 +596,7 @@ namespace Erp.ViewModel.Thesis
                             int Z = totalDaysInRange - Bid.NumberOfDays + 2;
 
                             InputData.ZBidsDict[(emp.Code, Bid.BidCode, i+1)] = Z;
+                            InputData.ZBidsDictInt[(emp.Seniority, Bid.PriorityLevel, 1)] = Z;
 
                         };
 
@@ -617,8 +610,9 @@ namespace Erp.ViewModel.Thesis
 
 
             OutputData = CommonFunctions.CalculateVacationPlanningAdvanced(InputData);
-            //var b = CommonFunctions.CalculateColumnGeneration(OutputData);
-
+            OutputData.VPYijResultsDataGrid = OutputData.VPYijResultsDataGrid.OrderBy(item => item.Employee.Seniority).ToObservableCollection();
+            OutputData.VPYijzResultsDataGrid = OutputData.VPYijzResultsDataGrid.OrderBy(item => item.Employee.Seniority).ToObservableCollection();
+            OutputData.VPXijResultsDataGrid = OutputData.VPXijResultsDataGrid.OrderBy(item => item.Employee.Seniority).ToObservableCollection();
 
             var result = System.Windows.MessageBox.Show($"Do you want to Create a Notepad as Python Input?", "Confirmation", MessageBoxButton.YesNo);
 
