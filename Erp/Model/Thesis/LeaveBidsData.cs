@@ -34,6 +34,7 @@ namespace Erp.Model.Thesis
 
         private int _BidId;
         private string _BidCode;
+        private string _OldBidCode;
 
         private int _PriorityLevel;
 
@@ -59,6 +60,11 @@ namespace Erp.Model.Thesis
         {
             get { return _BidCode; }
             set { _BidCode = value; OnPropertyChanged("BidCode"); }
+        }
+        public string OldBidCode
+        {
+            get { return _OldBidCode; }
+            set { _OldBidCode = value; OnPropertyChanged("OldBidCode"); }
         }
         public EmployeeData Employee
         {
@@ -130,6 +136,13 @@ namespace Erp.Model.Thesis
         {
             get { return bidflag; }
             set { bidflag = value; OnPropertyChanged("Bidflag"); }
+        }
+
+        private bool modify { get; set; }
+        public bool Modify
+        {
+            get { return modify; }
+            set { modify = value; OnPropertyChanged("Modify"); }
         }
     }
 }

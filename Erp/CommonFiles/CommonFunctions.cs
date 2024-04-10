@@ -1494,8 +1494,8 @@ ORDER BY L.PriorityLevel");
                         data.DateTo = Convert.ToDateTime(reader["DateTo"]);
 
 
-                        data.DateFromStr = data.DateFrom.ToString("dd/MM/yy"); 
-                        data.DateToStr = data.DateTo.ToString("dd/MM/yy"); 
+                        data.DateFromStr = data.DateFrom.ToString("dd/MM/yyyy"); 
+                        data.DateToStr = data.DateTo.ToString("dd/MM/yyyy"); 
 
 
                         data.DateTo = Convert.ToDateTime(reader["DateTo"]);
@@ -1542,8 +1542,8 @@ ORDER BY L.PriorityLevel");
                     int result = 0;
                     foreach (var row in Data)
                     {
-                        string BidCode = row.BidCode;
-                        var existingBid = dbContext.LeaveBids.SingleOrDefault(b => b.EmpId == EmployeeId && b.BidCode == BidCode);
+                        string OldBidCode = row.OldBidCode;
+
 
                         if (row.ExistingFlag == false && row.Bidflag == true && row.NewBidFlag == true)
                         {
@@ -1571,22 +1571,44 @@ ORDER BY L.PriorityLevel");
                         }
                         else if (row.ExistingFlag == true && row.Bidflag == false)
                         {
+                            var existingBid = dbContext.LeaveBids.SingleOrDefault(b => b.EmpId == EmployeeId && b.BidCode == row.BidCode);
                             dbContext.LeaveBids.Remove(existingBid);
 
                         }
-                        else if (row.ExistingFlag == true && row.Bidflag == true)
+                        else if (row.ExistingFlag == true && row.Bidflag == true && row.Modify == true)
                         {
-                            // Update existing bom
-                            existingBid.BidCode = row.BidCode;
-                            existingBid.PriorityLevel = row.PriorityLevel;
-                            existingBid.BidType = row.BidType.ToString();
-                            existingBid.DateFrom = row.DateFrom;
-                            existingBid.DateTo = row.DateTo;
-                            existingBid.DateFromStr = row.DateFrom.ToString();
-                            existingBid.DateToStr = row.DateTo.ToString();
-                            existingBid.NumberOfDays = row.NumberOfDays;
-                            existingBid.NumberOfDaysMin = row.NumberOfDaysMin;
-                            existingBid.NumberOfDaysMax = row.NumberOfDaysMax;
+                            if(row.OldBidCode != row.BidCode)
+                            {
+                                var existingBid = dbContext.LeaveBids.SingleOrDefault(b => b.EmpId == EmployeeId && b.BidCode == row.OldBidCode);
+                                // Update existing bom
+                                existingBid.BidCode = row.BidCode;
+                                existingBid.PriorityLevel = row.PriorityLevel;
+                                existingBid.BidType = row.BidType.ToString();
+                                existingBid.DateFrom = row.DateFrom;
+                                existingBid.DateTo = row.DateTo;
+                                existingBid.DateFromStr = row.DateFrom.ToString();
+                                existingBid.DateToStr = row.DateTo.ToString();
+                                existingBid.NumberOfDays = row.NumberOfDays;
+                                existingBid.NumberOfDaysMin = row.NumberOfDaysMin;
+                                existingBid.NumberOfDaysMax = row.NumberOfDaysMax;
+                            }
+                            else
+                            {
+                                var existingBid = dbContext.LeaveBids.SingleOrDefault(b => b.EmpId == EmployeeId && b.BidCode == row.BidCode);
+                                // Update existing bom
+                                existingBid.BidCode = row.BidCode;
+                                existingBid.PriorityLevel = row.PriorityLevel;
+                                existingBid.BidType = row.BidType.ToString();
+                                existingBid.DateFrom = row.DateFrom;
+                                existingBid.DateTo = row.DateTo;
+                                existingBid.DateFromStr = row.DateFrom.ToString();
+                                existingBid.DateToStr = row.DateTo.ToString();
+                                existingBid.NumberOfDays = row.NumberOfDays;
+                                existingBid.NumberOfDaysMin = row.NumberOfDaysMin;
+                                existingBid.NumberOfDaysMax = row.NumberOfDaysMax;
+                            }
+
+
                         }
 
 
@@ -3023,16 +3045,18 @@ Where 1=1 {0}", FilterStr);
                         #endregion
                         for (int r = 0; r < Rvalue; r++) //allagh
                         {
-                            Zvalue = ZbidsDict.TryGetValue((Employees[i], BidCode, r+1), out int value) ? value : Zvalue;
+                            objective.AddTerm(1, R[i, j, r]);
 
-                            for (int z = 0; z < Zvalue; z++) //allagh
-                            {
-                                // Define the variable name
+                            //Zvalue = ZbidsDict.TryGetValue((Employees[i], BidCode, r+1), out int value) ? value : Zvalue;
 
-                                // Create the binary variable with a name
-                                objective.AddTerm(1, Y[i, j, r, z]);
+                            //for (int z = 0; z < Zvalue; z++) //allagh
+                            //{
+                            //    // Define the variable name
 
-                            }
+                            //    // Create the binary variable with a name
+                            //    objective.AddTerm(1, Y[i, j, r, z]);
+
+                            //}
 
                         }
 
@@ -3287,7 +3311,6 @@ Where 1=1 {0}", FilterStr);
                 {
                     for (int j = 0; j < MaxLeaveBidsPerEmployee[Employees[i]]; j++)
                     {
-                        GRBLinExpr sumYijrz = 0;
                         #region Find ZValue ,RValue
                         int Zvalue = new int();
                         int Rvalue = new int();
@@ -3299,7 +3322,7 @@ Where 1=1 {0}", FilterStr);
                         for (int r = 0; r < Rvalue; r++)
                         {
                             Zvalue = ZbidsDict.TryGetValue((Employees[i], BidCode, r+1), out int value) ? value : Zvalue;
-
+                            GRBLinExpr sumYijrz = 0;
                             for (int z = 0; z < Zvalue; z++)
                             {
                                 sumYijrz.AddTerm(1.0, Y[i, j, r, z]);
@@ -3386,18 +3409,19 @@ Where 1=1 {0}", FilterStr);
 
                     var BidCode = specificEmployee.LeaveBidDataGridStatic[j].BidCode;
                     Rvalue = RBidsDict.TryGetValue((Employees[id], BidCode), out int valueR) ? valueR : Zvalue;
-                    Zvalue = ZbidsDict.TryGetValue((Employees[id], BidCode, Rvalue), out int value) ? value : Zvalue;
                     #endregion
                     for (r = 0; r < Rvalue; r++)
                     {
+                        //Zvalue = ZbidsDict.TryGetValue((Employees[id], BidCode, Rvalue-r), out int value) ? value : Zvalue;
 
-                        for (z = 0; z < Zvalue; z++)
-                        {
+               
+                        //for (z = 0; z < Zvalue; z++)
+                        //{
                             #region Check Bid
                             //GRBVar K = model.GetVarByName($"Y{id + 1}_{j + 1}_{r + 1}_{z + 1}");
                             //K.LB = 1;
 
-                            GRBVar Rijr = model.GetVarByName($"R{id + 1}_{j + 1}_{r + 1}");
+                            GRBVar Rijr = model.GetVarByName($"R{id + 1}_{j + 1}_{r+1}");
                             Rijr.LB = 1;
 
                             model.Update();
@@ -3453,7 +3477,7 @@ Where 1=1 {0}", FilterStr);
 
                             #endregion
 
-                        }
+                        //}
                     }
 
                     #endregion

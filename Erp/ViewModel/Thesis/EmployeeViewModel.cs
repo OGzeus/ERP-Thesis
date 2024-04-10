@@ -893,6 +893,7 @@ namespace Erp.ViewModel.Thesis
             else if (modify == true)
             {
                 var RowToRemove = FlatData.LeaveBidDataGridStatic.FirstOrDefault(item => item.BidCode == FlatData.LeaveBidInfo.BidCode);
+                FlatData.LeaveBidInfo.OldBidCode = RowToRemove.BidCode;
                 if (RowToRemove != null)
                 {
                     FlatData.LeaveBidDataGridStatic.Remove(RowToRemove);
@@ -902,6 +903,7 @@ namespace Erp.ViewModel.Thesis
                 FlatData.LeaveBidInfo.ExistingFlag = true;
                 FlatData.LeaveBidInfo.NewBidFlag = false;
                 FlatData.LeaveBidInfo.Bidflag = true;
+                FlatData.LeaveBidInfo.Modify = true;
             }
 
             FlatData.LeaveBidInfo.Schedule = FlatData.MainSchedule;
@@ -935,16 +937,20 @@ namespace Erp.ViewModel.Thesis
 
             FlatData.LeaveBidsInfoStatic.Schedule = FlatData.LeaveBidInfo.Schedule;
             FlatData.LeaveBidsInfoStatic.BidCode = FlatData.LeaveBidInfo.BidCode;
+            FlatData.LeaveBidsInfoStatic.OldBidCode = FlatData.LeaveBidInfo.OldBidCode;
             FlatData.LeaveBidsInfoStatic.BidType = FlatData.LeaveBidInfo.BidType;
             FlatData.LeaveBidsInfoStatic.PriorityLevel = FlatData.LeaveBidInfo.PriorityLevel;
             FlatData.LeaveBidsInfoStatic.DateFrom = FlatData.LeaveBidInfo.DateFrom;
             FlatData.LeaveBidsInfoStatic.DateTo = FlatData.LeaveBidInfo.DateTo;
+            FlatData.LeaveBidsInfoStatic.DateFromStr = FlatData.LeaveBidInfo.DateFrom.ToString("dd/MM/yyyy");
+            FlatData.LeaveBidsInfoStatic.DateToStr = FlatData.LeaveBidInfo.DateTo.ToString("dd/MM/yyyy");
             FlatData.LeaveBidsInfoStatic.NumberOfDays = FlatData.LeaveBidInfo.NumberOfDays;
             FlatData.LeaveBidsInfoStatic.NumberOfDaysMin = FlatData.LeaveBidInfo.NumberOfDaysMin;
             FlatData.LeaveBidsInfoStatic.NumberOfDaysMax = FlatData.LeaveBidInfo.NumberOfDaysMax;
             FlatData.LeaveBidsInfoStatic.ExistingFlag = FlatData.LeaveBidInfo.ExistingFlag; 
             FlatData.LeaveBidsInfoStatic.NewBidFlag = FlatData.LeaveBidInfo.NewBidFlag;
             FlatData.LeaveBidsInfoStatic.Bidflag = FlatData.LeaveBidInfo.Bidflag;
+            FlatData.LeaveBidsInfoStatic.Modify = FlatData.LeaveBidInfo.Modify;
 
             FlatData.LeaveBidDataGridStatic.Add(FlatData.LeaveBidsInfoStatic);
             var orderedCollection = new ObservableCollection<LeaveBidsDataStatic>(
