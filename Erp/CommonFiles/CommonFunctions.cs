@@ -2049,7 +2049,7 @@ Where 1=1 {0}", FilterStr);
 
 
         #region  Optimization
-        public VacationPlanningOutputData CalculateVacationPlanningAdvanced2(VacationPlanningInputData InputData)
+        public VacationPlanningOutputData CalculateVacationPlanningAdvancedProxeiro(VacationPlanningInputData InputData)
         {
             GRBEnv env = new GRBEnv("vplogfile.log");
             GRBModel model = new GRBModel(env);
