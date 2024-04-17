@@ -3359,7 +3359,7 @@ Where 1=1 {0}", FilterStr);
                                 sumRijr.AddTerm(1.0, R[i, j, r]);
 
                             }
-                            model.AddConstr(sumRijr <= 1, "Sum Rijr <=1" + Employees[i]);
+                            model.AddConstr(sumRijr <= 1, "Sum Rijr <=1 " + Employees[i]);
 
                         }
 

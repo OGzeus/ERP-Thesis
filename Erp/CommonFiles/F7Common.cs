@@ -274,6 +274,7 @@ namespace Erp.CommonFiles
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "MachCode", HeaderText = "Machine Code" });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "MachDescr", HeaderText = "Machine Description" });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "MachineType", HeaderText = "Machine Type" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "ProductionRate", HeaderText = "Production Rate" });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "PrimaryModel", HeaderText = "Primary Model" });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Status", HeaderText = "Status" });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Factory.Code", HeaderText = "Factory Code" });

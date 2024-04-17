@@ -10,7 +10,7 @@
 
              xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800" Background="White">
+             d:DesignHeight="450" d:DesignWidth="800" Background="White" FontSize="18">
     <UserControl.DataContext>
         <viewmodel:ItemViewModel/>
     </UserControl.DataContext>
@@ -183,7 +183,7 @@
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
 
                         <StackPanel Grid.Row="0" Grid.Column="0" HorizontalAlignment="Left" Orientation="Horizontal" >
@@ -202,6 +202,8 @@
                                                     Grid.Row="1"
                                                     Grid.RowSpan="1"
                                                     Grid.Column="0"
+                                                    Grid.ColumnSpan="4"
+
                                                     ColumnSizer="Star"
                                                     Background="White"
                                                     AllowSorting="True"
@@ -245,7 +247,7 @@
                     </Grid>
                 </TabItem>
 
-                <TabItem Header="ProductionProcessFlow">
+                <TabItem Header="Production Process Flow">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
@@ -257,7 +259,7 @@
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
 
                         <StackPanel Grid.Row="0" Grid.Column="0" HorizontalAlignment="Left" Orientation="Horizontal">
@@ -274,8 +276,8 @@
                         </StackPanel>
                         <syncfusion:SfDataGrid x:Name="sfGrid3"
                                                     Grid.Row="1"
-                                                    Grid.RowSpan="1"
                                                     Grid.Column="0"
+                                                    Grid.ColumnSpan="4"
                                                     ColumnSizer="Star"
                                                     Background="White"
                                                     AllowSorting="True"
