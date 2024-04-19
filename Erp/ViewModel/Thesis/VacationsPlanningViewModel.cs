@@ -120,7 +120,30 @@ namespace Erp.ViewModel.Thesis
 
             }
         }
+        private VPCGInputData cginputdata;
+        public VPCGInputData CGInputdata
+        {
+            get { return cginputdata; }
+            set
+            {
+                cginputdata = value;
+                INotifyPropertyChanged(nameof(CGInputdata));
 
+
+            }
+        }
+        private VPCGOutputData cgoutputdata;
+        public VPCGOutputData CGOutputdata
+        {
+            get { return cgoutputdata; }
+            set
+            {
+                cgoutputdata = value;
+                INotifyPropertyChanged(nameof(CGOutputdata));
+
+
+            }
+        }
         private Columns sfGridColumns;
         public Columns SfGridColumns
         {
@@ -179,8 +202,11 @@ namespace Erp.ViewModel.Thesis
             OutputData = new VacationPlanningOutputData();
             OutputData.VPYijResultsDataGrid = new ObservableCollection<VPYijResultsData>();
             OutputData.VPXijResultsDataGrid = new ObservableCollection<VPXijResultsData>();
-            OutputData.EmpLeaveStatusData = new ObservableCollection<EmployeeData>();
+            OutputData.VPXiResultsDataGrid = new ObservableCollection<VPXiResultData>();
 
+            OutputData.EmpLeaveStatusData = new ObservableCollection<EmployeeData>();
+            CGInputdata = new VPCGInputData();
+            CGInputdata.VPXiResultsDataGrid = new ObservableCollection<VPXiResultData>();
 
             this.sfGridColumns = new Columns();
             this.SfGridColumnsRepair = new Columns();
@@ -614,16 +640,64 @@ namespace Erp.ViewModel.Thesis
             OutputData.VPYijzResultsDataGrid = OutputData.VPYijzResultsDataGrid.OrderBy(item => item.Employee.Seniority).ToObservableCollection();
             OutputData.VPXijResultsDataGrid = OutputData.VPXijResultsDataGrid.OrderBy(item => item.Employee.Seniority).ToObservableCollection();
 
-            var result = System.Windows.MessageBox.Show($"Do you want to Create a Notepad as Python Input?", "Confirmation", MessageBoxButton.YesNo);
+            #region Column Generation
 
-            if (result == MessageBoxResult.Yes)
+            #region Input Data
+            CGInputdata.LeaveDays = new Dictionary<int, int>();
+            CGInputdata.LLiDict = new Dictionary<int, int>();
+
+            var XijList = OutputData.VPXijResultsDataGrid;
+            var groupedByDate = XijList
+                .GroupBy(x => x.Date) // Group by Date
+                .Select(g => new VPXiResultData
+                {
+                    Date = g.Key, // Date
+                    LimitLine = g.Sum(x => (int)x.XijFlag)
+                });
+
+            var t = 0;
+            foreach (var row in groupedByDate)
             {
-                var a = CommonFunctions.CreatePythonTxt(InputData);
+                var PreviousLimitLine = InputData.Schedule.ReqScheduleRowsData.ElementAt(t).LimitLine;
 
+                row.LimitLine = PreviousLimitLine -row.LimitLine;
+                row.LLi = $"LL{t + 1}";
+
+                OutputData.VPXiResultsDataGrid.Add(row);
+                CGInputdata.LLiDict[t] = row.LimitLine;
+
+                t++;
             }
 
-            SelectedTabIndex = 1;
+            CGInputdata.Dates = InputData.DatesStr;
 
+            t=1;
+            foreach (var emp in OutputData.EmpLeaveStatusData)
+            {
+                if (emp.LeaveStatus.ProjectedBalance >0)
+                {
+                    CGInputdata.LeaveDays[t] = emp.LeaveStatus.ProjectedBalance;
+                }
+            t++;
+            }
+            var a = CommonFunctions.CalculateVPColumnGeneration(CGInputdata);
+
+            #endregion
+
+            #endregion
+
+
+            #region Create Python input txt
+            //var result = System.Windows.MessageBox.Show($"Do you want to Create a Notepad as Python Input?", "Confirmation", MessageBoxButton.YesNo);
+
+            //if (result == MessageBoxResult.Yes)
+            //{
+            //    var a = CommonFunctions.CreatePythonTxt(InputData);
+
+            //}
+
+            SelectedTabIndex = 1;
+            #endregion
         }
         #endregion
 

@@ -222,7 +222,10 @@
     <Compile Include="Model\Thesis\ReqScheduleRowsData.cs" />
     <Compile Include="Model\Thesis\VacationPlanning\VacationPlanningInputData.cs" />
     <Compile Include="Model\Thesis\VacationPlanning\VacationPlanningOutputData.cs" />
+    <Compile Include="Model\Thesis\VacationPlanning\VPCGInputData.cs" />
+    <Compile Include="Model\Thesis\VacationPlanning\VPCGOutputData.cs" />
     <Compile Include="Model\Thesis\VacationPlanning\VPXijResultsData.cs" />
+    <Compile Include="Model\Thesis\VacationPlanning\VPXiResultData.cs" />
     <Compile Include="Model\Thesis\VacationPlanning\VPYijResultsData.cs" />
     <Compile Include="Model\UserAccountModel.cs" />
     <Compile Include="Model\UserModel.cs" />

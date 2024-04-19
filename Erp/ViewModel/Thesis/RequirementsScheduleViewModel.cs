@@ -263,6 +263,7 @@ namespace Erp.ViewModel.Thesis
                 ExecuteShowReqScheduleInfoDataGridCommand(obj);
                 FlatData.ID = 0;
                 ExecuteRefreshCommand(obj);
+                ExecuteRefreshCommand2(obj);
             }
             else if (Flag == -1)
             {

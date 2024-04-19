@@ -404,7 +404,7 @@
                                                     ShowRowHeader="True" 
                                                     FontSize="18"
                                                     AutoExpandGroups="True">
-                                    
+
                                     <syncfusion:SfDataGrid.GroupColumnDescriptions>
                                         <syncfusion:GroupColumnDescription ColumnName="Employee.Code" />
                                     </syncfusion:SfDataGrid.GroupColumnDescriptions>
@@ -426,7 +426,6 @@
 
                             </Grid>
                         </TabItem>
-
                         <TabItem Header="Entiltement">
                             <Grid>
 
@@ -473,6 +472,59 @@
                                         <syncfusion:GridTextColumn MappingName="LeaveStatus.CurrentBalance" HeaderText=" Leave Current Balance" AllowEditing="False"/>
 
                                         <syncfusion:GridTextColumn MappingName="LeaveStatus.ProjectedBalance" HeaderText="Leave Projected Balance " AllowEditing="False"/>
+
+                                    </syncfusion:SfDataGrid.Columns>
+                                    <!--<i:Interaction.Triggers>
+                            <i:EventTrigger EventName="MouseDoubleClick">
+                                <i:InvokeCommandAction Command="{Binding Path=DataContext.RowDataCommand,ElementName=sfGrid}" CommandParameter="{Binding}"/>
+                            </i:EventTrigger>
+                        </i:Interaction.Triggers>-->
+                                </syncfusion:SfDataGrid>
+
+
+                            </Grid>
+                        </TabItem>
+                        <TabItem Header="Xi Plan">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="770"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="500"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <syncfusion:SfDataGrid x:Name="sfGrid7"
+                                                    Grid.Row="1"
+                                                    Grid.Column="0"
+                                                    Grid.ColumnSpan="5"
+                                                    Background="White"
+                                                    AllowSorting="True"
+                                                    ShowSortNumbers="True"
+                                                    AllowEditing="True"
+                                                    AllowResizingColumns="True"
+                                                    FilterRowPosition="FixedTop"
+                                                    ScrollViewer.VerticalScrollBarVisibility="Visible"
+                                                    ScrollViewer.HorizontalScrollBarVisibility="Visible"
+                                                    ShowToolTip="True"
+                                                    AllowGrouping="True"
+                                                    ShowGroupDropArea="True"
+                                                    AllowFiltering="True"
+                                                    AutoGenerateColumns="False"
+                                                    ItemsSource="{Binding OutputData.VPXiResultsDataGrid , Mode=TwoWay , UpdateSourceTrigger=PropertyChanged}"
+                                                    ShowRowHeader="True" 
+                                                    FontSize="18"
+                                                    AutoExpandGroups="True">
+
+  
+                                    <syncfusion:SfDataGrid.Columns>
+                                        <syncfusion:GridTextColumn Width="110" MappingName="LLi" HeaderText="LLi" AllowEditing="False"/>
+                                        <syncfusion:GridTextColumn Width="110"  MappingName="Date" HeaderText="Date" AllowEditing="False"/>
+                                        <syncfusion:GridTextColumn Width="110"  MappingName="LimitLine" HeaderText="LimitLine" AllowEditing="False"/>
 
                                     </syncfusion:SfDataGrid.Columns>
                                     <!--<i:Interaction.Triggers>

@@ -71,7 +71,17 @@ namespace Erp.Model.Thesis.VacationPlanning
                 OnPropertyChanged(nameof(VPXijResultsDataGrid));
             }
         }
+        private ObservableCollection<VPXiResultData> _VPXiResultsDataGrid;
 
+        public ObservableCollection<VPXiResultData> VPXiResultsDataGrid
+        {
+            get { return _VPXiResultsDataGrid; }
+            set
+            {
+                _VPXiResultsDataGrid = value;
+                OnPropertyChanged(nameof(VPXiResultsDataGrid));
+            }
+        }
         private string[] dates;
         public string[] Dates
         {
