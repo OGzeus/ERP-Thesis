@@ -206,6 +206,8 @@ namespace Erp.ViewModel.Thesis
 
             OutputData.EmpLeaveStatusData = new ObservableCollection<EmployeeData>();
             CGInputdata = new VPCGInputData();
+            CGOutputdata = new VPCGOutputData();
+
             CGInputdata.VPXiResultsDataGrid = new ObservableCollection<VPXiResultData>();
 
             this.sfGridColumns = new Columns();
@@ -228,6 +230,7 @@ namespace Erp.ViewModel.Thesis
         #region CRUD  Commands
 
         #region Input 
+
         #region ADD VacationPlanning
         public ICommand AddVPCommand { get; }
 
@@ -415,7 +418,7 @@ namespace Erp.ViewModel.Thesis
                 #region Schedule
 
                 InputData.Schedule = (SelectedItem as VacationPlanningInputData).Schedule;
-                InputData.Schedule.ReqScheduleRowsData = CommonFunctions.GetReqSchedulesRows(InputData.Schedule.ReqCode);
+                InputData.Schedule.ReqScheduleRowsData = CommonFunctions.GetReqSchedulesRowsByEmpType(InputData.Schedule.ReqCode,InputData.EmployeeType);
 
                 #region Dates,DatesStr List  
 
@@ -435,7 +438,7 @@ namespace Erp.ViewModel.Thesis
             if (F7key == "ReqSchedule")
             {
                 InputData.Schedule = (SelectedItem as ReqScheduleInfoData);
-                InputData.Schedule.ReqScheduleRowsData = CommonFunctions.GetReqSchedulesRows(InputData.Schedule.ReqCode);
+                InputData.Schedule.ReqScheduleRowsData = CommonFunctions.GetReqSchedulesRowsByEmpType(InputData.Schedule.ReqCode, InputData.EmployeeType);
 
                 #region Dates, DatesStr List  
 
@@ -664,21 +667,21 @@ namespace Erp.ViewModel.Thesis
                 row.LLi = $"LL{t + 1}";
 
                 OutputData.VPXiResultsDataGrid.Add(row);
-                CGInputdata.LLiDict[t] = row.LimitLine;
+                CGInputdata.LLiDict[t+1] = row.LimitLine;
 
                 t++;
             }
 
             CGInputdata.Dates = InputData.DatesStr;
 
-            t=1;
+            t=0;
             foreach (var emp in OutputData.EmpLeaveStatusData)
             {
                 if (emp.LeaveStatus.ProjectedBalance >0)
                 {
-                    CGInputdata.LeaveDays[t] = emp.LeaveStatus.ProjectedBalance;
+                    CGInputdata.LeaveDays[t+1] = emp.LeaveStatus.ProjectedBalance;
+                    t++;
                 }
-            t++;
             }
             var a = CommonFunctions.CalculateVPColumnGeneration(CGInputdata);
 

@@ -488,7 +488,6 @@ INNER JOIN City ON City.CityId = A.AirportID
                         // Insert new ForeCast
                         newItem.ReqCode = flatData.ReqCode;
                         newItem.ReqDescr = flatData.ReqDescr;
-
                         newItem.Notes = flatData.Notes;
                         newItem.DateFrom = flatData.DateFrom;
                         newItem.DateTo = flatData.DateTo;
@@ -531,15 +530,18 @@ INNER JOIN City ON City.CityId = A.AirportID
                     {
                         var DateStr = row.DateStr;
 
-                        var existingRows = dbContext.ReqScheduleRows.Where(b => b.ReqCode == ReqCode  && b.DateStr == row.DateStr);
+                        var existingRows = dbContext.ReqScheduleRows.Where(b => b.ReqCode == ReqCode  && b.DateStr == row.DateStr
+                        && b.Position == row.Position.ToString());
 
-                        var existingrow = dbContext.ReqScheduleRows.FirstOrDefault(b => b.ReqCode == ReqCode && b.DateStr == row.DateStr);
+                        var existingrow = dbContext.ReqScheduleRows.FirstOrDefault(b => b.ReqCode == ReqCode && b.DateStr == row.DateStr 
+                        && b.Position == row.Position.ToString());
 
                         if (existingrow == null)
                         {
                             dbContext.ReqScheduleRows.Add(new ReqScheduleRowsDataEntity
                             {
                                 ReqCode = ReqCode,
+                                Position= row.Position.ToString(),
                                 Date = row.Date,
                                 DateStr = row.DateStr,
                                 LimitLine = row.LimitLine
@@ -591,7 +593,7 @@ INNER JOIN City ON City.CityId = A.AirportID
 
                 command.Parameters.AddWithValue("@Code", ReqCode);
 
-                command.CommandText = string.Format(@"select REQID,REQCODE,DATE,DATESTR,LIMITLINE
+                command.CommandText = string.Format(@"select REQID,REQCODE,POSITION,DATE,DATESTR,LIMITLINE
 FROM ReqSchedulerows
 Where ReqCode =@Code");
 
@@ -603,7 +605,56 @@ Where ReqCode =@Code");
                         ReqScheduleRowsData data = new ReqScheduleRowsData();
 
                         data.ReqCode = reader["REQCODE"].ToString();
+                        data.Position = (BasicEnums.EmployeeType)Enum.Parse(typeof(BasicEnums.EmployeeType), reader["POSITION"].ToString());
+                        data.LimitLine = int.Parse(reader["LIMITLINE"].ToString());
+                        data.Date = Convert.ToDateTime(reader["DATE"]);
 
+                        data.DateStr = reader["DATESTR"].ToString();
+
+
+                        DataList.Add(data);
+
+                    }
+                }
+
+                connection.Close();
+            }
+
+            return DataList;
+        }
+        public ObservableCollection<ReqScheduleRowsData> GetReqSchedulesRowsByEmpType(string ReqCode,BasicEnums.EmployeeType Position)
+        {
+            ObservableCollection<ReqScheduleRowsData> DataList = new ObservableCollection<ReqScheduleRowsData>();
+            string FilterStr = "";
+            using (var connection = GetConnection())
+            using (var command = new SqlCommand())
+            {
+                connection.Open();
+                command.Connection = connection;
+
+
+
+
+
+                command.Parameters.AddWithValue("@ReqCode", ReqCode);
+                command.Parameters.AddWithValue("@Position", Position.ToString());
+
+                FilterStr += @" and REQCODE = @ReqCode";
+                FilterStr += @" and POSITION = @Position";
+
+                command.CommandText = string.Format(@"select REQID,REQCODE,POSITION,DATE,DATESTR,LIMITLINE
+FROM ReqSchedulerows
+Where 1=1 {0}",FilterStr);
+
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+
+                        ReqScheduleRowsData data = new ReqScheduleRowsData();
+
+                        data.ReqCode = reader["REQCODE"].ToString();
+                        data.Position = (BasicEnums.EmployeeType)Enum.Parse(typeof(BasicEnums.EmployeeType), reader["POSITION"].ToString());
                         data.LimitLine = int.Parse(reader["LIMITLINE"].ToString());
                         data.Date = Convert.ToDateTime(reader["DATE"]);
 
@@ -738,7 +789,6 @@ Where  1=1 {0}", FilterStr);
             {
                 connection.Open();
                 command.Connection = connection;
-
 
 
 
@@ -4129,6 +4179,7 @@ Where 1=1 {0}", FilterStr);
                     model.AddConstr(expr, GRB.EQUAL, 1, "MC_" + (i + 1));
                 }
 
+                var a = 1;
 
                 // #2. Days
                 for (int t = 0; t < Dates.Length; t++)
@@ -4136,10 +4187,11 @@ Where 1=1 {0}", FilterStr);
                     GRBLinExpr expr = 0;
 
 
-                    model.AddConstr(expr >= 0, "Day_" + t+1);
+                    model.AddConstr(expr >= 0, "Day_" + (t+1));
                     //model.AddConstr(expr >= 0, "Day_" + Dates[t]);
 
                 }
+                var b = 1;
 
                 // #3. Limit Lines
                 for (int t = 0; t < Dates.Length; t++)
@@ -4148,7 +4200,7 @@ Where 1=1 {0}", FilterStr);
 
 
 
-                   model.AddConstr(expr <= LLiDict[t], "LimitLine_" + t + 1);
+                   model.AddConstr(expr <= LLiDict[t+1], "LimitLine_" + (t + 1));
                     
                 }
                 #endregion
@@ -4173,10 +4225,10 @@ Where 1=1 {0}", FilterStr);
                 return Data;
 
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine("An error occurred: " + ex.Message);
                 return Data;
-
             }
 
         }

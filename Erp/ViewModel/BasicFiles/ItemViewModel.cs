@@ -66,6 +66,7 @@ namespace Erp.ViewModel.BasicFiles
 
 
         #endregion
+
         #region Bill Of Materials
         private ObservableCollection<BomData> flatData2;
         public ObservableCollection<BomData> FlatData2
@@ -125,9 +126,6 @@ namespace Erp.ViewModel.BasicFiles
             set { chooserData3 = value; }
         }
         #endregion
-
-
-
 
         #region Enums
 

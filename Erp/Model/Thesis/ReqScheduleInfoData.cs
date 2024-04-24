@@ -22,6 +22,13 @@ namespace Erp.Model.Thesis
 
         private bool _MainSchedule { get; set; }
 
+        private BasicEnums.EmployeeType _Position { get; set; }
+
+        public BasicEnums.EmployeeType Position
+        {
+            get { return _Position; }
+            set { _Position = value; INotifyPropertyChanged("Position"); }
+        }
         public bool MainSchedule
         {
             get { return _MainSchedule; }

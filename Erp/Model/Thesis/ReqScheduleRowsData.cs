@@ -1,4 +1,5 @@
-﻿using Erp.Model.Interfaces;
+﻿using Erp.Model.Enums;
+using Erp.Model.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -12,6 +13,8 @@ namespace Erp.Model.Thesis
     {
         public int ReqId { get; set; }
         public string ReqCode { get; set; }
+        public BasicEnums.EmployeeType Position { get; set; }
+
         public DateTime Date { get; set; }
 
         public string DateStr { get; set; }

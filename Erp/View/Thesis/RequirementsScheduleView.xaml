@@ -218,10 +218,14 @@
                                                     ShowGroupDropArea="True"
                                            
                                                 >
+                            <syncfusion:SfDataGrid.GroupColumnDescriptions>
+                                <syncfusion:GroupColumnDescription ColumnName="Position"/>
+                            </syncfusion:SfDataGrid.GroupColumnDescriptions>
                             <syncfusion:SfDataGrid.SortColumnDescriptions>
                                 <syncfusion:SortColumnDescription ColumnName="DateStr"/>
                             </syncfusion:SfDataGrid.SortColumnDescriptions>
                                 <syncfusion:SfDataGrid.Columns>
+                                <syncfusion:GridTextColumn MappingName="Position" HeaderText="Position "  IsReadOnly="True" />
                                 <syncfusion:GridTextColumn MappingName="DateStr" HeaderText="Date "  IsReadOnly="True" />
                                 <syncfusion:GridTextColumn MappingName="LimitLine" HeaderText="Limit Line " />
                             </syncfusion:SfDataGrid.Columns>

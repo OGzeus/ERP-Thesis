@@ -65,6 +65,10 @@ namespace Erp.ViewModel.Thesis
         #region Enums
 
 
+        public BasicEnums.EmployeeType[] EmployeeTypes
+        {
+            get { return (BasicEnums.EmployeeType[])Enum.GetValues(typeof(BasicEnums.EmployeeType)); }
+        }
 
         #endregion
         public RequirementsScheduleViewModel()
@@ -368,15 +372,18 @@ namespace Erp.ViewModel.Thesis
 
                 for (int i = 0; i <= numberOfDays; i++)
                 {
-                    var Row = new ReqScheduleRowsData();
+                    foreach(var type in EmployeeTypes)
+                    {
+                        var Row = new ReqScheduleRowsData();
 
+                        Row.Position = type;
                         Row.LimitLine = LimitLine;
                         Row.Date = FlatData.DateFrom.AddDays(i);
                         Row.DateStr = FlatData.DateFrom.AddDays(i).ToString("dd/MM/yyyy");
 
+                        ReqScheduleRowsData.Add(Row);
 
-                    ReqScheduleRowsData.Add(Row);
-
+                    }
 
                 }
 

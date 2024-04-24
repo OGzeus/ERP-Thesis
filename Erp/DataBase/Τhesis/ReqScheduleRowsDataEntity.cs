@@ -12,6 +12,9 @@ namespace Erp.DataBase.Τhesis
         [Column(TypeName = "varchar(50)")]
         public string ReqCode { get; set; }
 
+        [Column(TypeName = "varchar(30)")]
+        public string Position { get; set; }
+
         [Column(TypeName = "int")]
         public int? LimitLine { get; set; }
 

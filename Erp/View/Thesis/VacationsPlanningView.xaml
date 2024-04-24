@@ -484,7 +484,7 @@
 
                             </Grid>
                         </TabItem>
-                        <TabItem Header="Xi Plan">
+                        <TabItem Header="LLi Plan">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
