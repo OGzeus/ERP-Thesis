@@ -57,6 +57,12 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="ILOG.Concert">
+      <HintPath>D:\CPLEX\cplex\bin\x64_win64\ILOG.Concert.dll</HintPath>
+    </Reference>
+    <Reference Include="ILOG.CPLEX">
+      <HintPath>D:\CPLEX\cplex\bin\x64_win64\ILOG.CPLEX.dll</HintPath>
+    </Reference>
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Data" />
@@ -191,12 +197,18 @@
     <Compile Include="Model\Manufacture\MPS\MPSOutputData.cs" />
     <Compile Include="Model\Manufacture\MrpInputData.cs" />
     <Compile Include="Model\Manufacture\MrpResultData.cs" />
+    <Compile Include="Model\Manufacture\MRP\DataPerDayMRP.cs" />
+    <Compile Include="Model\Manufacture\MRP\DecisionVariablesInvStatus.cs" />
+    <Compile Include="Model\Manufacture\MRP\DecisionVariableX.cs" />
+    <Compile Include="Model\Manufacture\MRP\DecisionVariableY.cs" />
+    <Compile Include="Model\Manufacture\MRP\DiagramsMRPData.cs" />
     <Compile Include="Model\Manufacture\MRP\MRPInputData.cs" />
     <Compile Include="Model\Manufacture\MRP\MRPOutputData.cs" />
     <Compile Include="Model\Manufacture\PlannedOrdersData.cs" />
     <Compile Include="Model\Manufacture\ProcessData.cs" />
     <Compile Include="Model\Manufacture\ProjectData.cs" />
     <Compile Include="Model\Manufacture\TaskData.cs" />
+    <Compile Include="Model\Manufacture\WorkcenterData.cs" />
     <Compile Include="Model\ModelBase.cs" />
     <Compile Include="Model\OrderModel.cs" />
     <Compile Include="Model\RelationalDatabaseDiagram\ColumnModel.cs" />

@@ -12,7 +12,7 @@
              xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf" 
              xmlns:converter="clr-namespace:Erp.Converters"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
+             d:DesignHeight="450" d:DesignWidth="800" FontSize="18">
     <UserControl.DataContext>
         <viewmodel:MPSViewModel/>
     </UserControl.DataContext>
@@ -68,7 +68,7 @@
 
         </StackPanel>
         <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="6"  converters:MainStackPanelReadonly.IsEnabledBasedOnProperty="{Binding InputData.MPSCode}" >
-            <TabControl >
+            <TabControl SelectedIndex="{Binding SelectedTabIndex}">
                 <TabItem Header="Insert MPS Input">
                     <StackPanel>
                         <Grid  Margin="0,0,-193,0">
@@ -551,8 +551,8 @@
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*" MinHeight="500"/>
+                            <RowDefinition Height="400"/>
+                            <RowDefinition Height="*" MaxHeight="400"/>
                         </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
@@ -597,8 +597,8 @@
             Text="{Binding Path=InputData.Diagram.DateEnd, Mode=TwoWay, StringFormat='yyyy-dd-MM'}" />
 
                             <StackPanel  HorizontalAlignment="Left" Orientation="Horizontal" Grid.Row="4" Grid.Column="1"  Margin="2">
-                                <Button x:Name="RunButtonD"  Width="100" HorizontalAlignment="Left" Command="{Binding CreateDiagramCommand}">
-                                    <TextBlock Text="Create Diagram"/>
+                                <Button x:Name="RunButtonD"  Width="140" HorizontalAlignment="Left" Command="{Binding CreateDiagramCommand}">
+                                    <TextBlock Text="Create Diagrams"/>
                                 </Button>
 
 
@@ -607,9 +607,8 @@
 
 
                         </Grid>
-
-                            <syncfusion:SfDataGrid x:Name="sfGridDiagrams" 
-                                                    Grid.Row="1"
+                        <syncfusion:SfDataGrid x:Name="sfGridDiagrams" 
+                                                    Grid.Row="2"
                                                     Grid.Column="0"
                                                     Grid.ColumnSpan="2"
                                                     ColumnSizer="AutoLastColumnFill"
@@ -618,7 +617,7 @@
                                                     ShowSortNumbers="True"
                                                     AllowFiltering="True"
                                                     AutoGenerateColumns="False"
-                                                    AllowEditing="True"
+                                                    AllowEditing="False"
                                                     AllowResizingColumns="True"
                                                     FilterRowPosition="FixedTop"
                                                     ScrollViewer.VerticalScrollBarVisibility="Visible"
@@ -639,7 +638,7 @@
                             </syncfusion:SfDataGrid>
 
 
-                        <lvc:CartesianChart  Grid.Row="3" Grid.Column="0"   Grid.ColumnSpan="2" Series="{Binding InputData.Diagram.SeriesCollection}" Grid.RowSpan="2" LegendLocation="Left">
+                        <lvc:CartesianChart  Grid.Row="1" Grid.Column="0"   Grid.ColumnSpan="2" Series="{Binding InputData.Diagram.SeriesCollection}"  LegendLocation="Left">
 
                             <lvc:CartesianChart.AxisX>
                                 <lvc:Axis Title="Month" Labels="{Binding InputData.Diagram.Labels}">

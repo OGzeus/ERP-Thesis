@@ -482,6 +482,7 @@ namespace Erp.ViewModel.Thesis
             {
                 int Flag = CommonFunctions.AddEmployeeData(FlatData);
                 if (Flag == 0)
+                
                 {
                     MessageBox.Show($"Ο Αποθηκεύτηκε νέος Υπάλληλος με Κωδικό : {FlatData.Code}");
                     ExecuteShowEmployeeInfoGridCommand(obj);

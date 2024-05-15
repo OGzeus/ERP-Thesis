@@ -22,6 +22,11 @@ namespace Erp.DataBase
         [Column(TypeName = "Decimal")]
         public float Quantity { get; set; }
 
+        [Column(TypeName = "Decimal")]
+        public float InvMax { get; set; }
+
+        [Column(TypeName = "Decimal")]
+        public float InvMin { get; set; }
 
         public virtual InventoryDataEntity Inventory { get; set; }
         public virtual ItemDataEntity StockItem { get; set; }

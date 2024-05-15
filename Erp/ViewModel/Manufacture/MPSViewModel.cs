@@ -34,7 +34,24 @@ namespace Erp.ViewModel.Manufacture
     {
 
 
+
         #region DataProperties
+
+        private int _selectedTabIndex;
+
+        public int SelectedTabIndex
+        {
+            get { return _selectedTabIndex; }
+            set
+            {
+                if (_selectedTabIndex != value)
+                {
+                    _selectedTabIndex = value;
+                    INotifyPropertyChanged(nameof(SelectedTabIndex));
+                }
+            }
+        }
+
 
         private ICollectionView collectionviewD;
 
@@ -198,8 +215,6 @@ namespace Erp.ViewModel.Manufacture
             };
             #endregion
 
-
-
             #region Κατασκευη linechart με 3 γραμμές
 
             DiagramData = OutputData.MPSOptResultsData;
@@ -243,12 +258,10 @@ namespace Erp.ViewModel.Manufacture
             InputData.Diagram.YFormatter = value => value.ToString("N0");
             #endregion
 
-
+            #endregion
             #region PrimaryMachines GetCommands
             InputData.PrimaryMachines = CommonFunctions.GetPrimaryMachineChooserData();
             InputData.Machines = CommonFunctions.GetNonPrimaryMachineChooserData();
-            #endregion
-
             #endregion
         }
 
@@ -1071,15 +1084,19 @@ namespace Erp.ViewModel.Manufacture
             if (InputData.NumberDatesOfRepairs == true) //HardCoded Repair FactoryPlanning 1
             {
                 OutputData = CommonFunctions.CalculateMPS1(InputData);
+                SelectedTabIndex = 2;
             }
             else if (InputData.NumberOfRepairsOnly == true)
             {
                 OutputData = CommonFunctions.CalculateMPS2(InputData);
+                SelectedTabIndex = 2;
+
             }
         }
         #endregion
 
         #region Diagrams
+
         #region F7
         public ICommand ShowInventoryGridCommand { get; }
         public ICommand ShowSupplierInfoGridCommand { get; }
@@ -1161,10 +1178,6 @@ namespace Erp.ViewModel.Manufacture
         }
         #endregion
 
-
-
-
-
         #region Συνάρτηση Διαγράμμος
 
         public List<string> Stock { get; set; }
@@ -1222,7 +1235,6 @@ namespace Erp.ViewModel.Manufacture
             InputData.Diagram.YFormatter = value => value.ToString("N0");
             #endregion
 
-            // Set the labels for the x-axis to the months in the data
 
 
 

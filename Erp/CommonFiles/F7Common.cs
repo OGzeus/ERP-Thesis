@@ -538,8 +538,8 @@ namespace Erp.CommonFiles
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "ItemType", HeaderText = "Item Type" });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Assembly", HeaderText = "Assembly" });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "CanBeProduced", HeaderText = "Can Be Produced" });
-            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "InputOrderFlag", HeaderText = "Can Be Sold" });
-            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "OutputOrderFlag", HeaderText = "Can Be Ordered" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "InputOrderFlag", HeaderText = "Can Be Ordered" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "OutputOrderFlag", HeaderText = "Can Be Sold" });
             GridData.SfGridColumns.Add(new GridCheckBoxColumn() { MappingName = "IsDeleted", HeaderText = "Deleted" });
 
             GridData.F7key = "ItemCode";
@@ -565,6 +565,41 @@ namespace Erp.CommonFiles
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "OutputOrderFlag", HeaderText = "Can Be Ordered" });
 
             GridData.F7key = "ItemCode";
+            return GridData;
+        }
+        public F7Data F7ItemMRPDiagram1()
+        {
+            F7Data GridData = new F7Data();
+            GridData.SfGridColumns = new Columns();
+            var Data = new ObservableCollection<ItemData>();
+
+            GridData.CollectionView = CollectionViewSource.GetDefaultView(Data);
+
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "ItemId", HeaderText = "Item Id" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "ItemCode", HeaderText = "Item Code" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "ItemDescr", HeaderText = "Item Descr" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "MesUnit", HeaderText = "UOM" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "ItemType", HeaderText = "Item Type" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Assembly", HeaderText = "Assembly" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "CanBeProduced", HeaderText = "Can Be Produced" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "InputOrderFlag", HeaderText = "Can Be Sold" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "OutputOrderFlag", HeaderText = "Can Be Ordered" });
+
+            GridData.F7key = "ItemCode";
+            return GridData;
+        }
+        public F7Data F7WorkcenterMRPDiagram2()
+        {
+            F7Data GridData = new F7Data();
+            GridData.SfGridColumns = new Columns();
+            var Data = new ObservableCollection<ItemData>();
+
+            GridData.CollectionView = CollectionViewSource.GetDefaultView(Data);
+
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "WorkCode", HeaderText = "Workcenter Code" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "WorkDescr", HeaderText = "Workcenter Descr" });
+
+            GridData.F7key = "Workcenter";
             return GridData;
         }
         public F7Data F7ItemMPSInput()
@@ -633,27 +668,14 @@ namespace Erp.CommonFiles
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "StockItem.ItemDescr", HeaderText = "Item Description", AllowEditing = false });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "StockItem.ItemType", HeaderText = "Item Type", AllowEditing = false });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "StockItem.Assembly", HeaderText = "Assembly", AllowEditing = false });
-            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Quantity", HeaderText = "Quantity", AllowEditing = true });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Stock", HeaderText = "Stock", AllowEditing = true });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "InvMax", HeaderText = "Inv Max", AllowEditing = true });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "InvMin", HeaderText = "Inv Min", AllowEditing = true });
+
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "StockItem.LotPolicy.Code", HeaderText = "Lot Policy Code", AllowEditing = true });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "StockItem.LotPolicy.LeadTime", HeaderText = "Lead Time", AllowEditing = false });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "StockItem.LotPolicy.BatchSize", HeaderText = "Batch Size", AllowEditing = false });
 
-            #region MultiColumnDropDownList
-
-            //var LotPolicyList = new List<LotPolicyData>();
-            //LotPolicyList = CommonFunctions.GetLotPolicyChooserData(false).ToList();
-            //var LotPolicyMultiDropDownColumn= new GridMultiColumnDropDownList()
-            //{
-            //    MappingName = "StockItem.LotPolicy.Code",
-            //    HeaderText = "LotPolicy Code",
-            //    DisplayMember = "Code",
-            //    AutoGenerateColumns = true,
-            //    ItemsSource =LotPolicyList,
-            //    AllowEditing = true
-            //};
-            //GridData.SfGridColumns.Add(LotPolicyMultiDropDownColumn);
-
-            #endregion
             GridData.F7key = "MRPStock";
             return GridData;
         }

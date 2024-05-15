@@ -2,6 +2,7 @@
 using Erp.Model.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -25,8 +26,13 @@ namespace Erp.Model.BasicFiles
         private bool? canbeproduced; 
         private float? bompercentage;
         private LotPolicyData lotpolicy;
+        private ObservableCollection<BomData> bom;
 
-
+        public ObservableCollection<BomData> Bom
+        {
+            get { return bom; }
+            set { bom = value; OnPropertyChanged("Bom"); }
+        }
         public BasicEnums.ItemType ItemType
         {
             get { return itemtype; }

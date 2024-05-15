@@ -16,7 +16,6 @@ namespace Erp.Model.Inventory
     public class InvDiagramsSearchData : INotifyPropertyChanged
     {
 
-
         private string[] labels;
         public string[] Labels
         {

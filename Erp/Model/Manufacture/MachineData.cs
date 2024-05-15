@@ -40,11 +40,7 @@ namespace Erp.Model.Manufacture
             get { return _AddMachine; }
             set { _AddMachine = value; OnPropertyChanged("AddMachine"); }
         }
-        public int MachID
-        {
-            get { return _MachID; }
-            set { _MachID = value; OnPropertyChanged("MachID"); }
-        }
+
         public bool PrimaryModel
         {
             get { return _PrimaryModel; }
@@ -55,7 +51,11 @@ namespace Erp.Model.Manufacture
             get { return _NumberOfMachines; }
             set { _NumberOfMachines = value; OnPropertyChanged("NumberOfMachines"); }
         }
-
+        public int MachID
+        {
+            get { return _MachID; }
+            set { _MachID = value; OnPropertyChanged("MachID"); }
+        }
         public string MachCode
         {
             get { return _MachCode; }

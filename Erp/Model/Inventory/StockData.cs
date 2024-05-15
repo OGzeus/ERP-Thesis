@@ -14,7 +14,10 @@ namespace Erp.Model.Inventory
     {
         private int finalitemid { get; set; }
         private ItemData stockitem  { get; set; }
-        private float quantity { get; set; }
+        private double _stock { get; set; }
+        private double _InvMin { get; set; }
+        private double _InvMax { get; set; }
+
         private bool _StockItemFlag { get; set; }
         private bool newitemflag { get; set; }
         private bool _ExistingFlag { get; set; }
@@ -25,10 +28,20 @@ namespace Erp.Model.Inventory
         }
 
 
-        public float Quantity
+        public double Stock  
         {
-            get { return quantity; }
-            set { quantity = value; OnPropertyChanged("Quantity"); }
+            get { return _stock; }
+            set { _stock = value; OnPropertyChanged("Stock"); }
+        }
+        public double InvMax
+        {
+            get { return _InvMax; }
+            set { _InvMax = value; OnPropertyChanged("InvMax"); }
+        }
+        public double InvMin
+        {
+            get { return _InvMin; }
+            set { _InvMin = value; OnPropertyChanged("InvMin"); }
         }
 
         public bool StockItemFlag

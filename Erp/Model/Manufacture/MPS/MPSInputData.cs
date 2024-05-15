@@ -208,7 +208,7 @@ namespace Erp.Model.Manufacture.MPS
 
         public Dictionary<(string, string), double> TotalOnlineMach { get; set; } //Number of Machines that need to be under maintenance
 
-        public Dictionary<(string, string), double> MaxDemand { get; set; } //Number of Machines that need to be under maintenance
+        public Dictionary<(string, string), double> MaxDemand { get; set; } //
 
         public Dictionary<(string, string), int> MachDownReq { get; set; } //Number of Machines that need to be under maintenance
         public Dictionary<string, int> MachDownReq2 { get; set; } //Number of Machines (tha ftiaksw diaforetikes mixanes kai tha pe3w me to enum me to machinetype 

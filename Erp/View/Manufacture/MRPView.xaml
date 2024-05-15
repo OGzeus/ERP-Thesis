@@ -10,7 +10,7 @@
              xmlns:converter="clr-namespace:Erp.Converters"
              xmlns:viewModel="clr-namespace:Erp.ViewModel.Manufacture"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
+             d:DesignHeight="450" d:DesignWidth="800" FontSize="18">
 
     <UserControl.DataContext>
         <viewModel:MRPViewModel/>
@@ -38,13 +38,13 @@
 
         </Grid.ColumnDefinitions>
 
-        <TextBlock Text="MRP Code : " FontWeight="Bold" FontSize="14"  Grid.Row="1" Grid.Column="0"  Margin="2"/>
+        <TextBlock Text="MRP Code : " FontWeight="Bold"   Grid.Row="1" Grid.Column="0"  Margin="2"/>
         <StackPanel Grid.Row="1" Grid.Column="1" HorizontalAlignment="Left"  Orientation="Horizontal"  Margin="2">
             <TextBox Text="{Binding InputData.MRPCode, Mode=TwoWay}" HorizontalAlignment="left" Width="115"  />
             <Button Content="f" Width="20"                        Command="{Binding ShowMRPCommand}"/>
         </StackPanel>
 
-        <TextBlock Text="MRP Description : " FontWeight="Bold" FontSize="14" Grid.Row="1" Grid.Column="2"  Margin="2"/>
+        <TextBlock Text="MRP Description : " FontWeight="Bold"  Grid.Row="1" Grid.Column="2"  Margin="2"/>
         <StackPanel Grid.Row="1" Grid.Column="3" HorizontalAlignment="Stretch"  Orientation="Horizontal"  Margin="2">
             <TextBox Text="{Binding InputData.MRPDescr, Mode=TwoWay}" HorizontalAlignment="Stretch" Width="135" />
         </StackPanel>
@@ -68,7 +68,7 @@
         </StackPanel>
         <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="8"  converter:MainStackPanelReadonly.IsEnabledBasedOnProperty="{Binding InputData.MRPCode}" >
 
-            <TabControl  >
+            <TabControl SelectedIndex="{Binding SelectedTabIndex}">
                 <TabItem Header="Insert MRP Input">
                     <StackPanel>
                         <Grid  Margin="0,0,-193,0">
@@ -129,11 +129,11 @@
 
 
                                         <StackPanel Grid.Row="1" Grid.Column="1" HorizontalAlignment="Left"  Orientation="Horizontal" Margin="2">
-                                            <TextBox Text="{Binding InputData.Forecast.ForCode, Mode=TwoWay}" HorizontalAlignment="left" Width="120" Height="18"  IsReadOnly="True" />
-                                            <Button Content="f" Width="15" Height="18"                     Command="{Binding ShowForecastDemand}"/>
+                                            <TextBox Text="{Binding InputData.Forecast.ForCode, Mode=TwoWay}" HorizontalAlignment="left" Width="120"   IsReadOnly="True" />
+                                            <Button Content="f" Width="20"                     Command="{Binding ShowMRPForecastDemand}"/>
                                         </StackPanel>
                                         <StackPanel Grid.Row="1" Grid.Column="3" HorizontalAlignment="Left"  Margin="2" Orientation="Horizontal">
-                                            <TextBox Text="{Binding  InputData.Forecast.ForDescr, Mode=TwoWay}" HorizontalAlignment="left" Width="135" Height="18" IsReadOnly="True" />
+                                            <TextBox Text="{Binding  InputData.Forecast.ForDescr, Mode=TwoWay}" HorizontalAlignment="left" Width="135" IsReadOnly="True" />
                                             <!--<Button Content="f" Width="15" Height="18"                     Command="{Binding ShowFactoryDataGridCommand}"/>-->
                                         </StackPanel>
                                         <TextBox Text="{Binding InputData.Forecast.PeriodType, Mode=TwoWay}" Grid.Row="2" Grid.Column="1" HorizontalAlignment="Stretch" Width="135"  Margin="2" IsReadOnly="True"/>
@@ -222,8 +222,8 @@
 
 
 
-                                            <TextBlock Text="vlepoume : "  FontSize="12" Grid.Row="3" Grid.Column="0" Margin="2"/>
-
+                                            <TextBlock Text=" Number of Workcenters : "   Grid.Row="0" Grid.Column="0" Margin="2"/>
+                                            <TextBox Text="{Binding InputData.W}" HorizontalAlignment="Center" Grid.Row="0" Grid.Column="1" Width="30" />
 
 
 
@@ -399,7 +399,7 @@
                 </TabItem>
                 <TabItem Header="MRP Results">
                     <TabControl>
-                        <TabItem Header="MRP Results">
+                        <TabItem Header="Production Plan">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
@@ -433,7 +433,7 @@
                                                     ShowGroupDropArea="True"
                                                     AllowFiltering="True"
                                                     AutoGenerateColumns="True"
-                                                    ItemsSource="{Binding OutputData.MPSOptResultsData , Mode=TwoWay , UpdateSourceTrigger=PropertyChanged}"
+                                                    ItemsSource="{Binding OutputData.XData , Mode=TwoWay , UpdateSourceTrigger=PropertyChanged}"
                                                     ShowRowHeader="True" 
                                                 >
 
@@ -443,8 +443,8 @@
 
                             </Grid>
                         </TabItem>
-                        <TabItem Header="Maintenance  Plan">
-                            <!--<Grid>
+                        <TabItem Header="Inventory  Plan">
+                            <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="500"/>
@@ -475,50 +475,93 @@
                                                     ShowGroupDropArea="True"
                                                     AllowFiltering="True"
                                                     AutoGenerateColumns="True"
-                                                    ItemsSource="{Binding OutputData.MachRepairResultsData , Mode=TwoWay , UpdateSourceTrigger=PropertyChanged}"
+                                                    ItemsSource="{Binding OutputData.InvData , Mode=TwoWay , UpdateSourceTrigger=PropertyChanged}"
                                                     ShowRowHeader="True" 
                                                 >
 
-                                -->
-                            <!--<i:Interaction.Triggers>
+                                
+                            <i:Interaction.Triggers>
                             <i:EventTrigger EventName="MouseDoubleClick">
                                 <i:InvokeCommandAction Command="{Binding Path=DataContext.RowDataCommand,ElementName=sfGrid}" CommandParameter="{Binding}"/>
                             </i:EventTrigger>
-                        </i:Interaction.Triggers>-->
-                            <!--
+                        </i:Interaction.Triggers>
+                            
                             </syncfusion:SfDataGrid>
 
 
-                        </Grid>-->
+                        </Grid>
                         </TabItem>
+                        <TabItem Header="Setup  Plan">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="500"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="500"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <syncfusion:SfDataGrid x:Name="sfGrid6"
+                                                    Grid.Row="1"
+                                                    Grid.Column="0"
+                                                    Grid.ColumnSpan="5"
+                                                    ColumnSizer="Star"
+                                                    Background="White"
+                                                    AllowSorting="True"
+                                                    ShowSortNumbers="True"
+                                                    AllowEditing="True"
+                                                    AllowResizingColumns="True"
+                                                    FilterRowPosition="FixedTop"
+                                                    ScrollViewer.VerticalScrollBarVisibility="Visible"
+                                                    ScrollViewer.HorizontalScrollBarVisibility="Visible"
+                                                    ShowToolTip="True"
+                                                    AllowGrouping="True"
+                                                    ShowGroupDropArea="True"
+                                                    AllowFiltering="True"
+                                                    AutoGenerateColumns="True"
+                                                    ItemsSource="{Binding OutputData.YData , Mode=TwoWay , UpdateSourceTrigger=PropertyChanged}"
+                                                    ShowRowHeader="True" 
+                                                >
 
+
+                                    <i:Interaction.Triggers>
+                                        <i:EventTrigger EventName="MouseDoubleClick">
+                                            <i:InvokeCommandAction Command="{Binding Path=DataContext.RowDataCommand,ElementName=sfGrid}" CommandParameter="{Binding}"/>
+                                        </i:EventTrigger>
+                                    </i:Interaction.Triggers>
+
+                                </syncfusion:SfDataGrid>
+
+
+                            </Grid>
+                        </TabItem>
                     </TabControl>
 
 
 
                 </TabItem>
                 <TabItem Header="Diagrams">
-                    <!--<Grid>
+                    <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*" MinHeight="500"/>
+                        <RowDefinition Height="200" />
+                        <RowDefinition Height="Auto" />
+                        
                     </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto"/>
-
-                    </Grid.ColumnDefinitions>
-
-
-
-
-
-                    <Grid Grid.Row="0" Grid.Column="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="300"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <Grid Grid.Row="0" Grid.Column="0">
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
@@ -530,52 +573,48 @@
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
 
 
                         <TextBlock Text="Κωδικός Είδους : "   Grid.Row="0" Grid.Column="0"  Margin="2" />
-                        <TextBlock Text="Περίοδος Ανάλυσης : "   Grid.Row="3" Grid.Column="0"   Margin="2"/>
+                        <TextBlock Text="Κωδικός Workcenter : "   Grid.Row="0" Grid.Column="2"  Margin="2" />
 
 
 
-                        <StackPanel Grid.Row="0" Grid.Column="1" HorizontalAlignment="Left"  Orientation="Horizontal"  Margin="2">
-                            <TextBox Text="{Binding InputData.Diagram.Item.ItemCode}" HorizontalAlignment="left" Width="115" />
-                            <Button Content="f" Width="20"                        Command="{Binding ShowItemGridCommand}"/>
-                        </StackPanel>
-
-
-
-
-
-                        <DatePicker Grid.Row="3" Grid.Column="1"  Margin="2" Name="DateStart" 
-            Text="{Binding Path=InputData.Diagram.DateStart, Mode=TwoWay, StringFormat='yyyy-dd-MM'}" />
-
-                        <DatePicker Grid.Row="3" Grid.Column="2"   Margin="2" Name="DateEnd" 
-            Text="{Binding Path=InputData.Diagram.DateEnd, Mode=TwoWay, StringFormat='yyyy-dd-MM'}" />
-
-                        <StackPanel  HorizontalAlignment="Left" Orientation="Horizontal" Grid.Row="4" Grid.Column="1"  Margin="2">
-                            <Button x:Name="RunButtonD"  Width="100" HorizontalAlignment="Left" Command="{Binding CreateDiagramCommand}">
-                                <TextBlock Text="Create Diagram"/>
+                            <StackPanel Grid.Row="0" Grid.Column="1" HorizontalAlignment="Left"  Orientation="Horizontal"  Margin="2">
+                                <TextBox Text="{Binding OutputData.Diagram1.Item.ItemCode}" HorizontalAlignment="left" Width="115" />
+                                <Button Content="f" Width="20"                        Command="{Binding ShowItemGridCommand}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Row="0" Grid.Column="3" HorizontalAlignment="Left"  Orientation="Horizontal"  Margin="2">
+                                <TextBox Text="{Binding OutputData.Diagram2.Workcenter.WorkCode}" HorizontalAlignment="left" Width="115" />
+                                <Button Content="f" Width="20"                        Command="{Binding ShowWorkcenterGridCommand}"/>
+                            </StackPanel>
+                            <Button x:Name="RunButtonD"  Width="150" Grid.Row="1" Grid.Column="1"  HorizontalAlignment="Left" Command="{Binding CreateDiagram1Command}">
+                                <TextBlock Text="Create Diagram 1"/>
                             </Button>
+                            <Button x:Name="RunButtonD2"  Width="150" Grid.Row="1" Grid.Column="3" HorizontalAlignment="Left" Command="{Binding CreateDiagram2Command}">
+                                    <TextBlock Text="Create Diagram 2"/>
+                                </Button>
 
-
-                        </StackPanel>
-
-
-
+                           
                     </Grid>
 
-                    <ScrollViewer Grid.Row="1" Grid.Column="0" VerticalAlignment="Stretch"  HorizontalScrollBarVisibility="Auto">
-                        <syncfusion:SfDataGrid x:Name="sfGridDiagrams" 
+                        <syncfusion:SfDataGrid x:Name="sfGridDiagrams"  Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
                                    
-                                                    ColumnSizer="AutoLastColumnFill"
+                                                    ColumnSizer="Star"
                                                     Background="White"
                                                     AllowSorting="True"
                                                     ShowSortNumbers="True"
                                                     AllowFiltering="True"
                                                     AutoGenerateColumns="False"
+                                                    AllowEditing="False"
+                                                    AllowResizingColumns="True"
+                                                    FilterRowPosition="FixedTop"
+                                                    ScrollViewer.VerticalScrollBarVisibility="Visible"
+                                                    ScrollViewer.HorizontalScrollBarVisibility="Visible"
+                                                    ShowToolTip="True"
                                                     SelectedItem="{Binding SelectedItem2, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                     Columns="{Binding SfGridColumnsD, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                     ItemsSource="{Binding CollectionViewD , Mode=TwoWay , UpdateSourceTrigger=PropertyChanged}"
@@ -588,26 +627,51 @@
                             </i:Interaction.Triggers>
                         </syncfusion:SfDataGrid>
 
-                    </ScrollViewer>
+                        <Grid Grid.Row="2" >
+                            
+                        <Grid.RowDefinitions>
+                                <RowDefinition Height="500"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" MinWidth="600" />
+                                <ColumnDefinition Width="Auto" MinWidth="600" />
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
 
-                    <lvc:CartesianChart  Grid.Row="3" Grid.Column="0"  Series="{Binding InputData.Diagram.SeriesCollection}" Grid.RowSpan="2" LegendLocation="Left">
+                            <lvc:CartesianChart  Grid.Row="0" Grid.Column="0"  Series="{Binding OutputData.Diagram1.SeriesCollection}" FontSize="15" LegendLocation="Top">
 
-                        <lvc:CartesianChart.AxisX>
-                            <lvc:Axis Title="Month" Labels="{Binding InputData.Diagram.Labels}">
-                                <lvc:Axis.Separator>
-                                    <lvc:Separator Step="1" />
-                                </lvc:Axis.Separator>
-                            </lvc:Axis>
-                        </lvc:CartesianChart.AxisX>
-                        <lvc:CartesianChart.AxisY>
-                            <lvc:Axis Title="Value" LabelFormatter="{Binding InputData.Diagram.YFormatter}" MinValue="0" />
-                        </lvc:CartesianChart.AxisY>
+                                <lvc:CartesianChart.AxisX>
+                                    <lvc:Axis Title="Month" Labels="{Binding OutputData.Diagram1.Labels}" >
+                                        <lvc:Axis.Separator>
+                                            <lvc:Separator Step="1" />
+                                        </lvc:Axis.Separator>
+                                    </lvc:Axis>
+                                </lvc:CartesianChart.AxisX>
+                                <lvc:CartesianChart.AxisY>
+                                    <lvc:Axis Title="Value" LabelFormatter="{Binding OutputData.Diagram1.YFormatter}" MinValue="0" />
+                                </lvc:CartesianChart.AxisY>
 
+                            </lvc:CartesianChart>
 
-                    </lvc:CartesianChart>
+                            <lvc:CartesianChart  Grid.Row="0" Grid.Column="1"  Series="{Binding OutputData.Diagram2.SeriesCollection}" FontSize="15" LegendLocation="Top">
 
+                                <lvc:CartesianChart.AxisX>
+                                    <lvc:Axis Title="Date" Labels="{Binding OutputData.Diagram2.Labels}">
+                                        <lvc:Axis.Separator>
+                                            <lvc:Separator Step="1" />
+                                        </lvc:Axis.Separator>
+                                    </lvc:Axis>
+                                </lvc:CartesianChart.AxisX>
+                                <lvc:CartesianChart.AxisY>
+                                    <lvc:Axis Title="Value" LabelFormatter="{Binding OutputData.Diagram2.YFormatter}" MinValue="0" />
+                                </lvc:CartesianChart.AxisY>
 
-                </Grid>-->
+                            </lvc:CartesianChart>
+
+                        </Grid>
+                    </Grid>
                 </TabItem>
             </TabControl>
         </StackPanel>

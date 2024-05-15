@@ -437,28 +437,23 @@ namespace Erp.ViewModel.Data_Analytics
         private void ExecuteCreateDemandFCommand(object obj)
         { 
             FlatData = CommonFunctions.ChangeDatesFormat(FlatData);
-            if(FlatData.DemandForecast.Count == 0)
+            var numberOfDays = (FlatData.DateTo - FlatData.DateFrom).Days;
+
+            var numberOfMonths = (FlatData.DateTo.Year - FlatData.DateFrom.Year) * 12 + (FlatData.DateTo.Month - FlatData.DateFrom.Month + 1);
+
+            if (FlatData.DateTo.Day < FlatData.DateFrom.Day)
+            {
+                numberOfMonths--;
+            }
+            var numberOfWeeks = (FlatData.DateTo.Month - FlatData.DateFrom.Month);
+
+            var Items = CommonFunctions.GetItemData(false);
+            var selectedItems = Items.Where(item => item.OutputOrderFlag == true).ToObservableCollection();
+            Items = selectedItems;
+
+            if (FlatData.DemandForecast.Count == 0)
             {
                 var DemandForecast = new ObservableCollection<DemandForecastData>();
-
-                // Calculate the number of days between DateFrom and DateTo
-                var numberOfDays = (FlatData.DateTo - FlatData.DateFrom).Days;
-
-                var numberOfMonths = (FlatData.DateTo.Year - FlatData.DateFrom.Year) * 12 + (FlatData.DateTo.Month - FlatData.DateFrom.Month + 1);
-
-                if (FlatData.DateTo.Day < FlatData.DateFrom.Day)
-                {
-                    numberOfMonths--;
-                }
-                var numberOfWeeks = (FlatData.DateTo.Month - FlatData.DateFrom.Month);
-
-                var Items = CommonFunctions.GetItemData(false);
-
-                var selectedItems = Items.Where(item => item.OutputOrderFlag == true).ToObservableCollection();
-
-                Items = selectedItems;
-
-
                 foreach (var item in Items)
                 {
                     if (FlatData.TimeBucket == Model.Enums.BasicEnums.Timebucket.Daily)
@@ -471,30 +466,27 @@ namespace Erp.ViewModel.Data_Analytics
                             DForecastLine.Date = FlatData.DateFrom.AddDays(i);
                             DForecastLine.Item = item;
                             DForecastLine.DateStr = CommonFunctions.ChangeSpecificDateFormat(FlatData, DForecastLine.Date);
+                            DForecastLine.Selected = true;
                             DemandForecast.Add(DForecastLine);
-
-
                         }
                     }
                     if (FlatData.TimeBucket == Model.Enums.BasicEnums.Timebucket.Weekly)
                     {
-
                         for (int i = 0; i <= numberOfDays; i = i + 6)
                         {
                             var DForecastLine = new DemandForecastData();
 
                             DForecastLine.Demand = 200;
-                            DForecastLine.Date = FlatData.DateFrom.AddDays(i); 
+                            DForecastLine.Date = FlatData.DateFrom.AddDays(i);
                             DForecastLine.Item = item;
                             DForecastLine.DateStr = CommonFunctions.ChangeSpecificDateFormat(FlatData, DForecastLine.Date);
+                            DForecastLine.Selected = true;
                             DemandForecast.Add(DForecastLine);
-
                         }
-
                     }
                     if (FlatData.TimeBucket == Model.Enums.BasicEnums.Timebucket.Monthly)
                     {
-                        for (int i = 0; i <= numberOfMonths-1; i++)
+                        for (int i = 0; i <= numberOfMonths - 1; i++)
                         {
                             var DForecastLine = new DemandForecastData();
 
@@ -502,24 +494,73 @@ namespace Erp.ViewModel.Data_Analytics
                             DForecastLine.Date = FlatData.DateFrom.AddMonths(i);
                             DForecastLine.Item = item;
                             DForecastLine.DateStr = CommonFunctions.ChangeSpecificDateFormat(FlatData, DForecastLine.Date);
+                            DForecastLine.Selected = true;
                             DemandForecast.Add(DForecastLine);
-
-
                         }
                     }
-
-
                 }
+                FlatData.DemandForecast = DemandForecast;
+            }
+            else
+            {
+                var DemandForecast = FlatData.DemandForecast;
+                foreach (var item in Items)
+                {
 
+                    if (!FlatData.DemandForecast.Any(df => df.Item.ItemCode == item.ItemCode))
+                    {
+                        if (FlatData.TimeBucket == Model.Enums.BasicEnums.Timebucket.Daily)
+                        {
+                            for (int i = 0; i <= numberOfDays; i++)
+                            {
+                                var DForecastLine = new DemandForecastData();
+
+                                DForecastLine.Demand = 50;
+                                DForecastLine.Date = FlatData.DateFrom.AddDays(i);
+                                DForecastLine.Item = item;
+                                DForecastLine.DateStr = CommonFunctions.ChangeSpecificDateFormat(FlatData, DForecastLine.Date);
+                                DForecastLine.Selected = false;
+                                DemandForecast.Add(DForecastLine);
+                            }
+                        }
+                        if (FlatData.TimeBucket == Model.Enums.BasicEnums.Timebucket.Weekly)
+                        {
+                            for (int i = 0; i <= numberOfDays; i = i + 6)
+                            {
+                                var DForecastLine = new DemandForecastData();
+
+                                DForecastLine.Demand = 200;
+                                DForecastLine.Date = FlatData.DateFrom.AddDays(i);
+                                DForecastLine.Item = item;
+                                DForecastLine.DateStr = CommonFunctions.ChangeSpecificDateFormat(FlatData, DForecastLine.Date);
+                                DForecastLine.Selected = false;
+                                DemandForecast.Add(DForecastLine);
+                            }
+                        }
+                        if (FlatData.TimeBucket == Model.Enums.BasicEnums.Timebucket.Monthly)
+                        {
+                            for (int i = 0; i <= numberOfMonths - 1; i++)
+                            {
+                                var DForecastLine = new DemandForecastData();
+
+                                DForecastLine.Demand = 50;
+                                DForecastLine.Date = FlatData.DateFrom.AddMonths(i);
+                                DForecastLine.Item = item;
+                                DForecastLine.DateStr = CommonFunctions.ChangeSpecificDateFormat(FlatData, DForecastLine.Date);
+                                DForecastLine.Selected = false;
+                                DemandForecast.Add(DForecastLine);
+                            }
+                        }
+                    }                      
+                }
                 FlatData.DemandForecast = DemandForecast;
 
-              }
-
-
-
+            }
 
 
         }
+
+        
         #endregion
         #region Save
         private ViewModelCommand saveCommand2;

@@ -37,7 +37,6 @@ namespace Erp.ViewModel.Thesis
     public class VacationsPlanningViewModel : ViewModelBase
     {
 
-
         #region DataProperties
 
         private int _selectedTabIndex;

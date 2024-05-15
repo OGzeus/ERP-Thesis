@@ -11,7 +11,7 @@
            xmlns:customcontrols ="clr-namespace:Erp.CustomControls"
              mc:Ignorable="d" 
              
-             d:DesignHeight="450" d:DesignWidth="800">
+             d:DesignHeight="450" d:DesignWidth="800" FontSize="18">
     <UserControl.DataContext>
         <viewmodel:ForecastDemandViewModel/>
     </UserControl.DataContext>
@@ -224,7 +224,6 @@
                                                     Background="White"
                                                     AllowSorting="True"
                                                     ShowSortNumbers="True"
-                                                    AllowEditing="True"
 
                                                     AllowFiltering="True"
                                                     AutoGenerateColumns="False"
@@ -248,8 +247,10 @@
                             <syncfusion:GridTextColumn MappingName="Item.ItemCode" HeaderText="Item Code" IsReadOnly="True"/>
                             <!--<syncfusion:GridTextColumn MappingName="Date" HeaderText="Date" IsReadOnly="True" />-->
                             <syncfusion:GridTextColumn MappingName="DateStr" HeaderText="Date "  IsReadOnly="True" />
-                            <syncfusion:GridTextColumn MappingName="Demand" HeaderText="Demand" />
-                        </syncfusion:SfDataGrid.Columns>
+                            <syncfusion:GridTextColumn MappingName="Demand" HeaderText="Demand"  AllowEditing="True"/>
+                                <syncfusion:GridCheckBoxColumn MappingName="Selected" HeaderText="Selected" AllowEditing="True" />
+
+                            </syncfusion:SfDataGrid.Columns>
                         <!--<i:Interaction.Triggers>
                             <i:EventTrigger EventName="MouseDoubleClick">
                                 <i:InvokeCommandAction Command="{Binding Path=DataContext.RowDataCommand,ElementName=sfGrid}" CommandParameter="{Binding}"/>

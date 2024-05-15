@@ -1,60 +1,33 @@
-﻿using Erp.ViewModel;
-using OfficeOpenXml;
+﻿using OfficeOpenXml;
 using System.IO;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Input;
 using Erp.Model;
 using Erp.Repositories;
-using FontAwesome.Sharp;
-using System.Net.Configuration;
 using Microsoft.Data.SqlClient;
-using System.Net;
 using System.Collections.ObjectModel;
 using Erp.Model.BasicFiles;
 using Syncfusion.Windows.Shared;
 using Erp.Model.Suppliers;
-using Erp.View;
-using System.Windows.Markup;
-using System.Security.Cryptography.X509Certificates;
-using System.Runtime.InteropServices.ComTypes;
 using Erp.Model.Inventory;
 using Erp.ViewModel.Inventory;
 using Erp.Model.Manufacture;
-using System.Windows.Forms;
-using System.Drawing;
-using static Erp.ViewModel.Data_Analytics.MRPVisualisationViewModel;
 using Erp.Model.Data_Analytics;
 using Erp.Model.Customers;
 using Erp.DataBase;
-using Microsoft.Extensions.Options;
-using Microsoft.EntityFrameworkCore;
 using Erp.Model.Enums;
 using Gurobi;
 using Erp.Model.Inventory.InvControl_ConstantDemand;
 using Erp.Model.Inventory.InvControl_TimeVaryingDemand;
-using System.Windows.Controls;
 using Deedle;
-using System.Drawing.Drawing2D;
 using System.Data;
-using Microsoft.Identity.Client;
 using System.Web.UI.WebControls;
-using Syncfusion.Windows.Controls.Input;
 using Erp.Model.Data_Analytics.Forecast;
-using OxyPlot;
 using Erp.Model.Manufacture.MPS;
-using System.Windows.Media;
-using ControlzEx.Standard;
 using static Erp.Model.Enums.BasicEnums;
-using System.Globalization;
-using System.Reflection.Emit;
 using Erp.Model.Manufacture.MRP;
-using Syncfusion.Windows.Controls;
 using Erp.Model.Thesis;
 using Erp.DataBase.Τhesis;
 using Erp.Model.Thesis.VacationPlanning;
@@ -2099,846 +2072,6 @@ Where 1=1 {0}", FilterStr);
 
 
         #region  Optimization
-        public VacationPlanningOutputData CalculateVacationPlanningAdvancedProxeiro(VacationPlanningInputData InputData)
-        {
-            GRBEnv env = new GRBEnv("vplogfile.log");
-            GRBModel model = new GRBModel(env);
-
-            VacationPlanningOutputData Data = new VacationPlanningOutputData();
-            Data.VPYijResultsDataGrid = new ObservableCollection<VPYijResultsData>();
-            Data.VPYijzResultsDataGrid = new ObservableCollection<VPYijResultsData>();
-            Data.VPXijResultsDataGrid = new ObservableCollection<VPXijResultsData>();
-            Data.EmpLeaveStatusData = new ObservableCollection<EmployeeData>();
-
-            List<string> rows = new List<string>();
-            List<string> columns = new List<string>();
-            Dictionary<(string, string), double> make_plan = new Dictionary<(string, string), double>();
-            double bigM = 10000;
-
-            try
-            {
-                #region Optimization
-
-                #region Optimization paramaters
-
-                int MaxSatisfiedBids = InputData.MaxSatisfiedBids; //Max αριθμος ικανοποιημένων Bids ανα υπάλληλο
-                int SeparValue = InputData.SeparValue; // Seperation Value
-
-                string[] Employees = InputData.Employees.Select(d => d.Code).ToArray(); //Πινακας με τους Κωδικους Υπαλληλων
-                string[] Dates = InputData.DatesStr; //Πινακας με τα Dates
-
-
-
-
-                Dictionary<string, int> MaxLeaveBidsPerEmployee = InputData.MaxLeaveBidsPerEmployee;
-                Dictionary<string, string> BidsPerEmployee = InputData.BidsPerEmployee;
-
-                // Zvalue = Number Of Specific    .Για Specific Bids το Zvalue = 1 Παντα
-                // Rvalue = Number of NonSpecific . Για Specific,NonSpecific Bids to Rvalue = 1 Παντα
-
-                //ZBidsDict = <(Employee Code, LeaveBidCode ,Rvalue), Zvalue>
-                Dictionary<(string, string, int), int> ZbidsDict = InputData.ZBidsDict;
-
-                //RBidsDict = <(Employee Code, LeaveBidCode ),Rvalue>
-                Dictionary<(string, string), int> RBidsDict = InputData.RBidsDict;
-
-
-
-                int MaxLeaveBids = InputData.MaxLeaveBids; //Μεγιστος αριθμός Bids υπαλλήλου απο ολούς τους υπαλλήλους
-
-                int LimitLineFixed = InputData.Schedule.LimitLineFixed; // Σταθερό Limit Line σε όλες τις ημέρες
-
-                int Zmax = ZbidsDict.Max(kvp => kvp.Value); //Μεγιστο Zvalue , το χρειαζόμαστε για την δήλωση της Yijrz
-                int MaxNonSpecific = RBidsDict.Max(kvp => kvp.Value); //Μεγιστο Rvalue , το χρειαζόμαστε για την δήλωση της Yijrz
-
-                #endregion
-
-                #region Optimization Algorithm
-
-                #region Decision Variables 
-                // Decision variables
-                GRBVar[,,,] Y = new GRBVar[Employees.Length, MaxLeaveBids, MaxNonSpecific, Zmax];
-                GRBVar[,] X = new GRBVar[Employees.Length, Dates.Length];
-
-
-                // Create decision variables X
-                for (int i = 0; i < Employees.Length; i++)
-                {
-                    for (int t = 0; t < Dates.Length; t++)
-                    {
-                        // Define the variable name
-                        string varNameX = $"X{i + 1}_{t + 1}";
-
-                        // Create the binary variable with a name
-                        X[i, t] = model.AddVar(0.0, 1.0, 0.0, GRB.BINARY, varNameX);
-                    }
-                }
-
-                // Create decision variables Y
-                for (int i = 0; i < Employees.Length; i++)
-                {
-                    for (int j = 0; j < MaxLeaveBidsPerEmployee[Employees[i]]; j++)
-                    {
-                        #region Find ZValue,RValue
-
-                        int Rvalue = new int();
-                        int Zvalue = new int();
-                        var EmployeeCode = Employees[i];
-                        var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == Employees[i]);
-                        var BidCode = specificEmployee.LeaveBidDataGridStatic[j].BidCode;
-                        Rvalue = RBidsDict.TryGetValue((Employees[i], BidCode), out int valueR) ? valueR : Zvalue;
-                        Zvalue = ZbidsDict.TryGetValue((Employees[i], BidCode, Rvalue), out int value) ? value : Zvalue;
-                        #endregion
-                        for (int r = 0; r < Rvalue; r++) //allagh
-                        {
-                            for (int z = 0; z < Zvalue; z++) //allagh
-                            {
-                                // Define the variable name
-                                string varNameY = $"Y{i + 1}_{j + 1}_{r + 1}_{z + 1}";
-
-                                // Create the binary variable with a name
-                                Y[i, j, r, z] = model.AddVar(0.0, 1.0, 0.0, GRB.BINARY, varNameY);
-                            }
-
-                        }
-                    }
-                }
-
-                #endregion
-
-                #region Objective Function
-
-                GRBLinExpr objective = 0;
-
-                for (int i = Employees.Length - 1; i >= 0; i--)
-                {
-                    for (int j = MaxLeaveBidsPerEmployee[Employees[i]] - 1; j >= 0; j--)
-                    {
-                        #region Find ZValue, RValue
-                        int Zvalue = new int();
-                        int Rvalue = new int();
-                        var EmployeeCode = Employees[i];
-                        var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == Employees[i]);
-                        var BidCode = specificEmployee.LeaveBidDataGridStatic[j].BidCode;
-                        Rvalue = RBidsDict.TryGetValue((Employees[i], BidCode), out int valueR) ? valueR : Zvalue;
-                        Zvalue = ZbidsDict.TryGetValue((Employees[i], BidCode, Rvalue), out int value) ? value : Zvalue;
-                        #endregion
-                        for (int r = 0; r < Rvalue; r++) //allagh
-                        {
-                            for (int z = 0; z < Zvalue; z++) //allagh
-                            {
-                                objective.AddTerm(1, Y[i, j, r, z]);
-                            }
-                        }
-
-
-                    }
-                }
-
-
-                model.SetObjective(objective, GRB.MAXIMIZE);
-
-                #endregion
-
-                #region Constrains
-                // #1. Adding constraints for maximum number of satisfied bids 
-                for (int i = 0; i < Employees.Length; i++)
-                {
-                    GRBLinExpr sumLeaveBids = 0;
-                    for (int j = 0; j < MaxLeaveBidsPerEmployee[Employees[i]]; j++)
-                    {
-
-                        #region Find ZValue ,RValue
-                        int Zvalue = new int();
-                        int Rvalue = new int();
-                        var EmployeeCode = Employees[i];
-                        var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == Employees[i]);
-                        var BidCode = specificEmployee.LeaveBidDataGridStatic[j].BidCode;
-                        Rvalue = RBidsDict.TryGetValue((Employees[i], BidCode), out int valueR) ? valueR : Zvalue;
-                        Zvalue = ZbidsDict.TryGetValue((Employees[i], BidCode, Rvalue), out int value) ? value : Zvalue;
-                        #endregion
-                        for (int r = 0; r < Rvalue; r++)
-                        {
-                            for (int z = 0; z < Zvalue; z++)
-                            {
-                                sumLeaveBids.AddTerm(1.0, Y[i, j, r, z]);
-
-                            }
-                        }
-
-
-                    }
-
-                    // Adding the constraint for the current employee
-                    model.AddConstr(sumLeaveBids <= MaxSatisfiedBids, "MaxSatisfiedBids_" + Employees[i]);
-                }
-
-
-                // #2. Entitlements
-                for (int i = 0; i < Employees.Length; i++)
-                {
-                    var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == Employees[i]);
-                    GRBLinExpr sumLeaveBidDays = 0;
-                    for (int j = 0; j < MaxLeaveBidsPerEmployee[Employees[i]]; j++)
-                    {
-                        var NumberOfDays = specificEmployee.LeaveBidDataGridStatic[j].NumberOfDaysMax;
-                        #region Find ZValue ,RValue
-                        int Zvalue = new int();
-                        int Rvalue = new int();
-                        var EmployeeCode = Employees[i];
-                        var BidCode = specificEmployee.LeaveBidDataGridStatic[j].BidCode;
-                        Rvalue = RBidsDict.TryGetValue((Employees[i], BidCode), out int valueR) ? valueR : Zvalue;
-                        Zvalue = ZbidsDict.TryGetValue((Employees[i], BidCode, Rvalue), out int value) ? value : Zvalue;
-                        #endregion
-                        for (int r = 0; r < Rvalue; r++)
-                        {
-                            NumberOfDays = NumberOfDays - r;
-                            for (int z = 0; z < Zvalue; z++)
-                            {
-                                sumLeaveBidDays.AddTerm(NumberOfDays, Y[i, j, r, z]); // Summing up the leavebidsDays for each employee
-                            }
-                        }
-
-
-                    }
-
-                    var MaxLeaveDays = specificEmployee.LeaveStatus.CurrentBalance;
-
-                    // Adding the constraint for the current employee
-                    model.AddConstr(sumLeaveBidDays <= MaxLeaveDays, "MaxLeaveDays_" + Employees[i]);
-
-
-                }
-
-                // #3. Limit Lines
-
-                for (int t = 0; t < Dates.Length; t++)
-                {
-                    GRBLinExpr sumDays = 0;
-                    //Ξεχωριστό LimitLine για κάθε ημέρα 
-                    var LimitLine = InputData.Schedule.ReqScheduleRowsData.ElementAt(t).LimitLine;
-
-                    for (int i = 0; i < Employees.Length; i++)
-                    {
-
-                        sumDays.AddTerm(1, X[i, t]);
-
-
-                    }
-                    model.AddConstr(sumDays <= LimitLine, "LimitLine_" + Dates[t]);
-
-                }
-
-                //#5. Overlapping
-
-
-                #region  OverLapping
-
-                for (int i = 0; i < Employees.Length; i++)
-                {
-                    for (int j1 = 0; j1 < MaxLeaveBidsPerEmployee[Employees[i]] - 1; j1++)
-                    {
-                        for (int j2 = j1 + 1; j2 < MaxLeaveBidsPerEmployee[Employees[i]]; j2++)
-                        {
-                            var EmployeeCode = Employees[i];
-                            var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == Employees[i]);
-
-                            #region Find z1,z2
-                            int Z1value = new int();
-                            int Z2value = new int();
-                            int R1value = new int();
-                            int R2value = new int();
-
-                            var BidCode1 = specificEmployee.LeaveBidDataGridStatic[j1].BidCode;
-                            R1value = RBidsDict.TryGetValue((Employees[i], BidCode1), out int valueR1) ? valueR1 : R1value;
-
-                            var BidCode2 = specificEmployee.LeaveBidDataGridStatic[j2].BidCode;
-                            R2value = RBidsDict.TryGetValue((Employees[i], BidCode2), out int valueR2) ? valueR2 : R2value;
-                            #endregion
-
-                            for (int r1 = 0; r1 < R1value; r1++)
-                            {
-                                Z1value = ZbidsDict.TryGetValue((Employees[i], BidCode1, r1 + 1), out int value1) ? value1 : Z1value;
-
-                                for (int r2 = 0; r2 < R2value; r2++)
-                                {
-                                    Z2value = ZbidsDict.TryGetValue((Employees[i], BidCode2, r2 + 1), out int value2) ? value2 : Z2value;
-
-                                    for (int z1 = 0; z1 < Z1value; z1++)
-                                    {
-                                        for (int z2 = 0; z2 < Z2value; z2++)
-                                        {
-                                            if (SeparOrOverlap(i, j1, j2, z1, z2, r1, r2))
-                                            {
-                                                GRBLinExpr expr = Y[i, j1, r1, z1] + Y[i, j2, r2, z2];
-                                                model.AddConstr(expr <= 1, $"SO{i + 1}_{j1 + 1}_{z1 + 1}_{j2 + 1}_{z2 + 1}");
-                                            }
-                                        }
-                                    }
-                                }
-
-
-                            }
-
-
-
-
-                        }
-                    }
-                }
-                bool SeparOrOverlap(int i, int j1, int j2, int z1, int z2, int r1, int r2)
-                {
-
-                    var emp = InputData.Employees.ElementAt(i);
-
-                    var SelectedBid1 = emp.LeaveBidDataGridStatic.ElementAt(j1);
-                    var SelectedBid2 = emp.LeaveBidDataGridStatic.ElementAt(j2);
-
-                    //if int(BidStart[i][j2]) >= int(BidStart[i][j1]) + int(BidLength[i][j1]) + separvalue:
-                    if (SelectedBid2.DateFrom.AddDays(z2) >= SelectedBid1.DateFrom.AddDays(SelectedBid1.NumberOfDaysMax + SeparValue + z1 - r1 -1))   
-                    {
-                        return false;
-
-                    };
-                    //if int(BidStart[i][j2]) + int(BidLength[i][j2]) <= int(BidStart[i][j1]) - separvalue:
-                    if (SelectedBid2.DateFrom.AddDays(SelectedBid2.NumberOfDaysMax + z2 - r1 - 1) <= SelectedBid1.DateFrom.AddDays(-SeparValue))
-                    {
-
-                        return false;
-
-                    };
-
-                    return true;
-                }
-
-                #endregion
-                //#6.Connection Between Y and X
-                for (int i = 0; i < Employees.Length; i++)
-                {
-                    var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == Employees[i]);
-                    var maxBids = MaxLeaveBidsPerEmployee[Employees[i]];
-
-                    for (int j = 0; j < maxBids; j++)
-                    {
-                        var bid = specificEmployee.LeaveBidDataGridStatic[j];
-                        var bidDays = bid.NumberOfDays;
-
-                        #region Find ZValue, RValue
-                        int Zvalue = new int();
-                        int Rvalue = new int();
-                        var EmployeeCode = Employees[i];
-                        var BidCode = specificEmployee.LeaveBidDataGridStatic[j].BidCode;
-                        Rvalue = RBidsDict.TryGetValue((Employees[i], BidCode), out int valueR) ? valueR : Zvalue;
-                        Zvalue = ZbidsDict.TryGetValue((Employees[i], BidCode, Rvalue), out int value) ? value : Zvalue;
-                        #endregion
-                        for (int r = 0; r < Rvalue; r++) //allagh
-                        {
-                            for (int z = 0; z < Zvalue; z++) //allagh
-                            {
-                                var startDateIndex = Array.IndexOf(Dates, bid.DateFrom.ToString("dd/MM/yyyy"));
-
-                                GRBLinExpr sumDays = 0;
-                                for (int k = 0; k < bidDays; k++)
-                                {
-                                    sumDays.AddTerm(1, X[i, startDateIndex + k + z]); // Add X variables for each day of the bid
-                                }
-                                // Add the constraint
-                                model.AddConstr(bidDays * Y[i, j, r, z] <= sumDays, $"BidDaysConstraint_{Employees[i]}_{j}_{z}");
-                            }
-
-                        }
-
-
-                    }
-                }
-                #endregion
-
-                #endregion
-
-                #region New Optimize settings
-                bool grant = false;
-                BasicEnums.VPLogicType logic = InputData.VPLogicType; // Λογικη Ανάθεσης π.χ Strict Seniority
-
-                int FinishedEmpIds = 0; //Το αντιστοιχο FinishedIds στο κωδικα της Python
-                int FinishedBidIds = 1; //Μετρητής για τα ολοκληρωμέναBids
-
-                int id = 0;
-                var numRowsPerEmployee = InputData.Employees.Select(e => e.LeaveBidDataGridStatic.Count);
-                var numOfEmployes = InputData.Employees.Count; //Το αντιστοιχο N της python
-
-                int N = numRowsPerEmployee.Sum(); //Το N εδω ειναι o αριθμος των συνολικών Bids.
-                int[] NextBid = new int[N];
-                int[] NrOfBids = MaxLeaveBidsPerEmployee.Values.ToArray();
-                List<string> outputLines = new List<string>();
-
-
-                model.Update();
-
-                while (FinishedEmpIds <= numOfEmployes) // Kozani
-                {
-
-
-                    int j = NextBid[id];
-
-                    #region Check Bid
-                    var z = 0;
-                    var r = 0;
-                    #region Find ZValue,RValue
-                    int Zvalue = new int();
-                    int Rvalue = new int();
-                    var EmployeeCode = Employees[id];
-                    var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == Employees[id]);
-
-                    var BidCode = specificEmployee.LeaveBidDataGridStatic[j].BidCode;
-                    Rvalue = RBidsDict.TryGetValue((Employees[id], BidCode), out int valueR) ? valueR : Zvalue;
-                    Zvalue = ZbidsDict.TryGetValue((Employees[id], BidCode, Rvalue), out int value) ? value : Zvalue;
-                    #endregion
-                    for (r = 0; r < Rvalue; r++)
-                    {
-                        for (z = 0; z < Zvalue; z++)
-                        {
-                            #region Check Bid
-                            GRBVar K = model.GetVarByName($"Y{id + 1}_{j + 1}_{r + 1}_{z + 1}");
-                            K.LB = 1;
-                            model.Update();
-                            model.Optimize();
-                            bool solution = (model.Status == GRB.Status.OPTIMAL);
-                            if (solution)
-                            {
-                                grant = true;
-                                string message = $"Crew member {id + 1} was awarded bid {j + 1}";
-                                Console.WriteLine(message);
-                                outputLines.Add(message);
-                                Data.ObjValue = model.ObjVal;
-
-                                #region Set Xit LB = 1
-                                var emp = InputData.Employees.ElementAt(id);
-
-                                var SelectedBid = emp.LeaveBidDataGridStatic.ElementAt(j);
-                                var DateFrom = SelectedBid.DateFrom.AddDays(z).ToString("dd/MM/yyyy");
-                                var DateTo = SelectedBid.DateFrom.AddDays(SelectedBid.NumberOfDaysMax - r + z -1).ToString("dd/MM/yyyy");
-
-                                string employee = Employees[id];
-
-                                var DateFromIndex = Dates.IndexOf(DateFrom);
-                                var DateToIdIndex = Dates.IndexOf(DateTo);
-                                if (DateFromIndex != -1 && DateToIdIndex != -1)
-                                {
-                                    for (int t = DateFromIndex; t <= DateToIdIndex && t < Dates.Length; t++)
-                                    {
-                                        GRBVar Xit = model.GetVarByName($"X{id + 1}_{t + 1}");
-                                        Xit.LB = 1;
-                                    }
-
-                                }
-                                else
-                                {
-                                    // Handle the case where DateFrom or DateTo is not found in the Dates list
-                                    Console.WriteLine("DateFrom or DateTo not found in the Dates list.");
-                                }
-
-                                #endregion
-
-                                z = Zvalue; //Break from the loop and dont check the others z
-                            }
-                            else
-                            {
-                                grant = false;
-                                K.LB = 0;
-                                string message = $"Crew member {id + 1} was not awarded bid {j + 1}";
-                                Console.WriteLine(message);
-                                outputLines.Add(message);
-                            }
-
-                            #endregion
-
-                        }
-                    }
-
-                    #endregion
-                    NextBid[id]++;
-                    if (NextBid[id] == NrOfBids[id])
-                    {
-                        FinishedEmpIds++;
-
-                    }
-                    if (model.Status == GRB.Status.OPTIMAL)
-                    {
-                        Data.ObjValue = model.ObjVal;
-                    }
-                    if (FinishedBidIds == N)
-                    {
-                        break;
-                    }
-                    FinishedBidIds = FinishedBidIds + 1;
-                    if (FinishedBidIds <= N)
-                    {
-                        id = GetNextId(id, grant, numOfEmployes, NextBid, NrOfBids, FinishedEmpIds, logic);
-                    }
-                }
-                #endregion
-
-                #endregion
-
-                #region Save,Show Results
-                var Upgrade = new bool();
-                var flag = new bool();
-                var customMessageBox = new CustomMessageBox("Do you want to Save the Results or Search for a better Solution?");
-                if (customMessageBox.ShowDialog() == true)
-                {
-                    // User clicked Save Only or Save and Upgrade
-                    if (customMessageBox.DialogResult == true)
-                    {
-                        // User clicked Save Only or Save and Upgrade
-                        var result = customMessageBox.Message.Contains("Save and Upgrade") ? "Save and Upgrade" : "Save Only";
-                        Console.WriteLine($"User clicked {result}");
-
-                        if (result == "Save and Upgrade" || result == "Save Only")
-                        {
-                            #region OutputResults
-                            if (Data.ObjValue > 0)
-                            {
-
-
-
-                                // Create a data structure to store the optimal solution
-                                model.Update();
-
-
-                                #region Insert Xij
-                                // Extract the optimal solution for the 'X' variables
-                                for (int i = 0; i < Employees.Length; i++)
-                                {
-                                    for (int t = 0; t < Dates.Length; t++)
-                                    {
-                                        string employee = Employees[i];
-                                        string date = Dates[t];
-                                        double xValue = X[i, t].LB;
-                                        if (xValue == 1)
-                                        {
-                                            Console.WriteLine($"Employee: {employee}, Date: {date}, Value: {xValue}");
-                                        }
-                                        // Store the optimal 'X' value in the data structure
-                                        make_plan[(employee, date)] = xValue;
-
-                                        // Add 'employee' and 'date' to the respective lists if they are not already there
-                                        if (!rows.Contains(employee))
-                                            rows.Add(employee);
-                                        if (!columns.Contains(date))
-                                            columns.Add(date);
-                                    }
-                                }
-                                #endregion
-
-
-
-                                // Print the optimal solution for 'X' variables
-                                Console.WriteLine("Optimal Solution for X Variables:");
-                                foreach (var employee in rows)
-                                {
-                                    foreach (var date in columns)
-                                    {
-                                        double xValue = make_plan.ContainsKey((employee, date)) ? make_plan[(employee, date)] : 0.0;
-                                        Console.WriteLine($"Employee: {employee}, Date: {date}, Value: {xValue} -> Employee: {employee}, Date: {date}, Value: {xValue} X{(Array.IndexOf(Employees, employee) + 1)}{(Array.IndexOf(Dates, date) + 1)}");
-
-
-                                        #region Populate VP Xij
-                                        VPXijResultsData singleDataRecord = new VPXijResultsData();
-
-
-                                        singleDataRecord.Xij = $"X{(Array.IndexOf(Employees, employee) + 1)}{(Array.IndexOf(Dates, date) + 1)}";
-                                        singleDataRecord.XijFlag = xValue;
-                                        singleDataRecord.Date = date;
-
-
-
-
-                                        var SpecificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == employee);
-                                        singleDataRecord.Employee = SpecificEmployee;
-
-                                        Data.VPXijResultsDataGrid.Add(singleDataRecord);
-                                        #endregion
-                                    }
-                                }
-
-                                // Extract the optimal solution for the 'Y' variables
-                                Dictionary<(string, int, int, int), double> y_plan = new Dictionary<(string, int, int, int), double>();
-                                for (int i = 0; i < Employees.Length; i++)
-                                {
-                                    for (int j = 0; j < MaxLeaveBidsPerEmployee[Employees[i]]; j++)
-                                    {
-                                        var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == Employees[i]);
-
-                                        #region Find ZValue
-                                        int Zvalue = new int();
-                                        int Rvalue = new int();
-                                        var EmployeeCode = Employees[i];
-                                        var BidCode = specificEmployee.LeaveBidDataGridStatic[j].BidCode;
-                                        Rvalue = RBidsDict.TryGetValue((Employees[i], BidCode), out int valueR) ? valueR : Zvalue;
-                                        #endregion
-                                        for (int r = 0; r < Rvalue; r++)
-                                        {
-                                            Zvalue = ZbidsDict.TryGetValue((Employees[i], BidCode, r + 1), out int value) ? value : Zvalue;
-
-                                            for (int z = 0; z < Zvalue; z++) //allagh
-                                            {
-                                                string employee = Employees[i];
-                                                int bidIndex = j;
-                                                double yValue = Y[i, j, r, z].LB;
-
-                                                // Store the optimal 'Y' value in the data structure
-                                                y_plan[(employee, bidIndex, r, z)] = yValue;
-                                            }
-                                        }
-
-
-
-
-
-
-
-                                    }
-                                }
-
-                                // Print the optimal solution for 'Y' variables
-                                Console.WriteLine("\nOptimal Solution for Y Variables:");
-                                int counter = 0;
-                                foreach (var employee in rows)
-                                {
-                                    var TotalNumberOfDays = 0;
-
-                                    for (int j = 0; j < MaxLeaveBidsPerEmployee[employee]; j++)
-                                    {
-                                        #region Find ZValue
-                                        int Zvalue = new int();
-                                        int Rvalue = new int();
-                                        var EmployeeCode = employee;
-                                        var specificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == EmployeeCode);
-                                        var BidCode = specificEmployee.LeaveBidDataGridStatic[j].BidCode;
-                                        Rvalue = RBidsDict.TryGetValue((EmployeeCode, BidCode), out int valueR) ? valueR : Zvalue;
-                                        #endregion
-
-                                        for (int r = 0; r < Rvalue; r++)
-                                        {
-                                            Zvalue = ZbidsDict.TryGetValue((EmployeeCode, BidCode, r + 1), out int value) ? value : Zvalue;
-                                            for (int z = 0; z < Zvalue; z++) //allagh
-                                            {
-                                                int bidIndex = j;
-                                                double yValue = y_plan.ContainsKey((employee, bidIndex, r, z)) ? y_plan[(employee, bidIndex, r, z)] : 0.0;
-
-                                                Console.WriteLine($"Employee: {employee}, BidIndex: {bidIndex + 1}, Value: {yValue} -> Employee: {employee}, BidIndex: {bidIndex + 1}, Value: {yValue} Y{(Array.IndexOf(Employees, employee) + 1)}{(bidIndex + 1)}");
-
-                                                #region Populate VP Yij
-                                                VPYijResultsData yijDataRecord = new VPYijResultsData();
-                                                yijDataRecord.LeaveBidData = new LeaveBidsDataStatic();
-
-
-                                                yijDataRecord.Yij = $"Y{(Array.IndexOf(Employees, employee) + 1)}{(bidIndex + 1)}";
-                                                yijDataRecord.Yijr = $"Y{(Array.IndexOf(Employees, employee) + 1)}{(bidIndex + 1)}{(r + 1)}";
-                                                yijDataRecord.Yijrz = $"Y{(Array.IndexOf(Employees, employee) + 1)}{(bidIndex + 1)}{(r + 1)}{(z + 1)}";
-
-                                                yijDataRecord.YijFlag = yValue;
-                                                yijDataRecord.ConfirmedBidFlag = yValue;
-
-                                                var SpecificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == employee);
-                                                yijDataRecord.Employee = SpecificEmployee;
-
-                                                yijDataRecord.LeaveBidData = SpecificEmployee.LeaveBidDataGridStatic[j];
-
-                                                #region Edit Dates
-
-                                                var DateFrom = SpecificEmployee.LeaveBidDataGridStatic[j].DateFrom;
-                                                var NumberOfDays = SpecificEmployee.LeaveBidDataGridStatic[j].NumberOfDaysMax - r;
-                                                var NumberOfDaysMax = SpecificEmployee.LeaveBidDataGridStatic[j].NumberOfDaysMax;
-                                                var NumberOfDaysMin = SpecificEmployee.LeaveBidDataGridStatic[j].NumberOfDaysMin;
-
-                                                var BidType = SpecificEmployee.LeaveBidDataGridStatic[j].BidType;
-                                                var DateTo = SpecificEmployee.LeaveBidDataGridStatic[j].DateTo;
-
-                                                yijDataRecord.DateFrom = DateFrom;
-                                                yijDataRecord.DateTo = DateTo;
-
-                                                if (BidType == BasicEnums.BidType.Min_Max)
-                                                {
-                                                    NumberOfDays = 0;
-                                                }
-                                                else if (BidType == BasicEnums.BidType.Non_Specific)
-                                                {
-                                                    NumberOfDaysMax = 0;
-                                                    NumberOfDaysMin = 0;
-
-                                                }
-                                                else if (BidType == BasicEnums.BidType.Specific)
-                                                {
-                                                    NumberOfDaysMax = 0;
-                                                    NumberOfDaysMin = 0;
-                                                }
-
-                                                yijDataRecord.NumberOfDays = NumberOfDays;
-                                                yijDataRecord.NumberOfDaysMax = NumberOfDaysMax;
-                                                yijDataRecord.NumberOfDaysMin = NumberOfDaysMin;
-
-                                                yijDataRecord.DateFromStr = DateFrom.ToString("dd/MM/yyyy");
-                                                yijDataRecord.DateToStr = DateTo.ToString("dd/MM/yyyy");
-
-                                                #endregion
-
-                                                #region ADD RECORD 
-                                                var existingRecord = Data.VPYijResultsDataGrid.FirstOrDefault(record => record.Yij == yijDataRecord.Yij);
-
-                                                if (existingRecord != null)
-                                                {
-                                                    if (existingRecord.YijFlag == 1)
-                                                    {
-
-                                                    }
-                                                    else if (existingRecord.YijFlag == 0 && yijDataRecord.YijFlag == 0)
-                                                    {
-
-                                                    }
-                                                    else if (existingRecord.YijFlag == 0 && yijDataRecord.YijFlag == 1)
-                                                    {
-                                                        // Insert the new record and remove the existing record
-                                                        Data.VPYijResultsDataGrid.Remove(existingRecord);
-                                                        Data.VPYijResultsDataGrid.Add(yijDataRecord);
-                                                    }
-                                                }
-                                                else
-                                                {
-                                                    Data.VPYijResultsDataGrid.Add(yijDataRecord);
-
-                                                }
-
-                                                #endregion
-
-
-
-                                                #endregion
-
-                                                #region Populate VP Yijz
-                                                VPYijResultsData yijzDataRecord = new VPYijResultsData();
-                                                yijzDataRecord.LeaveBidData = new LeaveBidsDataStatic();
-
-
-                                                yijzDataRecord.Yij = $"Y{(Array.IndexOf(Employees, employee) + 1)}{(bidIndex + 1)}";
-                                                yijzDataRecord.Yijr = $"Y{(Array.IndexOf(Employees, employee) + 1)}{(bidIndex + 1)}{(r + 1)}";
-                                                yijzDataRecord.Yijrz = $"Y{(Array.IndexOf(Employees, employee) + 1)}{(bidIndex + 1)}{(r + 1)}{(z + 1)}";
-
-                                                yijzDataRecord.YijFlag = yValue;
-                                                yijzDataRecord.ConfirmedBidFlag = yValue;
-
-                                                yijzDataRecord.Employee = SpecificEmployee;
-
-                                                yijzDataRecord.LeaveBidData = SpecificEmployee.LeaveBidDataGridStatic[j];
-
-                                                #region Edit Dates
-
-                                                if (SpecificEmployee.LeaveBidDataGridStatic[j].BidType == BasicEnums.BidType.Min_Max)
-                                                {
-                                                }
-
-                                                DateFrom = SpecificEmployee.LeaveBidDataGridStatic[j].DateFrom.AddDays(z);
-                                                NumberOfDays = SpecificEmployee.LeaveBidDataGridStatic[j].NumberOfDaysMax - r;
-                                                DateTo = DateFrom.AddDays(NumberOfDays - 1);
-
-                                                yijzDataRecord.DateFrom = DateFrom;
-                                                yijzDataRecord.DateTo = DateTo;
-                                                yijzDataRecord.NumberOfDays = NumberOfDays;
-                                                yijzDataRecord.DateFromStr = DateFrom.ToString("dd/MM/yyyy");
-                                                yijzDataRecord.DateToStr = DateTo.ToString("dd/MM/yyyy");
-
-                                                #endregion
-                                                Data.VPYijzResultsDataGrid.Add(yijzDataRecord);
-
-
-
-                                                #endregion
-                                                if (yValue == 1)
-                                                {
-                                                    TotalNumberOfDays = TotalNumberOfDays + NumberOfDays;
-
-                                                }
-                                            }
-                                        } //allagh
-
-                                        counter++;
-                                    }
-
-                                    var UpdatedEmp = InputData.Employees.FirstOrDefault(emp => emp.Code == employee);
-                                    UpdatedEmp.LeaveStatus.ProjectedBalance = UpdatedEmp.LeaveStatus.CurrentBalance - TotalNumberOfDays;
-                                    Data.EmpLeaveStatusData.Add(UpdatedEmp);
-
-                                }
-
-
-                                #region Create c#sol.txt for python
-                                //string filePath = @"C:\Users\npoly\Source\Repos\Bids_CrewScheduling_Kozanidis\c#sol.txt";
-                                //File.WriteAllText(filePath, string.Empty);
-
-                                //using (StreamWriter writer = new StreamWriter(filePath, true)) // 'true' parameter appends to the existing file if it exists
-                                //{
-                                //    foreach (string line in outputLines)
-                                //    {
-                                //        writer.WriteLine(line);
-                                //    }
-                                //}
-
-                                #endregion
-                            }
-                            #endregion
-                        }
-                        if (result == "Save and Upgrade")
-                        {
-                            // Handle Save and Upgrade scenario
-                            Console.WriteLine("Saving and upgrading...");
-                            flag = SaveVpVijResultData(Data, 1, InputData.VPId);
-                            Console.WriteLine(flag);
-                            Upgrade = true;
-                        }
-                        else
-                        {
-                            // Handle Save Only scenario
-                            Console.WriteLine("Saving only...");
-                            flag = SaveVpVijResultData(Data, 1, InputData.VPId);
-                            Console.WriteLine(flag);
-                            Upgrade = false;
-
-                        }
-                    }
-                    else
-                    {
-                        // User clicked Upgrade Only
-                        Console.WriteLine("User clicked Upgrade Only");
-                        // Handle Upgrade Only scenario
-                        //flag = SaveVpVijResultData(Data, -1, InputData.VPId);
-                        Console.WriteLine(flag);
-                        Upgrade = true;
-
-                    }
-                }
-                while (Upgrade == true)
-                {
-                    var CurrentObjectiveValue = Data.ObjValue;
-                    var NewInputData = InputData;
-
-
-                    //Data = CalculateVacationPlanningAdvanced2(NewInputData,Yijk);
-                }
-                model.Dispose();
-                env.Dispose();
-
-                #endregion
-
-                return Data;
-
-
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("An error occurred: " + ex.Message);
-                return Data;
-            }
-        }
 
         public VacationPlanningOutputData CalculateVacationPlanningAdvanced(VacationPlanningInputData InputData)
         {
@@ -3254,9 +2387,6 @@ Where 1=1 {0}", FilterStr);
 
                             }
 
-
-
-
                         }
                     }
                 }
@@ -3268,22 +2398,16 @@ Where 1=1 {0}", FilterStr);
                     var SelectedBid1 = emp.LeaveBidDataGridStatic.ElementAt(j1);
                     var SelectedBid2 = emp.LeaveBidDataGridStatic.ElementAt(j2);
 
-                    if (i == 0 && j1 == 0 && j2 == 1 && z1 > 11)
-                    {
-                        var a = 1;
-                    }
 
-                    var cultureInfo = new CultureInfo("en-GB"); // English (United Kingdom) culture
-                    DateTimeFormatInfo dtfi = cultureInfo.DateTimeFormat;
 
-                    Console.WriteLine($"Checking if {SelectedBid2.DateFrom.AddDays(z2).ToString(dtfi)} >= {SelectedBid1.DateFrom.AddDays(SelectedBid1.NumberOfDaysMax + SeparValue + z1 - r1 - 1).ToString(dtfi)}");
                     if (SelectedBid2.DateFrom.AddDays(z2) >= SelectedBid1.DateFrom.AddDays(SelectedBid1.NumberOfDaysMax + SeparValue + z1 - r1 - 1))
                     {
                         Console.WriteLine("Condition: false");
                         return false;
 
                     };
-                    Console.WriteLine($"Checking if {SelectedBid2.DateFrom.AddDays(SelectedBid2.NumberOfDaysMax + z2 - r1 - 1).ToString(dtfi)} <= {SelectedBid1.DateFrom.AddDays(-SeparValue + z1).ToString(dtfi)}");
+
+                   
                     if (SelectedBid2.DateFrom.AddDays(SelectedBid2.NumberOfDaysMax + z2 - r1 - 1) <= SelectedBid1.DateFrom.AddDays(-SeparValue+z1))
                     {
                         Console.WriteLine("Condition: false");
@@ -4242,6 +3366,7 @@ Where 1=1 {0}", FilterStr);
         #endregion
 
         #endregion
+
         public ObservableCollection<EmployeeData> GetEmployeesByTypeData(VacationPlanningInputData InputData, bool ShowDeleted)
         {
             ObservableCollection<EmployeeData> DataList = new ObservableCollection<EmployeeData>();
@@ -7646,7 +6771,10 @@ Where 1=1 {0}",FilterStr);
                             {
                                 InvId = finalInvId,
                                 ItemId = stockItemId,
-                                Quantity = (float)row.Quantity,
+                                Quantity = (float)row.Stock,
+                                InvMax = (float)row.InvMax,
+                                InvMin = (float)row.InvMin,
+
                             };
 
                             dbContext.Stock.Add(newStock);
@@ -7660,7 +6788,9 @@ Where 1=1 {0}",FilterStr);
                         else if (row.ExistingFlag == true && row.StockItemFlag == true)
                         {
                             // Update existing bom
-                            existingStock.Quantity = (float)row.Quantity;
+                            existingStock.Quantity = (float)row.Stock;
+                            existingStock.InvMax = (float)row.InvMax;
+                            existingStock.InvMin = (float)row.InvMin;
 
                         }
                     }
@@ -7698,7 +6828,8 @@ Where InvCode = @InvCode");
 
 
                 command.CommandText = string.Format(@"
- SELECT Rmaster.ItemId,Rmaster.ItemCode,Rmaster.ItemDescr,Rmaster.MesUnit,Rmaster.ItemType,Rmaster.Assembly,Stock.Quantity 
+ SELECT Rmaster.ItemId,Rmaster.ItemCode,Rmaster.ItemDescr,Rmaster.MesUnit,Rmaster.ItemType,Rmaster.Assembly,
+Stock.Quantity ,Stock.InvMax,Stock.InvMin
 FROM STOCK
 Inner JOIN Rmaster ON Rmaster.ItemId = Stock.ItemId
 Where Stock.InvId = @InvId");
@@ -7719,7 +6850,9 @@ Where Stock.InvId = @InvId");
                         itemData.Assembly = (BasicEnums.Assembly)Enum.Parse(typeof(BasicEnums.Assembly), reader["Assembly"].ToString());
                         itemData.ItemType = (BasicEnums.ItemType)Enum.Parse(typeof(BasicEnums.ItemType), reader["ItemType"].ToString());
                         stockdata.StockItem = itemData;
-                        stockdata.Quantity = float.Parse(reader["Quantity"].ToString());
+                        stockdata.Stock = double.Parse(reader["Quantity"].ToString());
+                        stockdata.InvMax = double.Parse(reader["InvMax"].ToString());
+                        stockdata.InvMin = double.Parse(reader["InvMin"].ToString());
 
                         stockdata.NewItemFlag = false;
                         stockdata.ExistingFlag = true;
@@ -7761,8 +6894,9 @@ And Rmaster.AssemblyNumber <=2 And Rmaster.IsDeleted = 0";
 
                             stockdata.StockItem = itemData;
 
-                            stockdata.Quantity = 0;
-                            stockdata.StockItemFlag = false;
+                            stockdata.Stock = 0;
+                            stockdata.InvMax = 1000;
+                            stockdata.InvMin = 0;
                             stockdata.NewItemFlag = true;
                             stockdata.ExistingFlag = false;
 
@@ -7801,7 +6935,7 @@ Where InvCode = @InvCode");
                 command.CommandText = string.Format(@"
  SELECT Rmaster.ItemId,Rmaster.ItemCode,Rmaster.ItemDescr,Rmaster.MesUnit,
  Rmaster.ItemType,Rmaster.Assembly,Lot.LotPolicyCode,Lot.LeadTime,Lot.BatchSize,
-Stock.Quantity 
+Stock.Quantity,Stock.InvMin,Stock.InvMax  
 FROM STOCK
 Inner JOIN Rmaster ON Rmaster.ItemId = Stock.ItemId
 Inner Join LotPolicy as Lot on Lot.ItemId = Rmaster.ItemId
@@ -7828,7 +6962,9 @@ Where Lot.MainPolicy = 1 and Stock.InvId = @InvId");
 
 
                         stockdata.StockItem = itemData;
-                        stockdata.Quantity = float.Parse(reader["Quantity"].ToString());
+                        stockdata.Stock = double.Parse(reader["Quantity"].ToString());
+                        stockdata.InvMin = double.Parse(reader["InvMin"].ToString());
+                        stockdata.InvMax = double.Parse(reader["InvMax"].ToString());
 
 
                         DataList.Add(stockdata);
@@ -8204,40 +7340,48 @@ Where iDay Between  @DateStart AND @DateEnd and ItemId=@ItemId and InventoryId=@
                     bool hasChanges = false;
                     foreach (var row in DemandForecast)
                     {
-                        var currentItemId = row.Item.ItemId;
-                        var DateStr = row.DateStr;
 
-                        var existingRows = dbContext.DemandForecast.Where(b => b.ForCode == ForCode && b.ItemId == currentItemId && b.DateStr == row.DateStr);
+                            var currentItemId = row.Item.ItemId;
+                            var DateStr = row.DateStr;
 
-                        var existingrow = dbContext.DemandForecast.FirstOrDefault(b => b.ForCode == ForCode && b.ItemId == currentItemId && b.DateStr == row.DateStr);
+                            var existingRows = dbContext.DemandForecast.Where(b => b.ForCode == ForCode && b.ItemId == currentItemId && b.DateStr == row.DateStr);
 
-                        if (existingrow == null)
-                        {
-                            dbContext.DemandForecast.Add(new DemandForecastEntity
+                            var existingrow = dbContext.DemandForecast.FirstOrDefault(b => b.ForCode == ForCode && b.ItemId == currentItemId && b.DateStr == row.DateStr);
+
+                            if (existingrow == null && row.Selected == true )
                             {
-                                ForCode = ForCode,
-                                ItemId = row.Item.ItemId,
-                                Date = row.Date,
-                                DateStr = row.DateStr,
+                                dbContext.DemandForecast.Add(new DemandForecastEntity
+                                {
+                                    ForCode = ForCode,
+                                    ItemId = row.Item.ItemId,
+                                    Date = row.Date,
+                                    DateStr = row.DateStr,
 
-                                Demand = row.Demand
+                                    Demand = row.Demand
 
 
-                            });
-                            hasChanges = true;
-                        }
-                        else if (existingrow != null)
-                        {
-
-                            if (existingrow.Demand != row.Demand)
-                            {
-                                existingrow.Demand = row.Demand;
+                                });
                                 hasChanges = true;
+                            }
+                            else if (existingrow != null)
+                            {
 
+                                if (existingrow.Demand != row.Demand && row.Selected == true)
+                                {
+                                    existingrow.Demand = row.Demand;
+                                    hasChanges = true;
+
+                                }
+                                else if(row.Selected == false)
+                            {
+                                dbContext.DemandForecast.Remove(existingrow);
+                                hasChanges = true;
                             }
 
 
                         }
+                      
+                       
 
 
                     }
@@ -8317,6 +7461,64 @@ Where  1=1 {0}", FilterStr);
             return DataList;
         }
 
+        public MRPInputData GetDemandFItemData(MRPInputData MRPData, string ForCode)
+        {
+            ObservableCollection<DemandForecastData> ForecastDataList = new ObservableCollection<DemandForecastData>();
+            ObservableCollection<ItemData> ItemsDataList = new ObservableCollection<ItemData>();
+            var existingItemCodes = new HashSet<string>(); // To keep track of existing ItemCodes
+            using (var connection = GetConnection())
+            using (var command = new SqlCommand())
+            {
+                connection.Open();
+                command.Connection = connection;
+
+                command.Parameters.AddWithValue("@Code", ForCode);
+
+                command.CommandText = string.Format(@"select D.ForCode,D.ForecastId,D.ItemId,D.Date,D.Demand,D.DateStr,
+a.ItemId,a.ItemCode,a.MesUnit,a.CanBeProduced,A.OutputOrderFlag,A.InputOrderFlag
+from DemandForecast as D
+Inner  Join Rmaster as A on A.ItemID = D.ItemId
+Where ForCode =@Code");
+
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        DemandForecastData fdata = new DemandForecastData();
+
+                        ItemData idata = new ItemData();
+                        fdata.Item = new ItemData();
+
+                        fdata.ForCode = reader["Forcode"].ToString();
+                        fdata.Item.ItemId = int.Parse(reader["ItemId"].ToString());
+                        fdata.Item.ItemCode = reader["ItemCode"].ToString();
+                        fdata.Demand = decimal.Parse(reader["Demand"].ToString());
+                        fdata.Date = Convert.ToDateTime(reader["Date"]);
+                        fdata.DateStr = reader["DateStr"].ToString();
+                        fdata.Selected = true;
+                        ForecastDataList.Add(fdata);
+                        // Only process if this ItemCode hasn't been processed before
+                        if (!existingItemCodes.Contains(fdata.Item.ItemCode))
+                        {
+
+
+                            // Get additional info for this ItemCode
+                            idata = GetItemChooserData(0, fdata.Item.ItemCode);
+                            ItemsDataList.Add(idata);
+
+                            // Add this ItemCode to the set of processed ItemCodes
+                            existingItemCodes.Add(fdata.Item.ItemCode);
+                        }
+                    }
+                }
+
+                connection.Close();
+            }
+            MRPData.Forecast.DemandForecast = ForecastDataList;
+            MRPData.EndItems = ItemsDataList;
+            return MRPData;
+        }
+
 
         public ObservableCollection<DemandForecastData> GetDemandForecast(string ForCode)
         {
@@ -8354,7 +7556,7 @@ Where ForCode =@Code");
                         data.Date = Convert.ToDateTime(reader["Date"]);
 
                         data.DateStr = reader["DateStr"].ToString();
-
+                        data.Selected = true;
 
                         DataList.Add(data);
 
@@ -9549,9 +8751,9 @@ Where 1=1 {0}", FilterStr);
                         data.Forecast = new ForecastInfoData();
                         data.Inventory = new InventoryData();
 
-                        data.MRPID = Convert.ToInt32(reader["MPSID"]);
-                        data.MRPCode = reader["MPSCODE"].ToString();
-                        data.MRPDescr = reader["MPSDESCR"].ToString();
+                        data.MRPID = Convert.ToInt32(reader["MRPID"]);
+                        data.MRPCode = reader["MRPCODE"].ToString();
+                        data.MRPDescr = reader["MRPDESCR"].ToString();
                         data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
 
                         data.OrdersFlag = bool.Parse(reader["ORDERSFLAG"].ToString());
@@ -9696,121 +8898,1877 @@ Where 1=1 {0}", FilterStr);
 
             }
         }
-        public bool CalculateMRP(MRPInputData Data)
-        {
-            var Items = Data.Items.OrderByDescending(item => item.AssemblyNumber).ToList();
-            var TotalDemandDict = Data.TotalDemandDict;
-            var SubItems = Data.Bom;
-            using (var connection = GetConnection())
-            using (var command = new SqlCommand())
+
+        public MRPOutputData  CalculateMRPMain(MRPInputData InputData)
+        {          
+            GRBEnv env = new GRBEnv("mrplogfile.log");
+            GRBModel model = new GRBModel(env);
+            MRPOutputData OutputData = new MRPOutputData();
+            OutputData.XData = new ObservableCollection<DecisionVariableX>();
+            OutputData.YData = new ObservableCollection<DecisionVariableY>();
+            OutputData.InvData = new ObservableCollection<DecisionVariablesInvStatus>();
+
+            try
             {
-                connection.Open();
-                command.Connection = connection;
+                #region Optimization
 
-                foreach (var item in Items)
+                #region Optimization paramaters
+
+                int T = InputData.T; //Planning Horizon
+                int P = InputData.P; //Number Of MPS end-item Products
+                int Q = InputData.Q; //Number Of MRP Component Products
+                int W = InputData.W; //Number Of Capacitated Work Cenetrs
+                int N = new int(); //Number Of Seuts
+
+                string[] Dates = InputData.Dates; //Πινακας με τα Dates
+
+                Dictionary<string, List<string>> Pw_String = InputData.Pw; // P(w) is the set of end-items that can be processed on work center w.
+                Dictionary<string, List<string>> Qw_String = InputData.Qw; // Q(w) is the set of products that can be processed on work center w.
+                Dictionary<(string, string), double> Dit_String = InputData.Dit; // Dit represents the demand for product i at the end of period t.
+                Dictionary<string, List<string>> Ci_String = InputData.Ci; // C(i) represents the set of direct subcomponents of each component or end-item 
+                Dictionary<(string, string), double> Rij_String = InputData.Rij; // Rij represents the number of units of direct subcomponent i required in each unit of component or end-item j.
+                Dictionary<(string, string), double> Awt_String = InputData.Awt; // Awt represents the available capacity at work center w during period t.
+                Dictionary<(string, string, string), double> Miwt_String = InputData.Miwt; // Mjwt represents the maximum production quantity for product j at work center w during period t
+                Dictionary<(string, string,string), double> Sijw_String = InputData.Sijw; // Sijw represents the setup times for all products and workstations. 
+                Dictionary<(string, string), double> Uiw_String = InputData.Uiw; // Ujw represents the unit production times for all products and workstations
+                Dictionary<string, double> Hi_String = InputData.Hi; // Ujw represents the unit production times for all products and workstations
+                Dictionary<string, double> Gi_String = InputData.Gi; // Ujw represents the unit production times for all products and workstations
+                Dictionary<string, string> I0W_String = InputData.I0W; // Ujw represents the unit production times for all products and workstations
+
+                Dictionary<string, (double, double)> Ii_String = InputData.Ii; // Ujw represents the unit production times for all products and workstations
+                Dictionary<string, (double, double)> Imax_min_String = InputData.Imax_min; // Ujw represents the unit production times for all products and workstations
+
+
+                Dictionary<int, List<int>> Pw = new Dictionary<int, List<int>>(); // P(w) is the set of end-items that can be processed on work center w.
+                Dictionary<int, List<int>> Qw = new Dictionary<int, List<int>>(); // Q(w) is the set of products that can be processed on work center w.
+                Dictionary<(int, int), double> Dit = new Dictionary<(int, int), double>(); // Dit represents the demand for product i at the end of period t.
+                Dictionary<int, List<int>> Ci = new Dictionary<int, List<int>>(); // C(i) represents the set of direct subcomponents of each component or end-item 
+                Dictionary<(int, int), double> Rij = new Dictionary<(int, int), double>(); // Rij represents the number of units of direct subcomponent i required in each unit of component or end-item j.
+                Dictionary<(int, int), double> Awt = new Dictionary<(int, int), double>(); // Awt represents the available capacity at work center w during period t.
+                Dictionary<(int, int, int), double> Miwt = new Dictionary<(int, int, int), double>(); // Mjwt represents the maximum production quantity for product j at work center w during period t
+                Dictionary<(int, int, int), double> Sijw = new Dictionary<(int, int, int), double>(); // Sijw represents the setup times for all products and workstations. 
+                Dictionary<(int, int), double> Uiw = new Dictionary<(int, int), double>(); // Ujw represents the unit production times for all products and workstations
+
+                Dictionary<int, double> Hi = new Dictionary<int, double>(); // Ujw represents the unit production times for all products and workstations
+                Dictionary<int, double> Gi = new Dictionary<int, double>(); // Ujw represents the unit production times for all products and workstations
+                Dictionary<int, int> I0W = new Dictionary<int, int>(); // Ujw represents the unit production times for all products and workstations
+
+                Dictionary<int, (double, double)> Ii = new Dictionary<int, (double, double)>();
+                Dictionary<int, (double, double)> Imax_min = new Dictionary<int, (double, double)>();
+
+                #region from string to int 
+                // Mapping from string keys to integer indices
+                Dictionary<string, int> workCenterIndexMap = new Dictionary<string, int>();
+                Dictionary<string, int> productIndexMap = new Dictionary<string, int>();
+                Dictionary<string, int> dateIndexMap = new Dictionary<string, int>();
+
+                // Initialize integer index counters
+                int workCenterIndexCounter = 0;
+                int productIndexCounter = 0;
+
+                // Transform Pw_String to Pw
+                foreach (var kvp in Pw_String)
                 {
-                    if (item.OutputOrderFlag == true)
+                    workCenterIndexMap[kvp.Key] = workCenterIndexCounter++;
+                    Pw.Add(workCenterIndexMap[kvp.Key], new List<int>());
+
+                    foreach (var product in kvp.Value)
                     {
-                        var DemandList = Data.Forecast.DemandForecast
-                            .Where(a => a.Item.ItemCode == item.ItemCode)
-                            .Select(a => a.Demand)
-                            .ToList();
-
-                        TotalDemandDict.Add("Demand For: " + item.ItemCode.ToString(), DemandList);
-                    }
-                    if (item.AssemblyNumber < 2)
-                    {
-                        #region 1st Part
-                        command.Parameters.AddWithValue("@ItemId", item.ItemId);
-
-                        command.CommandText = string.Format(@"Select ItemId,ComponentId,Percentage From Bom
-                                                            Where Bom.ComponentId =@ItemId 
-                                                            Order By ItemId");
-
-                        using (var reader = command.ExecuteReader())
+                        if (!productIndexMap.ContainsKey(product))
                         {
-                            SubItems = new ObservableCollection<BomData>();
-                            while (reader.Read())
-                            {
-                                var BomItem = new BomData();
-
-                                BomItem.FinalItemId = int.Parse(reader["ItemId"].ToString());
-                                BomItem.BomItem.ItemId = int.Parse(reader["ComponentId"].ToString());
-                                BomItem.BomPercentage = float.Parse(reader["Percentage"].ToString());
-
-                                SubItems.Add(BomItem);
-                            }
+                            productIndexMap[product] = productIndexCounter++;
                         }
+                        Pw[workCenterIndexMap[kvp.Key]].Add(productIndexMap[product]);
+                    }
+                }
 
-                        #endregion
-                        #region 2nd Part
-                        foreach(var row in SubItems)
+                // Transform Qw_String to Qw
+                foreach (var kvp in Qw_String)
+                {
+                    workCenterIndexMap[kvp.Key] = workCenterIndexCounter++;
+                    Qw.Add(workCenterIndexMap[kvp.Key], new List<int>());
+
+                    foreach (var product in kvp.Value)
+                    {
+                        if (!productIndexMap.ContainsKey(product))
                         {
-                            command.Parameters.AddWithValue("@SelectedItemId", row.BomItem.ItemId);
+                            productIndexMap[product] = productIndexCounter++;
+                        }
+                        Qw[workCenterIndexMap[kvp.Key]].Add(productIndexMap[product]);
+                    }
+                }
+                foreach (var kvp in I0W_String)
+                {
+                    // Assuming work center and product are represented by integer indices
+                    int workCenterIndex = workCenterIndexMap[kvp.Key];
+                    int productIndex = productIndexMap[kvp.Value];
 
-                            command.CommandText = string.Format(@"select top 1 * 
-                                                                from MrpResults
-                                                                where itemid =@SelectedItemId
-                                                                Order by id desc");
-                            using (var reader = command.ExecuteReader())
-                            {
-                                while (reader.Read())
+                    // Assign the product index to the work center index
+                    I0W[workCenterIndex] = productIndex;
+                }
+                #region Merge Pw into Qw
+                foreach (var kvp in Pw)
+                {
+                    int workCenter = kvp.Key;
+                    List<int> endItems = kvp.Value;
+
+                    // If the work center already exists in Qw, append the end items to its list
+                    if (Qw.ContainsKey(workCenter))
+                    {
+                        Qw[workCenter].AddRange(endItems);
+                    }
+                    // If the work center doesn't exist in Qw, add it along with its end items
+                    else
+                    {
+                        Qw[workCenter] = new List<int>(endItems);
+                    }
+                }
+                N = Qw.Count; //Number Of Seuts
+
+                #endregion
+
+                #region Calculate N
+                // Create a new dictionary to store the setup counts for each w
+                Dictionary<int, int> NDict = new Dictionary<int, int>();
+
+                // Initialize the maximum count to zero
+                int maxListCount = 0;
+
+                // Iterate through each list in the Qw dictionary
+                foreach (var kvp in Qw)
+                {
+                    // Get the count of items in the current list
+                    int listCount = kvp.Value.Count;
+
+                    // Add the list count to the new dictionary
+                    NDict.Add(kvp.Key, listCount);
+
+                    // Update the maximum count if the current list count is greater
+                    if (listCount > maxListCount)
+                    {
+                        maxListCount = listCount;
+                    }
+                }
+
+                // Update the N variable to hold the maximum list count
+                N = maxListCount;
+
+
+                #endregion
+                // Now maxListCount contains the count of the maximum list
+
+                // Transform Dates string list to integer indices
+                int dateIndexCounter = 1; // Start index from 1
+
+                foreach (var date in Dates)
+                {
+                    dateIndexMap[date] = dateIndexCounter++;
+                }
+
+                // Transform Dit_String to Dit
+                foreach (var kvp in Dit_String)
+                {
+                    // Get the integer index corresponding to the string date
+                    int ItemIndex = productIndexMap[kvp.Key.Item1];
+                    int dateIndex = dateIndexMap[kvp.Key.Item2];
+
+                    Dit[(ItemIndex, dateIndex)] = kvp.Value;
+
+                }
+
+                // Transform Ci_String to Ci
+                foreach (var kvp in Ci_String)
+                {
+                    // Assuming component or end-item i is represented by integer index
+                    int enditemindex = productIndexMap[kvp.Key];
+                    if (!Ci.ContainsKey(enditemindex))
+                    {
+                        Ci[enditemindex] = new List<int>();
+                    }
+                    // Convert string indices to integers and add them to Ci
+                    foreach (var subcomponentName in kvp.Value)
+                    {
+                        int subcomponentIndex = productIndexMap[subcomponentName]; // Assuming productIndexMap is a mapping from product names to their integer indices
+                        Ci[enditemindex].Add(subcomponentIndex);
+                    }
+                }
+
+                // Transform Rij_String to Rij
+                foreach (var kvp in Rij_String)
+                {
+                    // Assuming component or end-item i and j are represented by integer indices
+                    int endItemIndex = productIndexMap[kvp.Key.Item1];
+                    int componentIndex = productIndexMap[kvp.Key.Item2];
+
+                    Rij[(endItemIndex, componentIndex)] = kvp.Value;
+                }
+
+                // Transform Awt_String to Awt
+                foreach (var kvp in Awt_String)
+                {
+                    // Assuming work center w is represented by integer index
+                    int workCenterIndex = workCenterIndexMap[kvp.Key.Item1];
+                    int dateIndex = dateIndexMap[kvp.Key.Item2];
+
+                    Awt[(workCenterIndex, dateIndex)] = kvp.Value;                   
+                    // Assuming period t is represented by integer index
+                }
+
+                // Transform Miwt_String to Miwt
+                foreach (var kvp in Miwt_String)
+                {
+                    // Assuming work center w is represented by integer index
+                    int productIndex = productIndexMap[kvp.Key.Item1];
+
+                    int workCenterIndex = workCenterIndexMap[kvp.Key.Item2];
+                    // Assuming period t is represented by integer index
+                    int dateIndex = dateIndexMap[kvp.Key.Item3];
+                    if (!Miwt.ContainsKey((productIndex,workCenterIndex, dateIndex)))
+                    {
+                        Miwt[(productIndex, workCenterIndex,dateIndex)]= kvp.Value;
+                    }
+                }
+
+                // Transform Sijw_String to Sijw
+                foreach (var kvp in Sijw_String)
+                {
+                    // Assuming fromWorkCenter, fromProduct, and toProduct are represented by integer indices
+                    int fromProductIndex = productIndexMap[kvp.Key.Item1];
+                    int toProductIndex = productIndexMap[kvp.Key.Item2];
+
+                    int workCenterIndex = workCenterIndexMap[kvp.Key.Item3];
+
+                    Sijw[(fromProductIndex, toProductIndex, workCenterIndex)] = kvp.Value;
+                }
+
+                // Transform Uiw_String to Uiw
+                foreach (var kvp in Uiw_String)
+                {
+                    // Assuming work center w is represented by integer index
+                    int productIndex = productIndexMap[kvp.Key.Item1];
+                    // Assuming product j is represented by integer index
+                    int workCenterIndex = workCenterIndexMap[kvp.Key.Item2];
+
+                    Uiw[(productIndex, workCenterIndex)] = kvp.Value;
+                }
+
+                // Transform Hi_String to Hi
+                foreach (var kvp in Hi_String)
+                {
+                    // Assuming component or end-item i is represented by integer index
+                    int productIndex = productIndexMap[kvp.Key];
+                    Hi[productIndex] = kvp.Value;
+                }
+
+                // Transform Gi_String to Gi
+                foreach (var kvp in Gi_String)
+                {
+                    // Assuming component or end-item i is represented by integer index
+                    int productIndex = productIndexMap[kvp.Key];
+                    Gi[productIndex] = kvp.Value;
+                }
+
+                // Transform Ii_String to Ii
+                    Ii = Ii_String.ToDictionary(
+                    kvp => productIndexMap[kvp.Key],
+                    kvp => kvp.Value
+                );
+
+                // Transform Imax_min_String to Imax_min
+                    Imax_min = Imax_min_String.ToDictionary(
+                    kvp => productIndexMap[kvp.Key],
+                    kvp => kvp.Value
+                );
+                #endregion
+
+                #region Print Dictionaries
+                Console.WriteLine("Pw:");
+                foreach (var kvp in Pw)
+                {
+                    Console.Write($"Work Center {kvp.Key}: ");
+                    Console.WriteLine(string.Join(", ", kvp.Value));
+                }
+
+                Console.WriteLine("\nQw:");
+                foreach (var kvp in Qw)
+                {
+                    Console.Write($"Work Center {kvp.Key}: ");
+                    Console.WriteLine(string.Join(", ", kvp.Value));
+                }
+
+                Console.WriteLine("\nDit:");
+                foreach (var kvp in Dit)
+                {
+                    Console.Write($"Period {kvp.Key}: ");
+                    Console.WriteLine(string.Join(", ", kvp.Value));
+                }
+
+                Console.WriteLine("\nCi:");
+                foreach (var kvp in Ci)
+                {
+                    Console.Write($"Component {kvp.Key}: ");
+                    Console.WriteLine(string.Join(", ", kvp.Value));
+                }
+
+                Console.WriteLine("\nRij:");
+                foreach (var kvp in Rij)
+                {
+                    Console.WriteLine($"({kvp.Key.Item1}, {kvp.Key.Item2}): {kvp.Value}");
+                }
+
+                Console.WriteLine("\nAwt:");
+                foreach (var kvp in Awt)
+                {
+                    Console.Write($"Work Center {kvp.Key}: ");
+                    Console.WriteLine(string.Join(", ", kvp.Value));
+                }
+
+                Console.WriteLine("\nMiwt:");
+                foreach (var kvp in Miwt)
+                {
+                    Console.Write($"({kvp.Key.Item1}, {kvp.Key.Item2}): ");
+                    Console.WriteLine(string.Join(", ", kvp.Value));
+                }
+
+                Console.WriteLine("\nSijw:");
+                foreach (var kvp in Sijw)
+                {
+                    Console.WriteLine($"({kvp.Key.Item1}, {kvp.Key.Item2}, {kvp.Key.Item3}): {kvp.Value}");
+                }
+
+                Console.WriteLine("\nUiw:");
+                foreach (var kvp in Uiw)
+                {
+                    Console.WriteLine($"({kvp.Key.Item1}, {kvp.Key.Item2}): {kvp.Value}");
+                }
+
+                Console.WriteLine("\nHi:");
+                foreach (var kvp in Hi)
+                {
+                    Console.WriteLine($"Component {kvp.Key}: {kvp.Value}");
+                }
+
+                Console.WriteLine("\nGi:");
+                foreach (var kvp in Gi)
+                {
+                    Console.WriteLine($"Component {kvp.Key}: {kvp.Value}");
+                }
+                #endregion
+                #endregion
+
+                #region Optimization Algorithm
+
+                #region Decision Variables 
+                // Decision variables
+                GRBVar[,,,,] Y = new GRBVar[Q,Q, W, T+1,N];
+                GRBVar[,,,] X = new GRBVar[Q, W, T + 1, N];
+                GRBVar[,] SI = new GRBVar[Q, T+1];
+                GRBVar[,] BI = new GRBVar[Q, T+1];
+
+
+                // Create decision variables Y
+                for (int i = 0; i < Q; i++)
+                {
+                    for (int j = 0; j < Q; j++)
+                    {
+                        for (int w = 0; w < W; w++)
+                        {
+                            // Check if the key w exists in NDict dictionary
+
+                                // Retrieve the count of the list associated with key w
+                                for (int t = 0; t <= T; t++)
                                 {
+                                    // Store the count to avoid multiple lookups
+
+                                    for (int n = 0; n < NDict[w]; n++)
+                                    {
+                                        // Define the variable name
+                                        string varName = $"Y{i + 1}_{j + 1}_{w + 1}_{t}_{n + 1}";
+
+                                        // Create the binary variable with a name
+                                        Y[i, j, w, t, n] = model.AddVar(0.0, 1.0, 0.0, GRB.BINARY, varName);
+                                    }
+                                }                          
+                        }
+                    }
+                }
+
+                // Create decision variables X
+                for (int i = 0; i < Q; i++)
+                {
+                    for (int w = 0; w < W; w++)
+                    {
+                        for (int t = 1; t <= T; t++)
+                        {
+                            // Check if the key w exists in NDict dictionary
+
+                                for (int n = 0; n < NDict[w]; n++)
+                                {
+                                    // Define the variable name
+                                    string varName = $"X{i + 1}_{w + 1}_{t}_{n + 1}";
+
+                                    // Create the binary variable with a name
+                                    X[i, w, t, n] = model.AddVar(0.0, GRB.INFINITY, 0.0, GRB.CONTINUOUS, varName);
+                                }                          
+                        }
+                    }
+                }
 
 
-                                    //TotalDemandDict.Add("Requirements From: " + item.ItemCode.ToString(), DemandList);
-                                }
+                // Create decision variables SI
+                for (int i = 0; i < Q; i++)
+                {
+                    for (int t = 0; t <= T; t++)
+                    {
+                            string varName = $"SI{i + 1}_{t}";
+                            SI[i, t] = model.AddVar(0.0, GRB.INFINITY, 0.0, GRB.CONTINUOUS, varName);
+                    }
+                };
+                // Create decision variables BI
+                for (int i = 0; i < Q; i++)
+                {
+                    for (int t = 0; t <= T; t++)
+                    {
+                        string varName = $"BI{i + 1}_{t}";
+                        BI[i, t] = model.AddVar(0.0, GRB.INFINITY, 0.0, GRB.CONTINUOUS, varName);
+                    }
+                };
+                #endregion
+
+                #region Objective Function
+
+                GRBLinExpr MinObjective = 0;
+
+                for (int i = 0; i < Q; i++)
+                {
+                    for (int t = 1; t <= T; t++)
+                    {
+
+                        var hi =Hi[i];
+                        var gi =Gi[i];
+                        MinObjective.AddTerm(hi, SI[i, t]);
+                        MinObjective.AddTerm(gi, BI[i, t]);
+
+                    }
+                }
+                model.SetObjective(MinObjective, GRB.MINIMIZE);
+
+                #endregion
+
+                #region Constrains
+                #region 2,3,4 Constrains
+                // #2. Link inventory and production to the independent demand for the MPS end-items
+                for (int t = 1; t <= T; t++)
+                {
+                    for (int i = 0; i < P; i++)
+                    {
+                        // Define the left-hand side of the equation
+                        GRBLinExpr InvStatus = SI[i, t - 1] - BI[i, t - 1] - SI[i, t] + BI[i, t];
+
+                        // Sum over work centers where i is an end-item
+                        GRBLinExpr Sum_X = 0;
+                        foreach (int w in Pw.Where(kv => kv.Value.Contains(i)).Select(kv => kv.Key))
+                        {
+                            for (int n = 0; n < NDict[w]; n++)
+                            {
+                                Sum_X += X[i, w, t, n];
                             }
                         }
 
-                        #endregion
+                        // Add to the left-hand side
+                        GRBLinExpr FinalSum = InvStatus + Sum_X;
 
+                        // Retrieve the demand for product i at the end of period t from the Dit dictionary
+                        double demand = Dit[(i,t)];
+
+                        // Add the constraint
+                        model.AddConstr(FinalSum == demand, "Inv_Production_MPS_" + i+1 + "_" + t);
                     }
+                }
 
 
-                    #region Calculate MRP
-                    var StartingStock = Data.Inventory.StockData
-                        .Where(row => row.StockItem.ItemId == item.ItemId)
-                        .Select(row => row.Quantity)
-                        .FirstOrDefault(); 
-                    var LeadTime = item.LotPolicy.LeadTime;
-
-                    var sizeOfDemand = Data.Forecast.NumberOfBuckets;
-                    decimal[,] demandArray = new decimal[1, sizeOfDemand];
-
-
-                    List<List<decimal>> demands = TotalDemandDict.Values.ToList();
-
-                    // Fill demand_array with demand values
-                    for (int i = 0; i < TotalDemandDict.Count; i++)
+                // Constraint 3: Inventory balance equation for components
+                for (int t = 1; t <= T; t++)
+                {
+                    for (int i = P; i < Q; i++) // Loop through components
                     {
-                        List<decimal> demandList = demands[i];
-                        for (int j = 0; j < demandList.Count; j++)
+                        // Define the left-hand side of the equation
+                        GRBLinExpr InvStatus = SI[i, t - 1] - BI[i, t - 1]-  SI[i, t] + BI[i, t];
+
+                        // Sum over work centers where i is processed
+                        GRBLinExpr ProductionSum = 0;
+                        foreach (int w in Qw.Where(kv => kv.Value.Contains(i)).Select(kv => kv.Key))
                         {
-                            demandArray[0, j] = demandList[j];
+                            foreach (int n in Enumerable.Range(0, NDict[w]))
+                            {
+                                ProductionSum += X[i, w, t, n];
+                            }
                         }
 
-                        double[,] data = new double[TotalDemandDict.Count + 1, sizeOfDemand];
-                        Array.Copy(demandArray, 0, data, 1, sizeOfDemand);
+                        // Retrieve the demand for component i at the end of period t from the Dit dictionary
+                        double demand = Dit[(i, t)];
+
+                        // Sum over all components j where i is a subcomponent of j
+
+                        GRBLinExpr SubcomponentDemandSum = 0;
+                         foreach(int j in Ci.Where(kv => kv.Value.Contains(i)).Select(kv => kv.Key))
+                         {
+                            foreach (int w in Qw.Where(kv => kv.Value.Contains(j)).Select(kv => kv.Key))
+                            {
+
+                                GRBLinExpr XSum = 0;
+                                foreach (int n in Enumerable.Range(0, NDict[w]))
+                                {
+                                    XSum += X[j, w, t, n];
+                                }
+                                SubcomponentDemandSum += Rij[(j, i)] * XSum;
+                            }
+                         }
+
+
+                        var a = 1;
+
+                        // Add the constraint
+                        model.AddConstr(InvStatus + ProductionSum == SubcomponentDemandSum + demand, "Inv_Balance_Component_" + i + "_" + t);
                     }
-
-                    // MRP calculations
-
+                }
 
 
+                //#4. It prohibits backlogs of dependent demand and limits any growth in component backlogs to
+                //be solely due to independent demand.
 
-                    #endregion
+                for (int t = 1; t <= T; t++)
+                {
+                    for (int i = P; i < Q; i++)
+                    {
+                        // Define the left-hand side of the equation
+                        GRBLinExpr InvStatus = BI[i, t] - BI[i, t - 1];
+
+                        // Retrieve the demand for product i at the end of period t from the Dit dictionary
+                        double demand = Dit[(i, t)];
+
+                        // Add the constraint
+                        model.AddConstr(InvStatus <= demand, "Const4_" + i + "_" + t);
+                    }
+                }
+                #endregion
+
+                #region Io ,Imax,Imin
+                for (int t = 1; t <= T; t++)
+                {
+                    for (int i = 0; i < Q; i++)
+                    {
+
+                        // Retrieve the demand for product i at the end of period t from the Dit dictionary
+                        double InvMax = Imax_min[i].Item1;
+                        double InvMin = Imax_min[i].Item2;
+
+                        // Add the constraint
+                        model.AddConstr(SI[i, t] <= InvMax, "Imax" + i + "_" + t);
+                        model.AddConstr(SI[i, t] >= InvMin, "Imin" + i + "_" + t);
+
+                    }
+                }
+
+                for (int i = 0; i < Q; i++)
+                {
+
+                    // Retrieve the demand for product i at the end of period t from the Dit dictionary
+                    double SI0 = Ii[i].Item1;
+                    double BI0 = Ii[i].Item2;
+
+                    // Add the constraint
+                    model.AddConstr(SI[i, 0] == SI0, "SI0" + i );
+                    model.AddConstr(BI[i, 0] == BI0, "BI0" + i );
 
                 }
 
 
+                #endregion
 
-                return true;
+                #region 5,6,7,8,9,10 Constrains
+
+                //////#5.
+                for (int w = 0; w < W; w++)
+                {
+                    List<int> productsInW = Qw[w]; // Get the list of products in work center w
+                    foreach (int i in productsInW)
+                    {
+                        foreach (int j in productsInW)
+                        {
+                            if (i != I0W[w]) // Exclude i != i0w and i != j
+                            {
+
+                                model.AddConstr(Y[i, j, w, 1, 0] == 0, $"Constraint_5_w{i + 1}_j{j + 1}_w{w + 1}");
+
+
+                            }
+                        }
+                    }
+                }
+
+
+                ////#6.
+                for (int w = 0; w < W; w++)
+                {
+                    GRBLinExpr setupSum = 0;
+                    foreach (int j in Qw[w])
+                    {
+
+                        setupSum += Y[I0W[w], j, w, 1, 0]; //thelei diorthosh
+                    }
+                    model.AddConstr(setupSum == 1, $"Constraint_6_w{w + 1}");
+                }
+
+                ////#7. 
+                for (int w = 0; w < W; w++)
+                {
+                    foreach (int i in Qw[w])
+                    {
+                        foreach (int j in Qw[w])
+                        {
+                            for (int t = 1; t <= T; t++)
+                            {
+                                if (i != j) // Exclude i != i0w and i != j
+                                {
+                                    model.AddConstr(Y[i, j, w, t, 0] == 0, "Constrain7_" + i + "_" + j + "_" + w + "_" + t);
+
+                                }
+                            }
+                        }
+                    }
+                }
+                //#8.
+                for (int w = 0; w < W; w++)
+                {
+                    for (int t = 1; t <= T; t++)
+                    {
+                        GRBLinExpr sumY = 0;
+
+                        foreach (int i in Qw[w])
+                        {
+                            sumY += Y[i, i, w, t, 0]; //thelei diorthosh
+
+                        }
+                        model.AddConstr(sumY == 1, "Constrain8_" + w + t);
+                    }
+                }
+                //#9.
+                for (int w = 0; w < W; w++)
+                {
+                    for (int t = 1; t <= T; t++)
+                    {
+                        foreach (int j in Qw[w])
+                        {
+                            for (int n = 0; n < NDict[w] - 1; n++)
+                            {
+                                GRBLinExpr sumYi = 0;
+                                foreach (int i in Qw[w])
+                                {
+                                    sumYi += Y[i, j, w, t, n]; //thelei diorthosh
+                                }
+                                GRBLinExpr sumYk = 0;
+
+                                foreach (int k in Qw[w])
+                                {
+                                    sumYk += Y[j, k, w, t, n + 1]; //thelei diorthosh
+                                }
+                                model.AddConstr(sumYi == sumYk, "9" + w + t);
+                            }
+                        }
+                    }
+                }
+
+                //#10
+                for (int w = 0; w < W; w++)
+                {
+                    for (int t = 1; t <= T; t++)
+                    {
+                        foreach (int j in Qw[w])
+                        {
+                            GRBLinExpr sumYi = 0;
+                            foreach (int i in Qw[w])
+                            {
+                                sumYi += Y[i, j, w, t - 1, NDict[w] - 1]; //thelei diorthosh
+                            }
+                            GRBLinExpr sumYk = 0;
+
+                            foreach (int k in Qw[w])
+                            {
+                                sumYk += Y[j, k, w, t, 0]; //thelei diorthosh
+                            }
+                            model.AddConstr(sumYi == sumYk, "Constrain_10" + w + t);
+                        }
+                    }
+                }
+
+                #endregion
+                //#region 11,12 Constrains
+                ////#11 
+                //for (int w = 0; w < W; w++)
+                //{
+                //    for (int t = 1; t <= T; t++)
+                //    {
+                //        for (int n = 0; n < NDict[w]; n++)
+                //        {
+                //            foreach (int j in Qw[w])
+                //            {
+                //                GRBLinExpr sumY = 0;
+                //                foreach (int i in Qw[w])
+                //                {
+                //                    sumY += Y[i, j, w, t, n]; //thelei diorthosh
+                //                }
+                //                model.AddConstr(sumY * Miwt[(j, w, t)] >= X[j, w, t, n], "Constrain11_" + w + t);
+
+                //            }
+
+                //        }
+                //    }
+                //}
+                //////#12 
+                //for (int w = 0; w < W; w++)
+                //{
+                //    for (int t = 1; t <= T; t++)
+                //    {
+                //        GRBLinExpr sum = 0;
+
+                //        for (int n = 0; n < NDict[w]; n++)
+                //        {
+                //            foreach (int j in Qw[w])
+                //            {
+                //                foreach (int i in Qw[w])
+                //                {
+                //                    sum += Y[i, j, w, t, n] * Sijw[(i, j, w)] + Uiw[(j, w)] * X[j, w, t, n]; //thelei diorthosh
+                //                }
+
+                //            }
+
+                //        }
+                //        model.AddConstr(sum <= Awt[(w, t)], "Constrain12_" + w + t);
+                //    }
+                //}
+                //#endregion
+                #endregion
+                #region Optimization Solver
+
+
+                model.Parameters.TimeLimit = 10;
+
+                model.Update();
+                model.Optimize();
+
+                #endregion
+
+                #region Populate Records
+                // Check if optimization was successful
+                if (model.Status == GRB.Status.OPTIMAL || model.Status == GRB.Status.TIME_LIMIT)
+                {
+                    #region Print Model
+                    model.Write("outMRPmst.mst");
+                    model.Write("outMRPsol.sol");
+                    model.Write("MRPFeasable.lp");
+                    model.Write("MRPFeasableMPS.mps");
+                    #endregion
+
+
+
+                    #region Retrieve Data Original
+                    OutputData.Diagram1 = new DiagramsMRPData();
+                    OutputData.Diagram1.DataPerDayMRP = new ObservableCollection<DataPerDayMRP>();
+                    OutputData.Diagram2 = new DiagramsMRPData();
+                    // Retrieve solution for decision variables Y
+                    ObservableCollection<DecisionVariableY> YVariables = new ObservableCollection<DecisionVariableY>();
+
+                    for (int i = 0; i < Q; i++)
+                    {
+                        for (int j = 0; j < Q; j++)
+                        {
+                            for (int w = 0; w < W; w++)
+                            {
+                                for (int t = 0; t <= T; t++)
+                                {
+                                    for (int n = 0; n < NDict[w]; n++)
+                                    {
+                                        var value = Y[i, j, w, t, n].X;
+                                        DecisionVariableY YVar = new DecisionVariableY();
+
+                                        YVar.ItemCodeFrom = productIndexMap.FirstOrDefault(x => x.Value == i).Key;
+                                        YVar.ItemCodeTo = productIndexMap.FirstOrDefault(x => x.Value == j).Key;
+                                        YVar.WorkCenter = workCenterIndexMap.FirstOrDefault(x => x.Value == w).Key;
+                                        YVar.Date = dateIndexMap.FirstOrDefault(x => x.Value == t).Key;
+                                        YVar.Setup = n + 1;
+                                        YVar.Value = value;
+                                        YVariables.Add(YVar);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+
+
+                    ObservableCollection<DecisionVariableX> XVariables = new ObservableCollection<DecisionVariableX>();
+
+                    for (int i = 0; i < Q; i++)
+                    {
+                        for (int t = 1; t <= T; t++)
+                        {
+                            DataPerDayMRP row = new DataPerDayMRP();
+                            row.ItemCode = productIndexMap.FirstOrDefault(x => x.Value == i).Key;
+                            row.Make = 0;
+                            row.Date = dateIndexMap.FirstOrDefault(x => x.Value == t).Key;
+                            for (int w = 0; w < W; w++)
+                            {
+
+                                for (int n = 0; n < NDict[w]; n++)
+                                {
+                                    DecisionVariableX XVar = new DecisionVariableX();
+                                    double value = X[i, w, t, n].X;
+
+                                    XVar.ItemCode = productIndexMap.FirstOrDefault(x => x.Value == i).Key;
+
+                                    XVar.WorkCenter = workCenterIndexMap.FirstOrDefault(x => x.Value == w).Key;
+                                    XVar.Date = dateIndexMap.FirstOrDefault(x => x.Value == t).Key;
+                                    XVar.Setup = n + 1;
+                                    XVar.Value = value;
+                                    XVariables.Add(XVar);
+                                    row.Make += value;
+                                }
+                            }
+                            OutputData.Diagram1.DataPerDayMRP.Add(row);
+                        }
+                    }
+
+                    // Retrieve solution for inventory status variables SI and BI
+                    ObservableCollection<DecisionVariablesInvStatus> InventoryStatusVariables = new ObservableCollection<DecisionVariablesInvStatus>();
+                    for (int i = 0; i < Q; i++)
+                    {
+                        for (int t = 0; t <= T; t++)
+                        {
+                            double siValue = SI[i, t].X;
+                            double biValue = BI[i, t].X;
+                            DecisionVariablesInvStatus InvVar = new DecisionVariablesInvStatus();
+
+                            InvVar.ItemCode = productIndexMap.FirstOrDefault(x => x.Value == i).Key;
+                            InvVar.Date = dateIndexMap.FirstOrDefault(x => x.Value == t).Key;
+                            InvVar.SIValue = siValue;
+                            InvVar.BIValue = biValue;
+
+                            InventoryStatusVariables.Add(InvVar);
+
+
+                            // Find the corresponding row in DataPerDay based on the item code (i) and date (t)
+                            var correspondingRow = OutputData.Diagram1.DataPerDayMRP.FirstOrDefault(row => row.ItemCode == InvVar.ItemCode && row.Date == InvVar.Date);
+
+                            // If a corresponding row is found, update its SIValue and BIValue
+                            if (correspondingRow != null)
+                            {
+                                correspondingRow.Stock = siValue;
+                                correspondingRow.Backlog = biValue;
+                            };
+                        }
+                    }
+
+                    foreach (var kvp in Dit_String)
+                    {
+                        var correspondingRow = OutputData.Diagram1.DataPerDayMRP.FirstOrDefault(row => row.ItemCode == kvp.Key.Item1 && row.Date == kvp.Key.Item2);
+                        if (correspondingRow != null)
+                        {
+                            correspondingRow.Demand = kvp.Value;
+                        };
+
+
+
+                    }
+
+
+
+
+                    OutputData.XData = XVariables;
+                    OutputData.YData = YVariables;
+                    OutputData.InvData = InventoryStatusVariables;
+
+                    OutputData.ObjValue = model.ObjVal;
+                    
+
+                    #endregion
+                }
+                else
+                {
+                    //model.Write("outMRP.mst");
+                    //model.Write("outMRP.sol");
+                    model.Write("MRPFeasable.lp");
+                    model.Write("MRPFeasableMPS.mps");
+
+                    // Model is infeasible
+
+                    // Compute an Irreducible Infeasible Subsystem (IIS) to obtain the infeasibility proof
+                    model.ComputeIIS();
+                    model.Write("MRPModel.ilp");
+
+
+                }
+
+                #endregion
+                #endregion
+                #endregion
+                return OutputData;
+
             }
-
-
+            catch (Exception ex)
+            {
+                Console.WriteLine("An error occurred: " + ex.Message);
+                return OutputData;
+            }
         }
+        public MRPOutputData CalculateMRP2(MRPInputData InputData)
+        {
+            GRBEnv env = new GRBEnv("mrplogfile.log");
+            GRBModel model = new GRBModel(env);
+            MRPOutputData OutputData = new MRPOutputData();
+            OutputData.XData = new ObservableCollection<DecisionVariableX>();
+            OutputData.YData = new ObservableCollection<DecisionVariableY>();
+            OutputData.InvData = new ObservableCollection<DecisionVariablesInvStatus>();
 
+            try
+            {
+                #region Optimization
+
+                #region Optimization paramaters
+
+                int T = InputData.T; //Planning Horizon
+                int P = InputData.P; //Number Of MPS end-item Products
+                int Q = InputData.Q; //Number Of MRP Component Products
+                int W = InputData.W; //Number Of Capacitated Work Cenetrs
+                int N = new int(); //Number Of Seuts
+
+                string[] Dates = InputData.Dates; //Πινακας με τα Dates
+
+                Dictionary<string, List<string>> Pw_String = InputData.Pw; // P(w) is the set of end-items that can be processed on work center w.
+                Dictionary<string, List<string>> Qw_String = InputData.Qw; // Q(w) is the set of products that can be processed on work center w.
+                Dictionary<(string, string), double> Dit_String = InputData.Dit; // Dit represents the demand for product i at the end of period t.
+                Dictionary<string, List<string>> Ci_String = InputData.Ci; // C(i) represents the set of direct subcomponents of each component or end-item 
+                Dictionary<(string, string), double> Rij_String = InputData.Rij; // Rij represents the number of units of direct subcomponent i required in each unit of component or end-item j.
+                Dictionary<(string, string), double> Awt_String = InputData.Awt; // Awt represents the available capacity at work center w during period t.
+                Dictionary<(string, string, string), double> Miwt_String = InputData.Miwt; // Mjwt represents the maximum production quantity for product j at work center w during period t
+                Dictionary<(string, string, string), double> Sijw_String = InputData.Sijw; // Sijw represents the setup times for all products and workstations. 
+                Dictionary<(string, string), double> Uiw_String = InputData.Uiw; // Ujw represents the unit production times for all products and workstations
+                Dictionary<string, double> Hi_String = InputData.Hi; // Ujw represents the unit production times for all products and workstations
+                Dictionary<string, double> Gi_String = InputData.Gi; // Ujw represents the unit production times for all products and workstations
+                Dictionary<string, string> I0W_String = InputData.I0W; // Ujw represents the unit production times for all products and workstations
+
+                Dictionary<string, (double, double)> Ii_String = InputData.Ii; // Ujw represents the unit production times for all products and workstations
+                Dictionary<string, (double, double)> Imax_min_String = InputData.Imax_min; // Ujw represents the unit production times for all products and workstations
+
+
+                Dictionary<int, List<int>> Pw = new Dictionary<int, List<int>>(); // P(w) is the set of end-items that can be processed on work center w.
+                Dictionary<int, List<int>> Qw = new Dictionary<int, List<int>>(); // Q(w) is the set of products that can be processed on work center w.
+                Dictionary<(int, int), double> Dit = new Dictionary<(int, int), double>(); // Dit represents the demand for product i at the end of period t.
+                Dictionary<int, List<int>> Ci = new Dictionary<int, List<int>>(); // C(i) represents the set of direct subcomponents of each component or end-item 
+                Dictionary<(int, int), double> Rij = new Dictionary<(int, int), double>(); // Rij represents the number of units of direct subcomponent i required in each unit of component or end-item j.
+                Dictionary<(int, int), double> Awt = new Dictionary<(int, int), double>(); // Awt represents the available capacity at work center w during period t.
+                Dictionary<(int, int, int), double> Miwt = new Dictionary<(int, int, int), double>(); // Mjwt represents the maximum production quantity for product j at work center w during period t
+                Dictionary<(int, int, int), double> Sijw = new Dictionary<(int, int, int), double>(); // Sijw represents the setup times for all products and workstations. 
+                Dictionary<(int, int), double> Uiw = new Dictionary<(int, int), double>(); // Ujw represents the unit production times for all products and workstations
+
+                Dictionary<int, double> Hi = new Dictionary<int, double>(); // Ujw represents the unit production times for all products and workstations
+                Dictionary<int, double> Gi = new Dictionary<int, double>(); // Ujw represents the unit production times for all products and workstations
+                Dictionary<int, int> I0W = new Dictionary<int, int>(); // Ujw represents the unit production times for all products and workstations
+
+                Dictionary<int, (double, double)> Ii = new Dictionary<int, (double, double)>();
+                Dictionary<int, (double, double)> Imax_min = new Dictionary<int, (double, double)>();
+
+                #region from string to int 
+                // Mapping from string keys to integer indices
+                Dictionary<string, int> workCenterIndexMap = new Dictionary<string, int>();
+                Dictionary<string, int> productIndexMap = new Dictionary<string, int>();
+                Dictionary<string, int> dateIndexMap = new Dictionary<string, int>();
+
+                // Initialize integer index counters
+                int workCenterIndexCounter = 0;
+                int productIndexCounter = 0;
+
+                // Transform Pw_String to Pw
+                foreach (var kvp in Pw_String)
+                {
+                    workCenterIndexMap[kvp.Key] = workCenterIndexCounter++;
+                    Pw.Add(workCenterIndexMap[kvp.Key], new List<int>());
+
+                    foreach (var product in kvp.Value)
+                    {
+                        if (!productIndexMap.ContainsKey(product))
+                        {
+                            productIndexMap[product] = productIndexCounter++;
+                        }
+                        Pw[workCenterIndexMap[kvp.Key]].Add(productIndexMap[product]);
+                    }
+                }
+
+                // Transform Qw_String to Qw
+                foreach (var kvp in Qw_String)
+                {
+                    workCenterIndexMap[kvp.Key] = workCenterIndexCounter++;
+                    Qw.Add(workCenterIndexMap[kvp.Key], new List<int>());
+
+                    foreach (var product in kvp.Value)
+                    {
+                        if (!productIndexMap.ContainsKey(product))
+                        {
+                            productIndexMap[product] = productIndexCounter++;
+                        }
+                        Qw[workCenterIndexMap[kvp.Key]].Add(productIndexMap[product]);
+                    }
+                }
+                foreach (var kvp in I0W_String)
+                {
+                    // Assuming work center and product are represented by integer indices
+                    int workCenterIndex = workCenterIndexMap[kvp.Key];
+                    int productIndex = productIndexMap[kvp.Value];
+
+                    // Assign the product index to the work center index
+                    I0W[workCenterIndex] = productIndex;
+                }
+                #region Merge Pw into Qw
+                foreach (var kvp in Pw)
+                {
+                    int workCenter = kvp.Key;
+                    List<int> endItems = kvp.Value;
+
+                    // If the work center already exists in Qw, append the end items to its list
+                    if (Qw.ContainsKey(workCenter))
+                    {
+                        Qw[workCenter].AddRange(endItems);
+                    }
+                    // If the work center doesn't exist in Qw, add it along with its end items
+                    else
+                    {
+                        Qw[workCenter] = new List<int>(endItems);
+                    }
+                }
+                N = Qw.Count; //Number Of Seuts
+
+                #endregion
+
+                #region Calculate N
+                // Create a new dictionary to store the setup counts for each w
+                Dictionary<int, int> NDict = new Dictionary<int, int>();
+
+                // Initialize the maximum count to zero
+                int maxListCount = 0;
+
+                // Iterate through each list in the Qw dictionary
+                foreach (var kvp in Qw)
+                {
+                    // Get the count of items in the current list
+                    int listCount = kvp.Value.Count;
+
+                    // Add the list count to the new dictionary
+                    NDict.Add(kvp.Key, listCount);
+
+                    // Update the maximum count if the current list count is greater
+                    if (listCount > maxListCount)
+                    {
+                        maxListCount = listCount;
+                    }
+                }
+
+                // Update the N variable to hold the maximum list count
+                N = maxListCount;
+
+
+                #endregion
+                // Now maxListCount contains the count of the maximum list
+
+                // Transform Dates string list to integer indices
+                int dateIndexCounter = 1; // Start index from 1
+
+                foreach (var date in Dates)
+                {
+                    dateIndexMap[date] = dateIndexCounter++;
+                }
+
+                // Transform Dit_String to Dit
+                foreach (var kvp in Dit_String)
+                {
+                    // Get the integer index corresponding to the string date
+                    int ItemIndex = productIndexMap[kvp.Key.Item1];
+                    int dateIndex = dateIndexMap[kvp.Key.Item2];
+
+                    Dit[(ItemIndex, dateIndex)] = kvp.Value;
+
+                }
+
+                // Transform Ci_String to Ci
+                foreach (var kvp in Ci_String)
+                {
+                    // Assuming component or end-item i is represented by integer index
+                    int enditemindex = productIndexMap[kvp.Key];
+                    if (!Ci.ContainsKey(enditemindex))
+                    {
+                        Ci[enditemindex] = new List<int>();
+                    }
+                    // Convert string indices to integers and add them to Ci
+                    foreach (var subcomponentName in kvp.Value)
+                    {
+                        int subcomponentIndex = productIndexMap[subcomponentName]; // Assuming productIndexMap is a mapping from product names to their integer indices
+                        Ci[enditemindex].Add(subcomponentIndex);
+                    }
+                }
+
+                // Transform Rij_String to Rij
+                foreach (var kvp in Rij_String)
+                {
+                    // Assuming component or end-item i and j are represented by integer indices
+                    int endItemIndex = productIndexMap[kvp.Key.Item1];
+                    int componentIndex = productIndexMap[kvp.Key.Item2];
+
+                    Rij[(endItemIndex, componentIndex)] = kvp.Value;
+                }
+
+                // Transform Awt_String to Awt
+                foreach (var kvp in Awt_String)
+                {
+                    // Assuming work center w is represented by integer index
+                    int workCenterIndex = workCenterIndexMap[kvp.Key.Item1];
+                    int dateIndex = dateIndexMap[kvp.Key.Item2];
+
+                    Awt[(workCenterIndex, dateIndex)] = kvp.Value;
+                    // Assuming period t is represented by integer index
+                }
+
+                // Transform Miwt_String to Miwt
+                foreach (var kvp in Miwt_String)
+                {
+                    // Assuming work center w is represented by integer index
+                    int productIndex = productIndexMap[kvp.Key.Item1];
+
+                    int workCenterIndex = workCenterIndexMap[kvp.Key.Item2];
+                    // Assuming period t is represented by integer index
+                    int dateIndex = dateIndexMap[kvp.Key.Item3];
+                    if (!Miwt.ContainsKey((productIndex, workCenterIndex, dateIndex)))
+                    {
+                        Miwt[(productIndex, workCenterIndex, dateIndex)] = kvp.Value;
+                    }
+                }
+
+                // Transform Sijw_String to Sijw
+                foreach (var kvp in Sijw_String)
+                {
+                    // Assuming fromWorkCenter, fromProduct, and toProduct are represented by integer indices
+                    int fromProductIndex = productIndexMap[kvp.Key.Item1];
+                    int toProductIndex = productIndexMap[kvp.Key.Item2];
+
+                    int workCenterIndex = workCenterIndexMap[kvp.Key.Item3];
+
+                    Sijw[(fromProductIndex, toProductIndex, workCenterIndex)] = kvp.Value;
+                }
+
+                // Transform Uiw_String to Uiw
+                foreach (var kvp in Uiw_String)
+                {
+                    // Assuming work center w is represented by integer index
+                    int productIndex = productIndexMap[kvp.Key.Item1];
+                    // Assuming product j is represented by integer index
+                    int workCenterIndex = workCenterIndexMap[kvp.Key.Item2];
+
+                    Uiw[(productIndex, workCenterIndex)] = kvp.Value;
+                }
+
+                // Transform Hi_String to Hi
+                foreach (var kvp in Hi_String)
+                {
+                    // Assuming component or end-item i is represented by integer index
+                    int productIndex = productIndexMap[kvp.Key];
+                    Hi[productIndex] = kvp.Value;
+                }
+
+                // Transform Gi_String to Gi
+                foreach (var kvp in Gi_String)
+                {
+                    // Assuming component or end-item i is represented by integer index
+                    int productIndex = productIndexMap[kvp.Key];
+                    Gi[productIndex] = kvp.Value;
+                }
+
+                // Transform Ii_String to Ii
+                Ii = Ii_String.ToDictionary(
+                kvp => productIndexMap[kvp.Key],
+                kvp => kvp.Value
+            );
+
+                // Transform Imax_min_String to Imax_min
+                Imax_min = Imax_min_String.ToDictionary(
+                kvp => productIndexMap[kvp.Key],
+                kvp => kvp.Value
+            );
+                #endregion
+
+                #region Print Dictionaries
+                Console.WriteLine("Pw:");
+                foreach (var kvp in Pw)
+                {
+                    Console.Write($"Work Center {kvp.Key}: ");
+                    Console.WriteLine(string.Join(", ", kvp.Value));
+                }
+
+                Console.WriteLine("\nQw:");
+                foreach (var kvp in Qw)
+                {
+                    Console.Write($"Work Center {kvp.Key}: ");
+                    Console.WriteLine(string.Join(", ", kvp.Value));
+                }
+
+                Console.WriteLine("\nDit:");
+                foreach (var kvp in Dit)
+                {
+                    Console.Write($"Period {kvp.Key}: ");
+                    Console.WriteLine(string.Join(", ", kvp.Value));
+                }
+
+                Console.WriteLine("\nCi:");
+                foreach (var kvp in Ci)
+                {
+                    Console.Write($"Component {kvp.Key}: ");
+                    Console.WriteLine(string.Join(", ", kvp.Value));
+                }
+
+                Console.WriteLine("\nRij:");
+                foreach (var kvp in Rij)
+                {
+                    Console.WriteLine($"({kvp.Key.Item1}, {kvp.Key.Item2}): {kvp.Value}");
+                }
+
+                Console.WriteLine("\nAwt:");
+                foreach (var kvp in Awt)
+                {
+                    Console.Write($"Work Center {kvp.Key}: ");
+                    Console.WriteLine(string.Join(", ", kvp.Value));
+                }
+
+                Console.WriteLine("\nMiwt:");
+                foreach (var kvp in Miwt)
+                {
+                    Console.Write($"({kvp.Key.Item1}, {kvp.Key.Item2}): ");
+                    Console.WriteLine(string.Join(", ", kvp.Value));
+                }
+
+                Console.WriteLine("\nSijw:");
+                foreach (var kvp in Sijw)
+                {
+                    Console.WriteLine($"({kvp.Key.Item1}, {kvp.Key.Item2}, {kvp.Key.Item3}): {kvp.Value}");
+                }
+
+                Console.WriteLine("\nUiw:");
+                foreach (var kvp in Uiw)
+                {
+                    Console.WriteLine($"({kvp.Key.Item1}, {kvp.Key.Item2}): {kvp.Value}");
+                }
+
+                Console.WriteLine("\nHi:");
+                foreach (var kvp in Hi)
+                {
+                    Console.WriteLine($"Component {kvp.Key}: {kvp.Value}");
+                }
+
+                Console.WriteLine("\nGi:");
+                foreach (var kvp in Gi)
+                {
+                    Console.WriteLine($"Component {kvp.Key}: {kvp.Value}");
+                }
+                #endregion
+                #endregion
+
+                #region Optimization Algorithm
+
+                #region Decision Variables 
+                // Decision variables
+                GRBVar[,,,,] Y = new GRBVar[Q, Q, W, T + 1, N];
+                GRBVar[,,,] X = new GRBVar[Q, W, T + 1, N];
+                GRBVar[,] SI = new GRBVar[Q, T + 1];
+                GRBVar[,] BI = new GRBVar[Q, T + 1];
+
+
+                // Create decision variables Y
+                for (int i = 0; i < Q; i++)
+                {
+         for (int j = 0; j < Q; j++)
+                    {
+                        for (int w = 0; w < W; w++)
+                        {
+                            if (Qw.TryGetValue(w, out var productList) && productList.Contains(i) && productList.Contains(j))
+                            {
+                                for (int t = 0; t <= T; t++)
+                                {
+                                    // Store the count to avoid multiple lookups
+
+                                    for (int n = 0; n < NDict[w]; n++)
+                                    {
+                                        // Define the variable name
+                                        string varName = $"Y{i + 1}_{j + 1}_{w + 1}_{t}_{n + 1}";
+
+                                        // Create the binary variable with a name
+                                        Y[i, j, w, t, n] = model.AddVar(0.0, 1.0, 0.0, GRB.BINARY, varName);
+                                    }
+                                }
+                                
+                            }
+                        }
+                    }
+                }
+
+                // Create decision variables X
+                for (int i = 0; i < Q; i++)
+                {
+                    for (int w = 0; w < W; w++)
+                    {
+                        if (Qw.TryGetValue(w, out var productList) && productList.Contains(i))
+                        {
+                            for (int t = 1; t <= T; t++)
+                            { 
+                            // Check if the key w exists in NDict dictionary
+
+                                for (int n = 0; n < NDict[w]; n++)
+                                {
+                                    // Define the variable name
+                                    string varName = $"X{i + 1}_{w + 1}_{t}_{n + 1}";
+
+                                    // Create the binary variable with a name
+                                    X[i, w, t, n] = model.AddVar(0.0, GRB.INFINITY, 0.0, GRB.CONTINUOUS, varName);
+                                }
+                            }
+                        }
+                    }
+                }
+
+
+                // Create decision variables SI
+                for (int i = 0; i < Q; i++)
+                {
+                    for (int t = 0; t <= T; t++)
+                    {
+                        string varName = $"SI{i + 1}_{t}";
+                        SI[i, t] = model.AddVar(0.0, GRB.INFINITY, 0.0, GRB.CONTINUOUS, varName);
+                    }
+                };
+                // Create decision variables BI
+                for (int i = 0; i < Q; i++)
+                {
+                    for (int t = 0; t <= T; t++)
+                    {
+                        string varName = $"BI{i + 1}_{t}";
+                        BI[i, t] = model.AddVar(0.0, GRB.INFINITY, 0.0, GRB.CONTINUOUS, varName);
+                    }
+                };
+                #endregion
+
+                #region Objective Function
+
+                GRBLinExpr MinObjective = 0;
+
+                for (int i = 0; i < Q; i++)
+                {
+                    for (int t = 1; t <= T; t++)
+                    {
+
+                        var hi = Hi[i];
+                        var gi = Gi[i];
+                        MinObjective.AddTerm(hi, SI[i, t]);
+                        MinObjective.AddTerm(gi, BI[i, t]);
+
+                    }
+                }
+                model.SetObjective(MinObjective, GRB.MINIMIZE);
+
+                #endregion
+
+                #region Constrains
+                #region 2,3,4 Constrains
+                // #2. Link inventory and production to the independent demand for the MPS end-items
+                for (int t = 1; t <= T; t++)
+                {
+                    for (int i = 0; i < P; i++)
+                    {
+                        // Define the left-hand side of the equation
+                        GRBLinExpr InvStatus = SI[i, t - 1] - BI[i, t - 1] - SI[i, t] + BI[i, t];
+
+                        // Sum over work centers where i is an end-item
+                        GRBLinExpr Sum_X = 0;
+                        foreach (int w in Pw.Where(kv => kv.Value.Contains(i)).Select(kv => kv.Key))
+                        {
+                            for (int n = 0; n < NDict[w]; n++)
+                            {
+                                Sum_X += X[i, w, t, n];
+                            }
+                        }
+
+                        // Add to the left-hand side
+                        GRBLinExpr FinalSum = InvStatus + Sum_X;
+
+                        // Retrieve the demand for product i at the end of period t from the Dit dictionary
+                        double demand = Dit[(i, t)];
+
+                        // Add the constraint
+                        model.AddConstr(FinalSum == demand, "Inv_Production_MPS_" + i + 1 + "_" + t);
+                    }
+                }
+
+
+                // Constraint 3: Inventory balance equation for components
+                for (int t = 1; t <= T; t++)
+                {
+                    for (int i = P; i < Q; i++) // Loop through components
+                    {
+                        // Define the left-hand side of the equation
+                        GRBLinExpr InvStatus = SI[i, t - 1] - BI[i, t - 1] - SI[i, t] + BI[i, t];
+
+                        // Sum over work centers where i is processed
+                        GRBLinExpr ProductionSum = 0;
+                        foreach (int w in Qw.Where(kv => kv.Value.Contains(i)).Select(kv => kv.Key))
+                        {
+                            foreach (int n in Enumerable.Range(0, NDict[w]))
+                            {
+                                ProductionSum += X[i, w, t, n];
+                            }
+                        }
+
+                        // Retrieve the demand for component i at the end of period t from the Dit dictionary
+                        double demand = Dit[(i, t)];
+
+                        // Sum over all components j where i is a subcomponent of j
+
+                        GRBLinExpr SubcomponentDemandSum = 0;
+                        foreach (int j in Ci.Where(kv => kv.Value.Contains(i)).Select(kv => kv.Key))
+                        {
+                            foreach (int w in Qw.Where(kv => kv.Value.Contains(j)).Select(kv => kv.Key))
+                            {
+
+                                GRBLinExpr XSum = 0;
+                                foreach (int n in Enumerable.Range(0, NDict[w]))
+                                {
+                                    XSum += X[j, w, t, n];
+                                }
+                                SubcomponentDemandSum += Rij[(j, i)] * XSum;
+                            }
+                        }
+
+
+                        var a = 1;
+
+                        // Add the constraint
+                        model.AddConstr(InvStatus + ProductionSum == SubcomponentDemandSum + demand, "Inv_Balance_Component_" + i + "_" + t);
+                    }
+                }
+
+
+                //#4. It prohibits backlogs of dependent demand and limits any growth in component backlogs to
+                //be solely due to independent demand.
+
+                for (int t = 1; t <= T; t++)
+                {
+                    for (int i = P; i < Q; i++)
+                    {
+                        // Define the left-hand side of the equation
+                        GRBLinExpr InvStatus = BI[i, t] - BI[i, t - 1];
+
+                        // Retrieve the demand for product i at the end of period t from the Dit dictionary
+                        double demand = Dit[(i, t)];
+
+                        // Add the constraint
+                        model.AddConstr(InvStatus <= demand, "Const4_" + i + "_" + t);
+                    }
+                }
+                #endregion
+
+                #region Io ,Imax,Imin
+                for (int t = 1; t <= T; t++)
+                {
+                    for (int i = 0; i < Q; i++)
+                    {
+
+                        // Retrieve the demand for product i at the end of period t from the Dit dictionary
+                        double InvMax = Imax_min[i].Item1;
+                        double InvMin = Imax_min[i].Item2;
+
+                        // Add the constraint
+                        model.AddConstr(SI[i, t] <= InvMax, "Imax" + i + "_" + t);
+                        model.AddConstr(SI[i, t] >= InvMin, "Imin" + i + "_" + t);
+
+                    }
+                }
+
+                for (int i = 0; i < Q; i++)
+                {
+
+                    // Retrieve the demand for product i at the end of period t from the Dit dictionary
+                    double SI0 = Ii[i].Item1;
+                    double BI0 = Ii[i].Item2;
+
+                    // Add the constraint
+                    model.AddConstr(SI[i, 0] == SI0, "SI0" + i);
+                    model.AddConstr(BI[i, 0] == BI0, "BI0" + i);
+
+                }
+
+
+                #endregion
+
+                #region 5,6,7,8,9,10 Constrains
+
+                //////#5.
+                for (int w = 0; w < W; w++)
+                {
+                    List<int> productsInW = Qw.TryGetValue(w, out var productList) ? productList : new List<int>();
+                    foreach (int i in productsInW)
+                    {
+                        foreach (int j in productsInW)
+                        {
+                            if (i != I0W[w]) // Exclude i != i0w and i != j
+                            {
+
+                                model.AddConstr(Y[i, j, w, 1, 0] == 0, $"Constraint_5_w{i + 1}_j{j + 1}_w{w + 1}");
+
+
+                            }
+                        }
+                    }
+                }
+                //foreach (int w in Qw.Where(kv => kv.Value.Contains(j)).Select(kv => kv.Key))
+
+
+                    ////#6.
+                for (int w = 0; w < W; w++)
+                {
+                    GRBLinExpr setupSum = 0;
+                    List<int> productsInW = Qw.TryGetValue(w, out var productList) ? productList : new List<int>();
+
+                    foreach (int j in productsInW)
+                    {
+
+                        setupSum += Y[I0W[w], j, w, 1, 0]; //thelei diorthosh
+                    }
+                    model.AddConstr(setupSum == 1, $"Constraint_6_w{w + 1}");
+                }
+
+                ////#7. 
+                for (int w = 0; w < W; w++)
+                {
+                    List<int> productsInW = Qw.TryGetValue(w, out var productList) ? productList : new List<int>();
+
+                    foreach (int i in productsInW)
+                    {
+                        foreach (int j in productsInW)
+                        {
+                            for (int t = 1; t <= T; t++)
+                            {
+                                if (i != j) // Exclude i != i0w and i != j
+                                {
+                                    model.AddConstr(Y[i, j, w, t, 0] == 0, "Constrain7_" + i + "_" + j + "_" + w + "_" + t);
+
+                                }
+                            }
+                        }
+                    }
+                }
+                //#8.
+                for (int w = 0; w < W; w++)
+                {
+                    List<int> productsInW = Qw.TryGetValue(w, out var productList) ? productList : new List<int>();
+
+                    for (int t = 1; t <= T; t++)
+                    {
+                        GRBLinExpr sumY = 0;
+
+                        foreach (int i in productsInW)
+                        {
+                            sumY += Y[i, i, w, t, 0]; //thelei diorthosh
+
+                        }
+                        model.AddConstr(sumY == 1, "Constrain8_" + w + t);
+                    }
+                }
+               //#9.
+                for (int w = 0; w < W; w++)
+                {
+                    List<int> productsInW = Qw.TryGetValue(w, out var productList) ? productList : new List<int>();
+
+                    for (int t = 1; t <= T; t++)
+                    {
+                        foreach (int j in productsInW)
+                        {
+                            for (int n = 0; n < NDict[w] - 1; n++)
+                            {
+                                GRBLinExpr sumYi = 0;
+                                foreach (int i in productsInW)
+                                {
+                                    sumYi += Y[i, j, w, t, n]; //thelei diorthosh
+                                }
+                                GRBLinExpr sumYk = 0;
+
+                                foreach (int k in productsInW)
+                                {
+                                    sumYk += Y[j, k, w, t, n + 1]; //thelei diorthosh
+                                }
+                                model.AddConstr(sumYi == sumYk, "Constrain_9" + w + t);
+                            }
+                        }
+                    }
+                }
+
+                //#10
+                for (int w = 0; w < W; w++)
+                {
+                    List<int> productsInW = Qw.TryGetValue(w, out var productList) ? productList : new List<int>();
+
+                    for (int t = 2; t <= T; t++)
+                    {
+                        foreach (int j in productsInW)
+                        {
+                            GRBLinExpr sumYi = 0;
+                            foreach (int i in productsInW)
+                            {
+                                sumYi += Y[i, j, w, t - 1, NDict[w] - 1]; //thelei diorthosh
+                            }
+                            GRBLinExpr sumYk = 0;
+
+                            foreach (int k in productsInW)
+                            {
+                                sumYk += Y[j, k, w, t, 0]; //thelei diorthosh
+                            }
+                            model.AddConstr(sumYi == sumYk, "Constrain_10" + w + t);
+                        }
+                    }
+                }
+
+                #endregion
+                #region 11,12 Constrains
+                //#11 
+                for (int w = 0; w < W; w++)
+                {
+                    List<int> productsInW = Qw.TryGetValue(w, out var productList) ? productList : new List<int>();
+
+                    for (int t = 1; t <= T; t++)
+                    {
+                        for (int n = 0; n < NDict[w]; n++)
+                        {
+                            foreach (int j in productsInW)
+                            {
+                                GRBLinExpr sumY = 0;
+                                foreach (int i in productsInW)
+                                {
+                                    sumY += Y[i, j, w, t, n]; //thelei diorthosh
+                                }
+                                model.AddConstr(sumY * Miwt[(j, w, t)] >= X[j, w, t, n], "Constrain11_" + w + t);
+
+                            }
+
+                        }
+                    }
+                }
+                ////#12 
+                for (int w = 0; w < W; w++)
+                {
+                    List<int> productsInW = Qw.TryGetValue(w, out var productList) ? productList : new List<int>();
+
+                    for (int t = 1; t <= T; t++)
+                    {
+                        GRBLinExpr sum = 0;
+
+                        for (int n = 0; n < NDict[w]; n++)
+                        {
+                            foreach (int j in productsInW)
+                            {
+                                foreach (int i in productsInW)
+                                {
+                                    sum += Y[i, j, w, t, n] * Sijw[(i, j, w)] + Uiw[(j, w)] * X[j, w, t, n]; //thelei diorthosh
+                                }
+
+                            }
+
+                        }
+                        model.AddConstr(sum <= Awt[(w, t)], "Constrain12_" + w + t);
+                    }
+                }
+                #endregion
+                #endregion
+                #region Optimization Solver
+
+
+                model.Parameters.TimeLimit = 10;
+
+                model.Update();
+                model.Optimize();
+
+                #endregion
+
+                #region Populate Records
+                // Check if optimization was successful
+                if (model.Status == GRB.Status.OPTIMAL || model.Status == GRB.Status.TIME_LIMIT)
+                {
+                    #region Print Model
+                    model.Write("outMRPmst.mst");
+                    model.Write("outMRPsol.sol");
+                    model.Write("MRPFeasable.lp");
+                    model.Write("MRPFeasableMPS.mps");
+                    #endregion
+
+
+
+                    #region Retrieve Data Original
+                    OutputData.Diagram1 = new DiagramsMRPData();
+                    OutputData.Diagram1.DataPerDayMRP = new ObservableCollection<DataPerDayMRP>();
+                    OutputData.Diagram2 = new DiagramsMRPData();
+                    // Retrieve solution for decision variables Y
+                    ObservableCollection<DecisionVariableY> YVariables = new ObservableCollection<DecisionVariableY>();
+
+                    for (int i = 0; i < Q; i++)
+                    {
+                        for (int j = 0; j < Q; j++)
+                        {
+                            for (int w = 0; w < W; w++)
+                            {
+                                if (Qw.TryGetValue(w, out var productList) && productList.Contains(i) && productList.Contains(j))
+                                {
+                                    for (int t = 0; t <= T; t++)
+                                    {
+                                        for (int n = 0; n < NDict[w]; n++)
+                                        {
+                                            var value = Y[i, j, w, t, n].X;
+                                            DecisionVariableY YVar = new DecisionVariableY();
+
+                                            YVar.ItemCodeFrom = productIndexMap.FirstOrDefault(x => x.Value == i).Key;
+                                            YVar.ItemCodeTo = productIndexMap.FirstOrDefault(x => x.Value == j).Key;
+                                            YVar.WorkCenter = workCenterIndexMap.FirstOrDefault(x => x.Value == w).Key;
+                                            YVar.Date = dateIndexMap.FirstOrDefault(x => x.Value == t).Key;
+                                            YVar.Setup = n + 1;
+                                            YVar.Value = value;
+                                            YVariables.Add(YVar);
+                                        }
+                                    }
+                                }
+                               
+                            }
+                        }
+                    }
+
+
+
+                    ObservableCollection<DecisionVariableX> XVariables = new ObservableCollection<DecisionVariableX>();
+
+                    for (int i = 0; i < Q; i++)
+                    {
+                        for (int t = 1; t <= T; t++)
+                        {
+                            DataPerDayMRP row = new DataPerDayMRP();
+                            row.ItemCode = productIndexMap.FirstOrDefault(x => x.Value == i).Key;
+                            row.Make = 0;
+                            row.Date = dateIndexMap.FirstOrDefault(x => x.Value == t).Key;                          
+                            for (int w = 0; w < W; w++)
+                            {
+                                if (Qw.TryGetValue(w, out var productList) && productList.Contains(i))
+                                {
+                                    for (int n = 0; n < NDict[w]; n++)
+                                    {
+                                        DecisionVariableX XVar = new DecisionVariableX();
+                                        double value = X[i, w, t, n].X;
+
+                                        XVar.ItemCode = productIndexMap.FirstOrDefault(x => x.Value == i).Key;
+
+                                        XVar.WorkCenter = workCenterIndexMap.FirstOrDefault(x => x.Value == w).Key;
+                                        XVar.Date = dateIndexMap.FirstOrDefault(x => x.Value == t).Key;
+                                        XVar.Setup = n + 1;
+                                        XVar.Value = value;
+                                        XVariables.Add(XVar);
+                                        row.Make += value;
+                                    }
+                                }
+                                   
+                            }
+                            OutputData.Diagram1.DataPerDayMRP.Add(row);
+                        }
+                    }
+
+                    // Retrieve solution for inventory status variables SI and BI
+                    ObservableCollection<DecisionVariablesInvStatus> InventoryStatusVariables = new ObservableCollection<DecisionVariablesInvStatus>();
+                    for (int i = 0; i < Q; i++)
+                    {
+                        for (int t = 0; t <= T; t++)
+                        {
+                            double siValue = SI[i, t].X;
+                            double biValue = BI[i, t].X;
+                            DecisionVariablesInvStatus InvVar = new DecisionVariablesInvStatus();
+
+                            InvVar.ItemCode = productIndexMap.FirstOrDefault(x => x.Value == i).Key;
+                            InvVar.Date = dateIndexMap.FirstOrDefault(x => x.Value == t).Key;
+                            InvVar.SIValue = siValue;
+                            InvVar.BIValue = biValue;
+
+                            InventoryStatusVariables.Add(InvVar);
+
+
+                            // Find the corresponding row in DataPerDay based on the item code (i) and date (t)
+                            var correspondingRow = OutputData.Diagram1.DataPerDayMRP.FirstOrDefault(row => row.ItemCode == InvVar.ItemCode && row.Date == InvVar.Date);
+
+                            // If a corresponding row is found, update its SIValue and BIValue
+                            if (correspondingRow != null)
+                            {
+                                correspondingRow.Stock = siValue;
+                                correspondingRow.Backlog = biValue;
+                            };
+                        }
+                    }
+
+                    foreach (var kvp in Dit_String)
+                    {
+                        var correspondingRow = OutputData.Diagram1.DataPerDayMRP.FirstOrDefault(row => row.ItemCode == kvp.Key.Item1 && row.Date == kvp.Key.Item2);
+                        if (correspondingRow != null)
+                        {
+                            correspondingRow.Demand = kvp.Value;
+                        };
+
+
+
+                    }
+
+
+
+
+                    OutputData.XData = XVariables;
+                    OutputData.YData = YVariables;
+                    OutputData.InvData = InventoryStatusVariables;
+
+                    OutputData.ObjValue = model.ObjVal;
+
+
+                    #endregion
+                }
+                else
+                {
+                    //model.Write("outMRP.mst");
+                    //model.Write("outMRP.sol");
+                    model.Write("MRPFeasable.lp");
+                    model.Write("MRPFeasableMPS.mps");
+
+                    // Model is infeasible
+
+                    // Compute an Irreducible Infeasible Subsystem (IIS) to obtain the infeasibility proof
+                    model.ComputeIIS();
+                    model.Write("MRPModel.ilp");
+
+
+                }
+
+                #endregion
+                #endregion
+                #endregion
+                return OutputData;
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("An error occurred: " + ex.Message);
+                return OutputData;
+            }
+        }
         public ObservableCollection<MrpInputData> GetMrpInputData(string FinalItemCode)
         {
             ObservableCollection<MrpInputData> DataList = new ObservableCollection<MrpInputData>();
@@ -11762,11 +12720,6 @@ ORDER BY Date ASC"
                             }
                             #endregion
                             Data.ObjValue = model.ObjVal;
-
-
-
-
-
 
                         }
 

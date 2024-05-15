@@ -60,17 +60,7 @@ namespace Erp.Model.Data_Analytics.Forecast
         }
 
 
-
         public bool ItemsFlag { get; set; }
-
-        private ObservableCollection<DemandForecastData> _DemandForecast;
-
-        public ObservableCollection<DemandForecastData> DemandForecast
-        {
-            get { return _DemandForecast; }
-            set { _DemandForecast = value; INotifyPropertyChanged("DemandForecast"); }
-        }
-
 
         private int _HoursPerTimeBucket;
 
@@ -90,6 +80,76 @@ namespace Erp.Model.Data_Analytics.Forecast
                 INotifyPropertyChanged("TimeBucket");
             }
         }
+
+        private ObservableCollection<DemandForecastData> _DemandForecast;
+
+        public ObservableCollection<DemandForecastData> DemandForecast
+        {
+            get { return _DemandForecast; }
+            set
+            {
+                if (1==1)
+                {
+                    _DemandForecast = value;
+                    INotifyPropertyChanged("DemandForecast");
+
+                    // Unsubscribe from previous collection's PropertyChanged events
+                    UnsubscribeFromPropertyChangedEvents();
+
+                    // Subscribe to PropertyChanged events of new collection
+                    SubscribeToPropertyChangedEvents();
+                }
+            }
+        }
+        private void SubscribeToPropertyChangedEvents()
+        {
+            foreach (var item in DemandForecast)
+            {
+                item.PropertyChanged += DemandForecastData_PropertyChanged;
+            }
+        }
+
+        private void UnsubscribeFromPropertyChangedEvents()
+        {
+            foreach (var item in DemandForecast)
+            {
+                item.PropertyChanged -= DemandForecastData_PropertyChanged;
+            }
+        }
+
+        private bool _isProcessingChange = false;
+
+        private void DemandForecastData_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            // Check if already processing a change to avoid recursion
+            if (_isProcessingChange)
+            {
+                return;
+            }
+
+            if (e.PropertyName == "Selected")
+            {
+                _isProcessingChange = true;
+
+                DemandForecastData changedItem = (DemandForecastData)sender;
+                bool newValue = changedItem.Selected;
+                string itemCode = changedItem.Item.ItemCode;
+
+                // Update Selected property of items with the same ItemCode
+                foreach (var item in DemandForecast.Where(d => d.Item.ItemCode == itemCode))
+                {
+                    item.Selected = newValue;
+                }
+
+                _isProcessingChange = false;
+            }
+        }
+
+
+
+
+
+
 
 
     }

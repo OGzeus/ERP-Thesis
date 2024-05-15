@@ -23,28 +23,66 @@ namespace Erp.Model.Manufacture.MRP
             }
         }
 
-        private ObservableCollection<MPSOptResultsData> _MPSOptResultsData;
+        private ObservableCollection<DecisionVariableX> _XData;
 
-        public ObservableCollection<MPSOptResultsData> MPSOptResultsData
+        public ObservableCollection<DecisionVariableX> XData
         {
-            get { return _MPSOptResultsData; }
+            get { return _XData; }
             set
             {
-                _MPSOptResultsData = value;
-                OnPropertyChanged(nameof(MPSOptResultsData));
+                _XData = value;
+                OnPropertyChanged(nameof(XData));
             }
         }
-        private ObservableCollection<MachRepairResultsData> _MachRepairResultsData;
+        private ObservableCollection<DecisionVariableY> _YData;
 
-        public ObservableCollection<MachRepairResultsData> MachRepairResultsData
+        public ObservableCollection<DecisionVariableY> YData
         {
-            get { return _MachRepairResultsData; }
+            get { return _YData; }
             set
             {
-                _MachRepairResultsData = value;
-                OnPropertyChanged(nameof(MachRepairResultsData));
+                _YData = value;
+                OnPropertyChanged(nameof(YData));
             }
         }
+        private ObservableCollection<DecisionVariablesInvStatus> _InvData;
+
+        public ObservableCollection<DecisionVariablesInvStatus> InvData
+        {
+            get { return _InvData; }
+            set
+            {
+                _InvData = value;
+                OnPropertyChanged(nameof(InvData));
+            }
+        }
+
+        #region Diagram Data
+
+        private DiagramsMRPData _Diagram1;
+        public DiagramsMRPData Diagram1
+        {
+            get { return _Diagram1; }
+            set
+            {
+                _Diagram1 = value;
+                OnPropertyChanged(nameof(Diagram1));
+            }
+        }
+
+
+        private DiagramsMRPData _Diagram2;
+        public DiagramsMRPData Diagram2
+        {
+            get { return _Diagram2; }
+            set
+            {
+                _Diagram2 = value;
+                OnPropertyChanged(nameof(Diagram2));
+            }
+        }
+        #endregion
+
 
         private string[] dates;
         public string[] Dates

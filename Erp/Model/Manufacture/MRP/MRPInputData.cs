@@ -30,9 +30,11 @@ namespace Erp.Model.Manufacture.MRP
         private ForecastInfoData forecast;
         private InventoryData inventory;
 
-        private InvDiagramsSearchData diagram;
+        private DiagramsMRPData _Diagrams;
         private ObservableCollection<ItemData> items;
-        private ObservableCollection<BomData> bom;
+        private ObservableCollection<ItemData> bomitems;
+        private ObservableCollection<WorkcenterData> _workcenters;
+
         public int MRPID
         {
             get { return mrpid; }
@@ -112,34 +114,70 @@ namespace Erp.Model.Manufacture.MRP
             set { forecastdatagrid = value; OnPropertyChanged("ForecastDatagrid"); }
         }
 
-        public ObservableCollection<BomData> Bom
-        {
-            get { return bom; }
-            set { bom = value; OnPropertyChanged("Bom"); }
-        }
-        public InvDiagramsSearchData Diagram
-        {
-            get { return diagram; }
-            set { diagram = value; OnPropertyChanged("Diagram"); }
-        }
 
-
-
-        public ObservableCollection<ItemData> Items
+        public ObservableCollection<ItemData> EndItems
         {
             get { return items; }
-            set { items = value; OnPropertyChanged("Items"); }
+            set { items = value; OnPropertyChanged("EndItems"); }
+        }
+        public ObservableCollection<ItemData> BomItems
+        {
+            get { return bomitems; }
+            set { bomitems = value; OnPropertyChanged("BomItems"); }
         }
 
+        public ObservableCollection<WorkcenterData> Workcenters
+        {
+            get { return _workcenters; }
+            set { _workcenters = value; OnPropertyChanged("Workcenters"); }
+        }
 
-
-        public Dictionary<string, double> MaintenanceRate { get; set; } //<ItemCode, Demand * Itemdata.Profit>
-        public Dictionary<string, double> Profit { get; set; } //<ItemCode, Demand * Itemdata.Profit>
-        public Dictionary<string, Dictionary<string, double>> TimeReq { get; set; }//MachineCode,<<ItemCode ,ItemProcessTime >>
-        public Dictionary<string, int> MachInstalled { get; set; } //Number of Machines (tha ftiaksw diaforetikes mixanes kai tha pe3w me to enum me to machinetype 
+        #region Old Dictionaries
+        //public Dictionary<string, double> MaintenanceRate { get; set; } //<ItemCode, Demand * Itemdata.Profit>
+        //public Dictionary<string, double> Profit { get; set; } //<ItemCode, Demand * Itemdata.Profit>
+        //public Dictionary<string, Dictionary<string, double>> TimeReq { get; set; }//MachineCode,<<ItemCode ,ItemProcessTime >>
+        //public Dictionary<string, int> MachInstalled { get; set; } //Number of Machines (tha ftiaksw diaforetikes mixanes kai tha pe3w me to enum me to machinetype 
         public Dictionary<string, List<decimal>> TotalDemandDict { get; set; } //<ItemCode, Demand * Itemdata.Profit>
-        public Dictionary<(string, string), double> MaxDemand { get; set; } //Number of Machines that need to be under maintenance
+        //public Dictionary<(string, string), double> MaxDemand { get; set; } //Number of Machines that need to be under maintenance
+        #endregion
 
+        #region MRP_Optimization_input 
+        public int T { get; set; }  //Planning Horizon
+
+        public int P { get; set; }//Number Of MPS end-item Products
+        public int Q { get; set; }//Number Of MRP Component Products
+        private int _W;
+        public int W
+        {
+            get { return _W; }
+            set
+            {
+                _W = value;
+                INotifyPropertyChanged("W");
+            }
+        }
+        //Sets:
+
+        public Dictionary<string, List<string>> Pw { get; set; }  // P(w) is the set of end-items that can be processed on work center w.
+        public Dictionary<string, List<string>> Qw { get; set; }  // Q(w) is the set of products that can be processed on work center w.
+
+        public Dictionary<(string, string), double> Dit { get; set; } // Dit represents the demand for product i at the end of period t.
+
+        public Dictionary<string, List<string>> Ci { get; set; }  //  C(i) represents the set of direct subcomponents of each component or end-item 
+
+        public Dictionary<(string, string), double> Rij { get; set; } //Rij represents the number of units of direct subcomponent i required in each unit of component or end-item j.
+        public Dictionary<(string, string), double> Awt { get; set; } //Awt represents the available capacity at work center w during period t.
+        public Dictionary<(string, string,string), double> Sijw { get; set; } // Sijw represents the setup times for all products and workstations.
+        public Dictionary<(string, string,string), double> Miwt { get; set; }  //Mjwt represents the maximum production quantity for product j at work center w during period t
+        public Dictionary<(string, string), double> Uiw { get; set; } //	Uiw represents the unit production times for all products and workstations
+        public Dictionary<string, double> Hi { get; set; } //	Hi
+        public Dictionary<string, double> Gi { get; set; } //	Hi
+        public Dictionary<string, String> I0W { get; set; } //	I0W
+
+        public Dictionary<string, (double, double)> Ii { get; set; } //	itemcode = Starting Stock,Backlong
+        public Dictionary<string, (double, double)> Imax_min { get; set; } //	Inventory Max , Inventory Min
+
+        #endregion
 
         #region FactoryPlanning1,2 bool visibility 
         private bool _StackPanelEnabled;

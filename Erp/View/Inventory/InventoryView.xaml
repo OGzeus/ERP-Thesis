@@ -10,7 +10,7 @@
              xmlns:syncfusion="http://schemas.syncfusion.com/wpf" 
              xmlns:viewmodel="clr-namespace:Erp.ViewModel.Inventory"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:Width="800" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+             d:DesignHeight="450" d:Width="800" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" FontSize="18">
 
     <UserControl.DataContext>
         <viewmodel:InventoryViewModel/>
@@ -32,13 +32,13 @@
             <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
 
-        <TextBlock Text="Inventory Code : " FontWeight="Bold" FontSize="14"  Grid.Row="1" Grid.Column="0" Margin="2" />
+        <TextBlock Text="Inventory Code : " FontWeight="Bold"  Grid.Row="1" Grid.Column="0" Margin="2" />
         <StackPanel Grid.Row="1" Grid.Column="1" HorizontalAlignment="Left"  Orientation="Horizontal" Margin="2">
             <TextBox Text="{Binding FlatData.InvCode}" HorizontalAlignment="left" Width="115" />
             <Button Content="f" Width="20"                        Command="{Binding ShowInventoryGridCommand}"/>
         </StackPanel>
 
-        <TextBlock Text="Inventory Descr : " FontWeight="Bold" FontSize="14" Grid.Row="1" Grid.Column="2"  Margin="2"/>
+        <TextBlock Text="Inventory Descr : " FontWeight="Bold"  Grid.Row="1" Grid.Column="2"  Margin="2"/>
         <StackPanel Grid.Row="1" Grid.Column="3" HorizontalAlignment="Stretch"  Orientation="Horizontal" Margin="2">
             <TextBox Text="{Binding FlatData.InvDescr}" HorizontalAlignment="Stretch" Width="135" Margin="2" />
             <!--<Button Content="f" Width="15"                        Command="{Binding ShowSupplierInfoGridCommandTo}"/>-->
@@ -48,7 +48,7 @@
                 <TextBlock Text="Add New Inventory"/>
             </Button>
 
-            <TextBlock Text="Delete : " FontWeight="Bold" FontSize="14"  Margin="15,0,0,0"/>
+            <TextBlock Text="Delete : " FontWeight="Bold" Margin="15,0,0,0"/>
             <CheckBox IsChecked="{Binding FlatData.IsDeleted, Mode=TwoWay}"  Margin="2" VerticalAlignment="Center"  />
             <ToggleButton x:Name = "tb" Content = "Show Deleted"  
          IsChecked="{Binding ShowDeleted, Mode=TwoWay}"  Margin = "2" Background="Beige" BorderBrush="Black" 
@@ -192,7 +192,10 @@
                                 <syncfusion:GridTextColumn MappingName="StockItem.ItemDescr" HeaderText="Item Description" IsReadOnly="True"/>
                                 <syncfusion:GridTextColumn MappingName="StockItem.ItemType" HeaderText="Item Type" IsReadOnly="True"/>
                                 <syncfusion:GridTextColumn MappingName="StockItem.Assembly" HeaderText="Assembly" IsReadOnly="True"/>
-                                <syncfusion:GridTextColumn MappingName="Quantity" HeaderText="Quantity" />
+                                <syncfusion:GridTextColumn MappingName="Stock" HeaderText="Stock" />
+                                <syncfusion:GridTextColumn MappingName="InvMax" HeaderText="Inv Max" />
+                                <syncfusion:GridTextColumn MappingName="InvMin" HeaderText="Inv Min" />
+
                                 <syncfusion:GridCheckBoxColumn MappingName="StockItemFlag" HeaderText="Select"/>
 
                             </syncfusion:SfDataGrid.Columns>
