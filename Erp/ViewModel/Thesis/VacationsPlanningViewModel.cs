@@ -31,6 +31,8 @@ using Erp.Model.Thesis.VacationPlanning;
 using Erp.Model.Thesis;
 using System.Globalization;
 using System.Runtime.InteropServices.ComTypes;
+using ILOG.CPLEX;
+using ILOG.Concert;
 
 namespace Erp.ViewModel.Thesis
 {
@@ -538,13 +540,13 @@ namespace Erp.ViewModel.Thesis
         private void ExecuteCalculateVacationPlanning(object obj)
         {
             InputData.MaxLeaveBidsPerEmployee = new Dictionary<string, int>();
-            InputData.BidsPerEmployee = new Dictionary<string, string>();
 
+            InputData.MaxLeaveBidsPerEmployee_Int = new Dictionary<int, int>();
             InputData.ZBidsDict = new Dictionary<(string, string,int), int>();
             InputData.RBidsDict = new Dictionary<(string, string), int>();
 
-            InputData.ZBidsDictInt = new Dictionary<(int, int, int), int>();
-            InputData.RBidsDictInt = new Dictionary<(int, int), int>();
+            InputData.ZBidsDict_Int = new Dictionary<(int, int, int), int>();
+            InputData.RBidsDict_Int = new Dictionary<(int, int), int>();
 
 
             #region Employee Insert Data
@@ -555,8 +557,10 @@ namespace Erp.ViewModel.Thesis
             InputData.Employees = CommonFunctions.GetEmployeesByTypeData(InputData,false);
             InputData.MaxLeaveBids = 0;
             int LeaveBidRowsCount = 0;
+            int EmpCount = 0;
             foreach (var emp in InputData.Employees)
             {
+                EmpCount++;
                 #region LeaveStatus
                 emp.LeaveStatus = new LeaveStatusData();
                 emp.LeaveStatus = CommonFunctions.GetLeaveStatusChooserData(emp.EmployeeId, emp.Code);
@@ -570,6 +574,7 @@ namespace Erp.ViewModel.Thesis
                 LeaveBidRowsCount = emp.LeaveBidDataGridStatic.Count();
 
                 InputData.MaxLeaveBidsPerEmployee[emp.Code] = LeaveBidRowsCount;
+                InputData.MaxLeaveBidsPerEmployee_Int[EmpCount] = LeaveBidRowsCount;
                 if (LeaveBidRowsCount > InputData.MaxLeaveBids)
                 {
                     InputData.MaxLeaveBids = LeaveBidRowsCount;
@@ -580,15 +585,14 @@ namespace Erp.ViewModel.Thesis
                 foreach (var Bid in emp.LeaveBidDataGridStatic)
                 {
 
-                    InputData.BidsPerEmployee[emp.Code] = Bid.BidCode; //Fill BidsPerEmployee Dictionary
 
                     if (Bid.BidType == BasicEnums.BidType.Specific)
                     {
                         InputData.RBidsDict[(emp.Code, Bid.BidCode)] = 1;
                         InputData.ZBidsDict[(emp.Code, Bid.BidCode,1)] = 1;
 
-                        InputData.RBidsDictInt[(emp.Seniority, Bid.PriorityLevel)] = 1;
-                        InputData.ZBidsDictInt[(emp.Seniority, Bid.PriorityLevel, 1)] = 1;
+                        InputData.RBidsDict_Int[(emp.Seniority-1, Bid.PriorityLevel-1)] = 1;
+                        InputData.ZBidsDict_Int[(emp.Seniority-1, Bid.PriorityLevel-1, 1)] = 1;
                     }
                     else if (Bid.BidType == BasicEnums.BidType.Non_Specific)
                     {
@@ -603,8 +607,8 @@ namespace Erp.ViewModel.Thesis
 
                         InputData.ZBidsDict[(emp.Code, Bid.BidCode,1)] = Z;
 
-                        InputData.RBidsDictInt[(emp.Seniority, Bid.PriorityLevel)] = 1;
-                        InputData.ZBidsDictInt[(emp.Seniority, Bid.PriorityLevel, 1)] = Z;
+                        InputData.RBidsDict_Int[(emp.Seniority-1, Bid.PriorityLevel-1)] = 1;
+                        InputData.ZBidsDict_Int[(emp.Seniority-1, Bid.PriorityLevel-1, 1)] = Z;
 
                     }
                     else if (Bid.BidType == BasicEnums.BidType.Min_Max)
@@ -616,7 +620,7 @@ namespace Erp.ViewModel.Thesis
                         var Max = Bid.NumberOfDaysMax;
 
                         InputData.RBidsDict[(emp.Code, Bid.BidCode)] = Max - Min + 1;
-                        InputData.RBidsDictInt[(emp.Seniority, Bid.PriorityLevel)] = Max - Min + 1;
+                        InputData.RBidsDict_Int[(emp.Seniority-1, Bid.PriorityLevel-1)] = Max - Min + 1;
 
                         for (int i = 0; i < Max - Min + 1; i++)
                         {
@@ -624,7 +628,7 @@ namespace Erp.ViewModel.Thesis
                             int Z = totalDaysInRange - Bid.NumberOfDays + 2;
 
                             InputData.ZBidsDict[(emp.Code, Bid.BidCode, i+1)] = Z;
-                            InputData.ZBidsDictInt[(emp.Seniority, Bid.PriorityLevel, 1)] = Z;
+                            InputData.ZBidsDict_Int[(emp.Seniority - 1, Bid.PriorityLevel - 1, i + 1)] = Z;
 
                         };
 
@@ -637,7 +641,9 @@ namespace Erp.ViewModel.Thesis
             #endregion
 
 
-            OutputData = CommonFunctions.CalculateVacationPlanningAdvanced(InputData);
+            //OutputData = CplexFunctions.CalculateVacationPlanning_CPLEX(InputData);
+            OutputData = CommonFunctions.CalculateVacationPlanning_Gurobi(InputData);
+
             OutputData.VPYijResultsDataGrid = OutputData.VPYijResultsDataGrid.OrderBy(item => item.Employee.Seniority).ToObservableCollection();
             OutputData.VPYijzResultsDataGrid = OutputData.VPYijzResultsDataGrid.OrderBy(item => item.Employee.Seniority).ToObservableCollection();
             OutputData.VPXijResultsDataGrid = OutputData.VPXijResultsDataGrid.OrderBy(item => item.Employee.Seniority).ToObservableCollection();
@@ -676,13 +682,12 @@ namespace Erp.ViewModel.Thesis
             t=0;
             foreach (var emp in OutputData.EmpLeaveStatusData)
             {
-                if (emp.LeaveStatus.ProjectedBalance >0)
-                {
+
                     CGInputdata.LeaveDays[t+1] = emp.LeaveStatus.ProjectedBalance;
                     t++;
-                }
+                
             }
-            var a = CommonFunctions.CalculateVPColumnGeneration(CGInputdata);
+            var a = CplexFunctions.CalculateVPColumnGeneration(CGInputdata);
 
             #endregion
 

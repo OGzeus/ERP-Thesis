@@ -84,16 +84,11 @@ namespace Erp.Model.Thesis.VacationPlanning
         private DateTime[] dates;
 
         public Dictionary<string, int> MaxLeaveBidsPerEmployee { get; set; } 
-        public Dictionary<string, string> BidsPerEmployee { get; set; } 
-
 
         public List<(int, int)> OverlappingBids1 = new List<(int, int)>();
         public List<(int, int)> OverlappingBids2 = new List<(int, int)>();
         public Dictionary<(string, string,int), int> ZBidsDict { get; set; }
         public Dictionary<(string, string), int> RBidsDict { get; set; }
-
-        public Dictionary<(int, int, int), int> ZBidsDictInt { get; set; }
-        public Dictionary<(int, int), int> RBidsDictInt { get; set; }
 
         public int MaxLeaveBids
         {
@@ -116,6 +111,17 @@ namespace Erp.Model.Thesis.VacationPlanning
             get { return dates; }
             set { dates = value; OnPropertyChanged("Dates"); }
         }
+        #endregion
+
+        #region Dictionaries/Input for Optimisation Int
+
+        private int _MaxLeaveBidsInt;
+        private int _MaxNonSpecificInt;
+
+        public Dictionary<int, int> MaxLeaveBidsPerEmployee_Int { get; set; }
+        public Dictionary<(int, int, int), int> ZBidsDict_Int { get; set; }
+        public Dictionary<(int, int), int> RBidsDict_Int { get; set; }
+
         #endregion
     }
 }

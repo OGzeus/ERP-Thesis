@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Erp.DataBase;
+using Erp.Model;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
@@ -26,5 +27,25 @@ namespace Erp.Repositories
         {
             return new SqlConnection(_connectionString);
         }
+
+        public static void LogError(Exception ex, string methodName, string additionalInfo = "")
+        {
+            using (var dbContext = new ErpDbContext(ErpDbContext.DbOptions))
+            {
+                dbContext.Loge.Add(new Log
+                {
+                    ExceptionType = ex.GetType().ToString(),
+                    ExceptionMessage = ex.Message,
+                    StackTrace = ex.StackTrace,
+                    Source = ex.Source,
+                    MethodName = methodName,
+                    OccurredAt = DateTime.Now,
+                    AdditionalInfo = additionalInfo
+                });
+
+                dbContext.SaveChanges();
+            }
+        }
+
     }
 }

@@ -131,7 +131,7 @@
                                         <TextBlock Text="Max Satisfied Bids : " Grid.Row="3" Grid.Column="0" Margin="2"/>
                                         <TextBlock Text="Separation Value : " Grid.Row="3" Grid.Column="2" Margin="2"/>
 
-                                        <TextBlock Text="Employee Type : " Grid.Row="4" Grid.Column="0" Margin="2"/>
+                                        <TextBlock Text="Position : " Grid.Row="4" Grid.Column="0" Margin="2"/>
                                         <TextBlock Text="Bid Reward Logic Type : " Grid.Row="4" Grid.Column="2" Margin="2"/>
 
                                         <StackPanel Grid.Row="1" Grid.Column="1" HorizontalAlignment="Left"  Orientation="Horizontal" Margin="2" >
