@@ -65,9 +65,6 @@
             <syncfusion:SfDataGrid.Columns>
                 <syncfusion:GridTextColumn MappingName="CityCode" HeaderText="City Code"/>
                 <syncfusion:GridTextColumn MappingName="CityDescr" HeaderText="City Descr"/>
-                <syncfusion:GridTextColumn MappingName="Longitude" HeaderText="Longitude " AllowEditing="False"/>
-                <syncfusion:GridTextColumn MappingName="Latitude" HeaderText="Latitude" AllowEditing="False"/>
-
                 <syncfusion:GridMultiColumnDropDownList  HeaderText="Prefecture Code" DisplayMember="PrefCode" 
                                                          ItemsSource="{Binding PrefList}"  
                                                          ItemsSourceSelector="{Binding PrefList.Count}" 
@@ -75,7 +72,13 @@
                                                          MappingName="PrefId"
                                                          ValueMember="PrefId"
                                                          />
+                <syncfusion:GridTextColumn MappingName="Longitude" HeaderText="Longitude " />
+                <syncfusion:GridTextColumn MappingName="Latitude" HeaderText="Latitude" />
+                <syncfusion:GridTextColumn MappingName="Population" HeaderText="Population" />
+
                 <syncfusion:GridCheckBoxColumn MappingName="IsDeleted" HeaderText="Deleted"/>
+
+
 
             </syncfusion:SfDataGrid.Columns>
         </syncfusion:SfDataGrid>

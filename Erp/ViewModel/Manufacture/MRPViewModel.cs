@@ -330,6 +330,11 @@ namespace Erp.ViewModel.Manufacture
 
             if (F7key == "MRPCode")
             {
+                InputData = new MRPInputData();
+                InputData.BomItems = new ObservableCollection<ItemData>();
+                InputData.Inventory = new InventoryData();
+                InputData.Inventory.StockData = new ObservableCollection<StockData>();
+
                 InputData.MRPID = (SelectedItem as MRPInputData).MRPID;
                 InputData.MRPCode = (SelectedItem as MRPInputData).MRPCode;
                 InputData.MRPDescr = (SelectedItem as MRPInputData).MRPDescr;
@@ -1479,11 +1484,25 @@ namespace Erp.ViewModel.Manufacture
 
         #endregion
 
+
         #region CRUD  Commands
 
         #region Input 
         #region ADD
-        public ICommand AddMRPCommand { get; }
+        private ViewModelCommand _AddMRPCommand;
+
+        public ICommand AddMRPCommand
+        {
+            get
+            {
+                if (_AddMRPCommand == null)
+                {
+                    _AddMRPCommand = new ViewModelCommand(ExecuteAddMRPCommand);
+                }
+
+                return _AddMRPCommand;
+            }
+        }
 
         private void ExecuteAddMRPCommand(object obj)
         {
@@ -1613,7 +1632,6 @@ namespace Erp.ViewModel.Manufacture
         #endregion
 
         #endregion
-
         #endregion
 
         private ICommand rowDataCommand { get; set; }

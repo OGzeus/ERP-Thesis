@@ -1,0 +1,987 @@
+﻿<UserControl x:Class="Erp.View.SupplyChain.Clustering_Vrp_View"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Erp.View.SupplyChain"
+             xmlns:converter="clr-namespace:Erp.Converters"
+             xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
+             xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity" 
+             xmlns:viewModel="clr-namespace:Erp.ViewModel.SupplyChain"
+             xmlns:syncfusion="http://schemas.syncfusion.com/wpf" 
+             xmlns:viewModel1="clr-namespace:Erp.Model.SupplyChain" xmlns:oxy="http://oxyplot.org/wpf"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800" FontSize="18">
+    <UserControl.DataContext>
+        <viewModel:Clustering_Vrp_Viewmodel/>
+    </UserControl.DataContext>
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        <converter:InvertBoolConverter x:Key="InvertBoolConverter" />
+        <viewModel1:ActivePanelToVisibilityConverter_CL x:Key="ActivePanelToVisibilityConverter_CL"/>
+        <viewModel1:ActivePanelToVisibilityConverter_VRP x:Key="ActivePanelToVisibilityConverter_VRP"/>
+
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="5"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="8" >
+
+            <TabControl SelectedIndex="{Binding SelectedTabIndex}">
+                <TabItem Header="Clustering Input ">
+                    <StackPanel>
+                        <Grid  Margin="0,0,-193,0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="700"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+
+                            </Grid.ColumnDefinitions>
+
+
+                            <Border BorderBrush="Black" BorderThickness="2" Grid.Row="0" Grid.Column ="0" MinWidth="300" MinHeight="190"  Margin="5"  >
+                                <StackPanel>
+                                    <TextBlock Text="Clustering 1" FontWeight="Bold" HorizontalAlignment="Center" Margin="5"/>
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Text="Clustering Type : " Grid.Row="1" Grid.Column="0" Margin="5"/>
+
+                                        <ComboBox ItemsSource="{Binding Cl_Enums}" SelectedItem="{Binding InputData.CLInputData_1.CL_Enum , UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" Grid.Row="1" Grid.Column="1" Margin="5" />
+                                       
+                                        <StackPanel x:Name="K_Means1"
+                            Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Grid.RowSpan="3" Orientation="Horizontal" Background="Beige"
+                            Visibility="{Binding InputData.CLInputData_1.CL_Enum, Converter={StaticResource ActivePanelToVisibilityConverter_CL}, ConverterParameter=K_means}">
+
+                                            <Grid>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="5"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <!-- Number of Clusters -->
+                                                <TextBlock Text="Number of Clusters (K):" Grid.Row="1" Grid.Column="0" Margin="5" VerticalAlignment="Center" />
+                                                <TextBox Text="{Binding InputData.CLInputData_1.KmeansInputData.NumberOfClusters}" Grid.Row="1" Grid.Column="1" Margin="5" Width="50" />
+
+                                                <!-- Max Iterations -->
+                                                <TextBlock Text="Max Iterations:" Grid.Row="2" Grid.Column="0" Margin="5" VerticalAlignment="Center" />
+                                                <TextBox Text="{Binding InputData.CLInputData_1.KmeansInputData.MaxIterations}" Grid.Row="2" Grid.Column="1" Margin="5" Width="50" />
+
+                                                <!-- Tolerance -->
+                                                <TextBlock Text="Tolerance:" Grid.Row="3" Grid.Column="0" Margin="5" VerticalAlignment="Center" />
+                                                <!--<TextBox Text="{Binding Tolerance}" Grid.Row="3" Grid.Column="1" Margin="5" Width="50" />-->
+
+                                            </Grid>
+                                        </StackPanel>
+                                        <StackPanel x:Name="Hierarchical_1"
+                            Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Grid.RowSpan="3" Orientation="Horizontal" Background="Beige"
+                            Visibility="{Binding InputData.CLInputData_1.CL_Enum, Converter={StaticResource ActivePanelToVisibilityConverter_CL}, ConverterParameter=Hierarchical}">
+
+                                            <Grid>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="5"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Number of Clusters (H):" Grid.Row="1" Grid.Column="0" Margin="5" VerticalAlignment="Center" />
+                                                <TextBox Text="{Binding InputData.CLInputData_1.HierInputData.MaxClusters}" Grid.Row="1" Grid.Column="1" Margin="5" Width="50" />
+
+                                            </Grid>
+                                        </StackPanel>
+                                        <StackPanel x:Name="Optimization_1"
+                            Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Grid.RowSpan="3" Orientation="Horizontal" Background="Beige"
+                            Visibility="{Binding InputData.CLInputData_1.CL_Enum, Converter={StaticResource ActivePanelToVisibilityConverter_CL}, ConverterParameter=Optimization}">
+
+                                            <Grid>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="5"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Optimization = " Grid.Row="1" Grid.Column="0" Margin="5"/>
+
+
+                                            </Grid>
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+
+                            </Border>
+
+                            <Border BorderBrush="Black" BorderThickness="2" Grid.Row="0" Grid.Column ="1" MinWidth="300" MinHeight="190"  Margin="5"  >
+                                <StackPanel>
+                                    <TextBlock Text="Clustering 2" FontWeight="Bold" HorizontalAlignment="Center" Margin="5"/>
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Text="Clustering Type : " Grid.Row="1" Grid.Column="0" Margin="5"/>
+
+                                        <ComboBox ItemsSource="{Binding Cl_Enums}" SelectedItem="{Binding InputData.CLInputData_2.CL_Enum , UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" Grid.Row="1" Grid.Column="1" Margin="5" />
+
+                                        <StackPanel x:Name="K_Means2"
+                            Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Grid.RowSpan="3" Orientation="Horizontal" Background="Beige"
+                            Visibility="{Binding InputData.CLInputData_2.CL_Enum, Converter={StaticResource ActivePanelToVisibilityConverter_CL}, ConverterParameter=K_means}">
+
+                                            <Grid>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="5"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <!-- Number of Clusters -->
+                                                <TextBlock Text="Number of Clusters (K):" Grid.Row="1" Grid.Column="0" Margin="5" VerticalAlignment="Center" />
+                                                <TextBox Text="{Binding InputData.CLInputData_2.KmeansInputData.NumberOfClusters}" Grid.Row="1" Grid.Column="1" Margin="5" Width="50" />
+
+                                                <!-- Max Iterations -->
+                                                <TextBlock Text="Max Iterations:" Grid.Row="2" Grid.Column="0" Margin="5" VerticalAlignment="Center" />
+                                                <!--<TextBox Text="{Binding MaxIterations}" Grid.Row="2" Grid.Column="1" Margin="5" Width="50" />-->
+
+                                                <!-- Tolerance -->
+                                                <TextBlock Text="Tolerance:" Grid.Row="3" Grid.Column="0" Margin="5" VerticalAlignment="Center" />
+                                                <!--<TextBox Text="{Binding Tolerance}" Grid.Row="3" Grid.Column="1" Margin="5" Width="50" />-->
+
+                                            </Grid>
+                                        </StackPanel>
+                                        <StackPanel x:Name="Hierarchical_2"
+                            Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Grid.RowSpan="3" Orientation="Horizontal" Background="Beige"
+                            Visibility="{Binding InputData.CLInputData_2.CL_Enum, Converter={StaticResource ActivePanelToVisibilityConverter_CL}, ConverterParameter=Hierarchical}">
+
+                                            <Grid>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="5"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Number of Clusters (H):" Grid.Row="1" Grid.Column="0" Margin="5" VerticalAlignment="Center" />
+                                                <TextBox Text="{Binding InputData.CLInputData_2.HierInputData.MaxClusters}" Grid.Row="1" Grid.Column="1" Margin="5" Width="50" />
+
+                                            </Grid>
+                                        </StackPanel>
+                                        <StackPanel x:Name="Optimization_2"
+                            Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Grid.RowSpan="3" Orientation="Horizontal" Background="Beige"
+                            Visibility="{Binding InputData.CLInputData_2.CL_Enum, Converter={StaticResource ActivePanelToVisibilityConverter_CL}, ConverterParameter=Optimization}">
+
+                                            <Grid>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="5"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Optimization = " Grid.Row="1" Grid.Column="0" Margin="5"/>
+
+
+                                            </Grid>
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+
+                            </Border>
+                            <StackPanel Grid.Row="3" Grid.ColumnSpan="4" HorizontalAlignment="Center" Orientation="Horizontal">
+
+                                <Button x:Name="ShowCities"  Width="180" HorizontalAlignment="Left" Margin="2"  Command="{Binding ShowCitiesGridCommand}">
+                                    <TextBlock Text="Show Cities"/>
+                                </Button>
+
+                                <Button x:Name="CalculateCL1"  Width="180" HorizontalAlignment="Left" Margin="2"  Command="{Binding CalculateClustering1}">
+                                    <TextBlock Text="Calculate Clustering 1"/>
+                                </Button>
+
+                                <Button x:Name="CalculateCL2"  Width="180" HorizontalAlignment="Left" Margin="2"  Command="{Binding CalculateClustering2}">
+                                    <TextBlock Text="Calculate Clustering 2"/>
+                                </Button>
+                            </StackPanel>
+                            <syncfusion:SfDataGrid  x:Name="dataGrid"
+                        AutoGenerateColumns="False"
+                                AllowSorting="True"
+                                ShowSortNumbers="True"
+                                AllowFiltering="True"
+                                AllowEditing="False"
+                                AllowDeleting="True"    
+                                Background="White"
+                                Grid.Row="4"
+                                Grid.Column="0"
+                                Grid.ColumnSpan="5"
+                                LiveDataUpdateMode="AllowDataShaping"                                
+                                ItemsSource="{Binding InputData.CityData}" 
+                                ShowRowHeader="True" 
+                                FilterRowPosition="FixedTop"
+                                ScrollViewer.VerticalScrollBarVisibility="Visible"
+                                ScrollViewer.HorizontalScrollBarVisibility="Visible"
+                                ShowToolTip="True"
+                                AllowGrouping="True"
+                                ShowGroupDropArea="True" >
+
+                                <syncfusion:SfDataGrid.Columns>
+                                    <syncfusion:GridTextColumn MappingName="CityCode" HeaderText="City Code"/>
+                                    <syncfusion:GridTextColumn MappingName="CityDescr" HeaderText="City Descr"/>
+                                    <syncfusion:GridTextColumn MappingName="PrefDescr" HeaderText="Prefecture Descr"/>
+                                    <syncfusion:GridTextColumn MappingName="CountryDescr" HeaderText="Country Descr"/>
+                                    <syncfusion:GridTextColumn MappingName="Longitude" HeaderText="Longitude " />
+                                    <syncfusion:GridTextColumn MappingName="Latitude" HeaderText="Latitude" />
+                                    <syncfusion:GridTextColumn MappingName="Population" HeaderText="Population" />
+                                    <syncfusion:GridTextColumn MappingName="Demand" HeaderText="Demand"  AllowEditing="True" />
+
+                                    <syncfusion:GridCheckBoxColumn MappingName="Selected" HeaderText="Selected" AllowEditing ="True" />
+
+                                </syncfusion:SfDataGrid.Columns>
+                            </syncfusion:SfDataGrid>
+                        </Grid>
+
+
+
+
+
+
+
+
+                    </StackPanel>
+                </TabItem>
+                <TabItem Header="Clustering Results">
+                    <TabControl>
+                        <TabItem Header="Clustering 1 ">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+
+                                </Grid.ColumnDefinitions>
+                                <!--<TextBlock Text="Objective Value: " Grid.Row="0" Grid.Column="0" Margin="2"/>
+                                <TextBox Text="{Binding OutputData.ObjValue, Mode=TwoWay}" Grid.Row="0" Grid.Column="1"  HorizontalAlignment="Stretch" Width="135" Margin="2" />-->
+                                <syncfusion:SfDataGrid x:Name="sfGrid_CL1"
+                                                    Grid.Row="1"
+                                                    Grid.Column="1"
+                                                    ColumnSizer="Star"
+                                                    Background="White"
+                                                    AllowSorting="True"
+                                                    ShowSortNumbers="True"
+                                                    AllowEditing="True"
+                                                    AllowResizingColumns="True"
+                                                    FilterRowPosition="FixedTop"
+                                                    ScrollViewer.VerticalScrollBarVisibility="Visible"
+                                                    ScrollViewer.HorizontalScrollBarVisibility="Visible"
+                                                    ShowToolTip="True"
+                                                    AllowGrouping="True"
+                                                    ShowGroupDropArea="True"
+                                                    AllowFiltering="True"
+                                                    AutoGenerateColumns="False"
+                                                    ItemsSource="{Binding ClResultsdata.DataPoints1 , Mode=TwoWay , UpdateSourceTrigger=PropertyChanged}"
+                                                    AutoExpandGroups="True"
+                                                    ShowRowHeader="True" 
+                                                >
+                                    <syncfusion:SfDataGrid.GroupColumnDescriptions>
+                                        <syncfusion:GroupColumnDescription ColumnName="ClusterCode" />
+                                    </syncfusion:SfDataGrid.GroupColumnDescriptions>
+                                    <syncfusion:SfDataGrid.SortColumnDescriptions>
+                                        <syncfusion:SortColumnDescription ColumnName="ClusterCode"  />
+                                    </syncfusion:SfDataGrid.SortColumnDescriptions>
+                                    <syncfusion:SfDataGrid.Columns>
+                                        <syncfusion:GridTextColumn MappingName="ClusterCode" HeaderText="Cluster Code" AllowEditing="False"/>
+                                        <syncfusion:GridTextColumn MappingName="Code" HeaderText="Point Code" AllowEditing="False"/>
+                                        <syncfusion:GridTextColumn MappingName="Longitude" HeaderText="Longitude" AllowEditing="False"/>
+                                        <syncfusion:GridTextColumn MappingName="Latitude" HeaderText="Latitude" AllowEditing="False"/>
+
+                                    </syncfusion:SfDataGrid.Columns>
+
+                                </syncfusion:SfDataGrid>
+                                <syncfusion:SfDataGrid x:Name="sfGrid_CLustersInfo1"
+                                                    Grid.Row="1"
+                                                    Grid.Column="2"
+                                                    ColumnSizer="Star"
+                                                    Background="White"
+                                                    AllowSorting="True"
+                                                    ShowSortNumbers="True"
+                                                    AllowEditing="True"
+                                                    AllowResizingColumns="True"
+                                                    FilterRowPosition="FixedTop"
+                                                    ScrollViewer.VerticalScrollBarVisibility="Visible"
+                                                    ScrollViewer.HorizontalScrollBarVisibility="Visible"
+                                                    ShowToolTip="True"
+                                                    AllowGrouping="True"
+                                                    ShowGroupDropArea="True"
+                                                    AllowFiltering="True"
+                                                    AutoGenerateColumns="True"
+                                                    ItemsSource="{Binding ClResultsdata.Clusters1 , Mode=TwoWay , UpdateSourceTrigger=PropertyChanged}"
+                                                    ShowRowHeader="True" 
+                                                    AutoExpandGroups="True"
+
+                                                >
+                                    <syncfusion:SfDataGrid.SortColumnDescriptions>
+                                        <syncfusion:SortColumnDescription ColumnName="ClusterCode"  />
+                                    </syncfusion:SfDataGrid.SortColumnDescriptions>
+
+                                </syncfusion:SfDataGrid>
+
+                            </Grid>
+                        </TabItem>
+                        <TabItem Header="Clustering 2 ">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+
+                                </Grid.ColumnDefinitions>
+                                <!--<TextBlock Text="Objective Value: " Grid.Row="0" Grid.Column="0" Margin="2"/>
+                                <TextBox Text="{Binding OutputData.ObjValue, Mode=TwoWay}" Grid.Row="0" Grid.Column="1"  HorizontalAlignment="Stretch" Width="135" Margin="2" />-->
+                                <syncfusion:SfDataGrid x:Name="sfGrid_CL2"
+                                                    Grid.Row="1"
+                                                    Grid.Column="1"
+                                                    ColumnSizer="Star"
+                                                    Background="White"
+                                                    AllowSorting="True"
+                                                    ShowSortNumbers="True"
+                                                    AllowEditing="True"
+                                                    AllowResizingColumns="True"
+                                                    FilterRowPosition="FixedTop"
+                                                    ScrollViewer.VerticalScrollBarVisibility="Visible"
+                                                    ScrollViewer.HorizontalScrollBarVisibility="Visible"
+                                                    ShowToolTip="True"
+                                                    AllowGrouping="True"
+                                                    ShowGroupDropArea="True"
+                                                    AllowFiltering="True"
+                                                    AutoGenerateColumns="False"
+                                                    ItemsSource="{Binding ClResultsdata.DataPoints2 , Mode=TwoWay , UpdateSourceTrigger=PropertyChanged}"
+                                                    ShowRowHeader="True" 
+                                                >
+
+                                    <syncfusion:SfDataGrid.Columns>
+                                        <syncfusion:GridTextColumn MappingName="ClusterCode" HeaderText="Cluster Code" AllowEditing="False"/>
+                                        <syncfusion:GridTextColumn MappingName="Code" HeaderText="Point Code" AllowEditing="False"/>
+                                        <syncfusion:GridTextColumn MappingName="Longitude" HeaderText="Longitude" AllowEditing="False"/>
+                                        <syncfusion:GridTextColumn MappingName="Latitude" HeaderText="Latitude" AllowEditing="False"/>
+
+                                    </syncfusion:SfDataGrid.Columns>
+
+                                </syncfusion:SfDataGrid>
+                                <syncfusion:SfDataGrid x:Name="sfGrid_CLustersInfo2"
+                                                    Grid.Row="1"
+                                                    Grid.Column="2"
+                                                    ColumnSizer="Star"
+                                                    Background="White"
+                                                    AllowSorting="True"
+                                                    ShowSortNumbers="True"
+                                                    AllowEditing="True"
+                                                    AllowResizingColumns="True"
+                                                    FilterRowPosition="FixedTop"
+                                                    ScrollViewer.VerticalScrollBarVisibility="Visible"
+                                                    ScrollViewer.HorizontalScrollBarVisibility="Visible"
+                                                    ShowToolTip="True"
+                                                    AllowGrouping="True"
+                                                    ShowGroupDropArea="True"
+                                                    AllowFiltering="True"
+                                                    AutoGenerateColumns="True"
+                                                    ItemsSource="{Binding ClResultsdata.Clusters2 , Mode=TwoWay , UpdateSourceTrigger=PropertyChanged}"
+                                                    ShowRowHeader="True" 
+                                                >
+
+
+                                </syncfusion:SfDataGrid>
+
+                            </Grid>
+                        </TabItem>
+                        <TabItem Header="Diagrams">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="200" />
+                                    <RowDefinition Height="Auto" />
+
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="300"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <Grid Grid.Row="0" Grid.Column="0">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+
+                                </Grid>
+
+
+                                <Grid Grid.Row="2" >
+
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="500"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" MinWidth="600" />
+                                        <ColumnDefinition Width="Auto" MinWidth="600" />
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    
+                                    <oxy:PlotView x:Name="PlotView" Grid.Row="0" Grid.Column="0" Model="{Binding PlotModel}" />
+
+                                </Grid>
+                            </Grid>
+                        </TabItem>
+                    </TabControl>
+                </TabItem>
+                <TabItem Header="VRP Input ">
+                    <StackPanel>
+                        <Grid  Margin="0,0,-193,0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="700"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+
+                            </Grid.ColumnDefinitions>
+
+                            <Border BorderBrush="Black" BorderThickness="1" Grid.Row="0"  Grid.Column ="2" Margin="5" Width="350" >
+                                <StackPanel>
+                                    <TextBlock Text="Vehicle Routing Type" FontWeight="Bold" HorizontalAlignment="Center" Margin="5"/>
+                                    <StackPanel>
+                                        <Grid  Margin="0,0,-193,0">
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="52"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="*"/>
+
+                                            </Grid.RowDefinitions>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="200"/>
+                                                <ColumnDefinition Width="200"/>
+
+                                                <ColumnDefinition Width="*"/>
+
+                                            </Grid.ColumnDefinitions>
+
+                                            <TextBlock Text="Capacitated VRP (CVRP) : "  Grid.Row="1" Grid.Column="0" Margin="5"/>
+                                            <TextBlock Text="CVRP with Time Windows (CVRPTW) : "   Grid.Row="2" Grid.Column="0" Margin="5"/>
+
+
+                                            <RadioButton Grid.Row="1" Grid.Column="1" Margin="5" IsChecked="{Binding InputData.CVRP_Flag}"/>
+                                            <RadioButton Grid.Row="2" Grid.Column="1" Margin="5" IsChecked="{Binding InputData.CVRPTW_Flag}"/>
+
+
+                                            <StackPanel Margin="2"  HorizontalAlignment="Left" Orientation="Horizontal"  Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="4">
+                                                <Button Margin="2" x:Name="ChooseRepairOptionsCommand"  Width="Auto" HorizontalAlignment="Left" Command="{Binding ShowVehicles1GridCommand}">
+                                                    <TextBlock Text="Choose "/>
+                                                </Button>
+                                            </StackPanel>
+
+
+
+                                            <!--<syncfusion:SfDataGrid x:Name="sfGridMaintenance"
+                                                    Grid.Row="5"
+                                                    Grid.Column="0"
+                                                    Grid.ColumnSpan="6"
+                                                    ColumnSizer="Star"
+                                                    Background="White"
+                                                    AllowSorting="True"
+                                                    ShowSortNumbers="True"
+                                                    AllowFiltering="True"
+                                                    AllowEditing="True"
+                                                    AllowResizingColumns="True"
+                                                    FilterRowPosition="FixedTop"
+                                                    ScrollViewer.VerticalScrollBarVisibility="Visible"
+                                                    ScrollViewer.HorizontalScrollBarVisibility="Visible"
+                                                    ShowToolTip="True"
+                                                    AllowGrouping="True"
+                                                    ShowGroupDropArea="True"
+                                                    AutoGenerateColumns="False"
+                                                    SelectedItem="{Binding SelectedItemRepair, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                    Columns="{Binding SfGridColumnsRepair, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                    ItemsSource="{Binding CollectionViewRepair , Mode=TwoWay , UpdateSourceTrigger=PropertyChanged}"
+                                                    ShowRowHeader="True" 
+                                                >
+                                            <i:Interaction.Triggers>
+                                                <i:EventTrigger EventName="MouseDoubleClick">
+                                                    <i:InvokeCommandAction Command="{Binding Path=DataContext.RowDataCommand,ElementName=sfGridMaintenance}" CommandParameter="{Binding}"/>
+                                                </i:EventTrigger>
+                                            </i:Interaction.Triggers>
+                                        </syncfusion:SfDataGrid>-->
+                                        </Grid>
+                                    </StackPanel>
+                                </StackPanel>
+
+                            </Border>
+
+                            <Border BorderBrush="Black" BorderThickness="2" Grid.Row="0" Grid.Column ="0" MinWidth="300" MinHeight="190"  Margin="5"  >
+                                <StackPanel>
+                                    <TextBlock Text="VRP 1" FontWeight="Bold" HorizontalAlignment="Center" Margin="5"/>
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Text="VRP Type : " Grid.Row="1" Grid.Column="0" Margin="5"/>
+
+                                        <ComboBox ItemsSource="{Binding VRP_Enums}" SelectedItem="{Binding InputData.VrpInputData_1.VRP_Enum , UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" Grid.Row="1" Grid.Column="1" Margin="5" />
+
+                                        <StackPanel x:Name="Simulation_Annealing1"
+                            Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Grid.RowSpan="3" Orientation="Horizontal" Background="Beige"
+                            Visibility="{Binding InputData.VrpInputData_1.VRP_Enum, Converter={StaticResource ActivePanelToVisibilityConverter_VRP}, ConverterParameter=Simulation_Annealing}">
+
+                                            <Grid>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="5"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <!-- Number of Clusters -->
+                                                <TextBlock Text="Initial Temperature = :" Grid.Row="1" Grid.Column="0" Margin="5" VerticalAlignment="Center" />
+                                                <TextBlock Text="Stopping Temperature = :" Grid.Row="1" Grid.Column="2" Margin="5" VerticalAlignment="Center" />
+                                                <TextBlock Text="Cooling Rate = :" Grid.Row="2" Grid.Column="0" Margin="5" VerticalAlignment="Center" />
+                                                <TextBlock Text="Max Iterations  = :" Grid.Row="2" Grid.Column="2" Margin="5" VerticalAlignment="Center" />
+                                                <TextBlock Text="Number Of Depots = :" Grid.Row="3" Grid.Column="0" Margin="5" VerticalAlignment="Center" />
+
+
+                                                <TextBox Text="{Binding InputData.VrpInputData_1.SimAnnealing_InputData.InitialTemp}" Grid.Row="1" Grid.Column="1" Margin="5" Width="50" />
+                                                <TextBox Text="{Binding InputData.VrpInputData_1.SimAnnealing_InputData.StoppingTemp}" Grid.Row="1" Grid.Column="3" Margin="5" Width="50" />
+                                                <TextBox Text="{Binding InputData.VrpInputData_1.SimAnnealing_InputData.CoolingRate}" Grid.Row="2" Grid.Column="1" Margin="5" Width="50" />
+                                                <TextBox Text="{Binding InputData.VrpInputData_1.SimAnnealing_InputData.MaxIterations}" Grid.Row="2" Grid.Column="3" Margin="5" Width="50" />
+                                                <TextBox Text="{Binding InputData.VrpInputData_1.SimAnnealing_InputData.NumberOfDepots}" Grid.Row="3" Grid.Column="1" Margin="5" Width="50" />
+
+
+
+                                            </Grid>
+                                        </StackPanel>
+                                        <StackPanel x:Name="VRP_Optimization_1"
+                            Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Grid.RowSpan="3" Orientation="Horizontal" Background="Beige"
+                            Visibility="{Binding InputData.VrpInputData_1.VRP_Enum, Converter={StaticResource ActivePanelToVisibilityConverter_VRP}, ConverterParameter=Optimization}">
+
+                                            <Grid>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="5"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Optimization  1 = " Grid.Row="1" Grid.Column="0" Margin="5"/>
+
+
+                                            </Grid>
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+
+                            </Border>
+                            <Border BorderBrush="Black" BorderThickness="2" Grid.Row="0" Grid.Column ="1" MinWidth="300" MinHeight="190"  Margin="5"  >
+                                <StackPanel>
+                                    <TextBlock Text="VRP 2" FontWeight="Bold" HorizontalAlignment="Center" Margin="5"/>
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Text="VRP Type : " Grid.Row="1" Grid.Column="0" Margin="5"/>
+
+                                        <ComboBox ItemsSource="{Binding VRP_Enums}" SelectedItem="{Binding InputData.VrpInputData_2.VRP_Enum , UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" Grid.Row="1" Grid.Column="1" Margin="5" />
+
+                                        <StackPanel x:Name="Simulation_Annealing2"
+                            Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Grid.RowSpan="3" Orientation="Horizontal" Background="Beige"
+                            Visibility="{Binding InputData.VrpInputData_2.VRP_Enum, Converter={StaticResource ActivePanelToVisibilityConverter_VRP}, ConverterParameter=Simulation_Annealing}">
+
+                                            <Grid>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="5"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <!-- Number of Clusters -->
+                                                <TextBlock Text="SA 2 = :" Grid.Row="1" Grid.Column="0" Margin="5" VerticalAlignment="Center" />
+                                                <!--<TextBox Text="{Binding InputData.CLInputData_1.KmeansInputData.NumberOfClusters}" Grid.Row="1" Grid.Column="1" Margin="5" Width="50" />-->
+
+
+
+                                            </Grid>
+                                        </StackPanel>
+                                        <StackPanel x:Name="VRP_Optimization_2"
+                            Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Grid.RowSpan="3" Orientation="Horizontal" Background="Beige"
+                            Visibility="{Binding InputData.VrpInputData_2.VRP_Enum, Converter={StaticResource ActivePanelToVisibilityConverter_VRP}, ConverterParameter=Optimization}">
+
+                                            <Grid>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="5"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Optimization VRP 2 = " Grid.Row="1" Grid.Column="0" Margin="5"/>
+
+
+                                            </Grid>
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+
+                            </Border>
+                            <StackPanel Grid.Row="3" Grid.ColumnSpan="4" HorizontalAlignment="Center" Orientation="Horizontal">
+
+                                <Button x:Name="Cluster_Vehicles1"  Width="180" HorizontalAlignment="Left" Margin="2"  Command="{Binding ShowVehicles1GridCommand}">
+                                    <TextBlock Text="Cluster/Vehicles 1"/>
+                                </Button>
+                                <Button x:Name="Cluster_Vehicles2"  Width="180" HorizontalAlignment="Left" Margin="2"  Command="{Binding ShowVehicles2GridCommand}">
+                                    <TextBlock Text="Cluster/Vehicles 2"/>
+                                </Button>
+                                <Button x:Name="CalculateVRP1"  Width="180" HorizontalAlignment="Left" Margin="2"  Command="{Binding CalculateVRP1}">
+                                    <TextBlock Text="Calculate VRP 1"/>
+                                </Button>
+
+                                <Button x:Name="CalculateVRP2"  Width="180" HorizontalAlignment="Left" Margin="2"  Command="{Binding CalculateVRP2}">
+                                    <TextBlock Text="Calculate VRP 2"/>
+                                </Button>
+                            </StackPanel>
+                            <syncfusion:SfDataGrid  x:Name="Vehicles_dataGrid"
+                                AutoGenerateColumns="False"
+                                AllowSorting="True"
+                                ShowSortNumbers="True"
+                                AllowFiltering="True"
+                                AllowEditing="True"
+                                AllowDeleting="True"    
+                                Background="White"
+                                Grid.Row="4"
+                                Grid.Column="0"
+                                Grid.ColumnSpan="5"
+                                LiveDataUpdateMode="AllowDataShaping"                                
+                                ItemsSource="{Binding InputData.CL_VehicleDataGrid}" 
+                                ShowRowHeader="True" 
+                                FilterRowPosition="FixedTop"
+                                ScrollViewer.VerticalScrollBarVisibility="Visible"
+                                ScrollViewer.HorizontalScrollBarVisibility="Visible"
+                                ShowToolTip="True"
+                                AutoExpandGroups="True"
+                                AllowGrouping="True"
+                                ShowGroupDropArea="True" 
+                                                    >
+                                <syncfusion:SfDataGrid.GroupColumnDescriptions>
+                                    <syncfusion:GroupColumnDescription ColumnName="Cluster.ClusterCode" />
+                                </syncfusion:SfDataGrid.GroupColumnDescriptions>
+                                <syncfusion:SfDataGrid.SortColumnDescriptions>
+                                    <syncfusion:SortColumnDescription ColumnName="Cluster.ClusterCode"  />
+                                </syncfusion:SfDataGrid.SortColumnDescriptions>
+                                <syncfusion:SfDataGrid.Columns>
+                                    <syncfusion:GridTextColumn MappingName="Cluster.ClusterCode" HeaderText="Cluster Code" AllowEditing="False"/>
+                                    <syncfusion:GridTextColumn MappingName="Cluster.NumberOfPoints" HeaderText="Numbere Of Points" AllowEditing="False"/>
+
+                                    <syncfusion:GridTextColumn MappingName="Vehicle.Code" HeaderText="Vehicle Code" AllowEditing="False"/>
+                                    <syncfusion:GridTextColumn MappingName="Vehicle.Descr" HeaderText="Vehicle Descr" AllowEditing="False"/>
+                                    <syncfusion:GridTextColumn MappingName="Vehicle.Capacity" HeaderText="Vehicle Capacity" AllowEditing="True"/>
+                                    <syncfusion:GridTextColumn MappingName="Vehicle.NumberOfVehicles" HeaderText="Number of Vehicles" AllowEditing="True"/>
+
+                                </syncfusion:SfDataGrid.Columns>
+
+
+                            </syncfusion:SfDataGrid>
+                        </Grid>
+
+
+
+
+
+
+
+
+                    </StackPanel>
+                </TabItem>
+                <TabItem Header="VRP Results">
+                    <TabControl>
+                        <TabItem Header="VRP Results">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+
+                                </Grid.ColumnDefinitions>
+                                <!--<TextBlock Text="Objective Value: " Grid.Row="0" Grid.Column="0" Margin="2"/>
+                                <TextBox Text="{Binding OutputData.ObjValue, Mode=TwoWay}" Grid.Row="0" Grid.Column="1"  HorizontalAlignment="Stretch" Width="135" Margin="2" />-->
+                                <syncfusion:SfDataGrid x:Name="sfGrid_VRP1"
+                                                    Grid.Row="1"
+                                                    Grid.Column="1"
+                                                    ColumnSizer="Star"
+                                                    Background="White"
+                                                    AllowSorting="True"
+                                                    ShowSortNumbers="True"
+                                                    AllowEditing="False"
+                                                    AllowResizingColumns="True"
+                                                    FilterRowPosition="FixedTop"
+                                                    ScrollViewer.VerticalScrollBarVisibility="Visible"
+                                                    ScrollViewer.HorizontalScrollBarVisibility="Visible"
+                                                    ShowToolTip="True"
+                                                    AllowGrouping="True"
+                                                    ShowGroupDropArea="True"
+                                                    AllowFiltering="True"
+                                                    AutoGenerateColumns="True"
+                                                    ItemsSource="{Binding VRPResultsData.Routes , Mode=TwoWay , UpdateSourceTrigger=PropertyChanged}"
+                                                    ShowRowHeader="True" 
+                                                >
+                                    <!--<syncfusion:SfDataGrid.Columns>
+                                        <syncfusion:GridTextColumn MappingName="ClusterCode" HeaderText="Cluster Code" AllowEditing="False"/>
+                                        <syncfusion:GridTextColumn MappingName="Code" HeaderText="Point Code" AllowEditing="False"/>
+                                        <syncfusion:GridTextColumn MappingName="Longitude" HeaderText="Longitude" AllowEditing="False"/>
+                                        <syncfusion:GridTextColumn MappingName="Latitude" HeaderText="Latitude" AllowEditing="False"/>
+
+                                    </syncfusion:SfDataGrid.Columns>-->
+
+                                </syncfusion:SfDataGrid>
+
+
+                            </Grid>
+                        </TabItem>
+
+                        <TabItem Header="Diagrams">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="200" />
+                                    <RowDefinition Height="Auto" />
+
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="300"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <Grid Grid.Row="0" Grid.Column="0">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+
+                                </Grid>
+
+
+                                <Grid Grid.Row="2" >
+
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="500"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" MinWidth="600" />
+                                        <ColumnDefinition Width="Auto" MinWidth="600" />
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!--<oxy:PlotView x:Name="PlotView2" Grid.Row="0" Grid.Column="0" Model="{Binding PlotModel}" />-->
+
+                                </Grid>
+                            </Grid>
+                        </TabItem>
+                    </TabControl>
+                </TabItem>
+            </TabControl>
+        </StackPanel>
+
+    </Grid>
+</UserControl>

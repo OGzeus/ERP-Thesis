@@ -21,6 +21,7 @@ using Erp.Model.Thesis;
 using Syncfusion.Data.Extensions;
 using OxyPlot;
 using Syncfusion.Windows.Shared;
+using Erp.Model.Thesis.CrewScheduling;
 
 namespace Erp.ViewModel.Thesis
 {
@@ -119,6 +120,7 @@ namespace Erp.ViewModel.Thesis
 
 
             FlatData = new EmployeeData();
+            flatData.EmpCrSettings = new EmployeeCR_Settings();
             ResetEmployeeViewModelData();
 
 
@@ -146,6 +148,8 @@ namespace Erp.ViewModel.Thesis
             FlatData.DateOfBirth = DateTime.Now.AddYears(-20);
             FlatData.BaseAirport = new AirportData();
             FlatData.Certification = new CertificationData();
+            FlatData.EmpCrSettings = new EmployeeCR_Settings();
+
             FlatData.LeaveBidInfo = new LeaveBidsData();
             FlatData.LeaveBidDataGrid = new ObservableCollection<LeaveBidsData>();
 
@@ -266,6 +270,8 @@ namespace Erp.ViewModel.Thesis
 
                 EMPLanguageData = CommonFunctions.GetEMPLanguageData(FlatData.Code, false);
                 FlatData.MainSchedule = CommonFunctions.GetMainScheduleInfoData();
+
+                FlatData.EmpCrSettings = (SelectedItem as EmployeeData).EmpCrSettings;
 
                 ExecuteRefreshCommand3(FlatData);
                 ExecuteRefreshCommandLeaveStatus(FlatData);

@@ -135,6 +135,7 @@ namespace Erp.View
             #region SupplyChain
 
             var menuSpCh = new List<SubItem>();
+            menuSpCh.Add(new SubItem("Clustering VRP", new Clustering_Vrp_View()));
             menuSpCh.Add(new SubItem("VRP", new VehicleRoutingView()));
             menuSpCh.Add(new SubItem("SupplyChainViewModel", new SupplyChainView()));
             menuSpCh.Add(new SubItem("VrpVisualisation" , new VrpVisView()));
@@ -169,7 +170,15 @@ namespace Erp.View
             menuFlights.Add(new SubItem("Requirements Schedule", new RequirementsScheduleView()));
             menuFlights.Add(new SubItem("Vacation Planning", new VacationsPlanningView()));
 
-            var Thesis = new ItemMenu("Diplwmatikh", menuFlights, PackIconKind.Schedule);
+            var VPThesis = new ItemMenu("Diplwmatikh 1", menuFlights, PackIconKind.Schedule);
+
+
+            var menuFlights2 = new List<SubItem>();
+
+            menuFlights2.Add(new SubItem("Flight Routes", new FlightRoutesView()));
+            menuFlights2.Add(new SubItem("Crew Scheduling", new CrewSchedulingView()));
+
+            var CSThesis = new ItemMenu("Diplwmatikh 2", menuFlights2, PackIconKind.Schedule);
             #endregion
 
             SubItems = SubItems.Concat(menuBasic).ToList();
@@ -177,6 +186,7 @@ namespace Erp.View
             SubItems = SubItems.Concat(menuInv).ToList();
             SubItems = SubItems.Concat(menuProd).ToList();
             SubItems = SubItems.Concat(menuData).ToList();
+            SubItems = SubItems.Concat(menuSpCh).ToList();
             SubItems = SubItems.Concat(menuFlights).ToList();
 
 
@@ -191,9 +201,10 @@ namespace Erp.View
             //Menu.Children.Add(new UserControlMenuItem(Vendors, this));
             Menu.Children.Add(new UserControlMenuItem(Inventory, this));
             Menu.Children.Add(new UserControlMenuItem(Production, this));
-            //Menu.Children.Add(new UserControlMenuItem(SupChain, this));
+            Menu.Children.Add(new UserControlMenuItem(SupChain, this));
             Menu.Children.Add(new UserControlMenuItem(DataAnalysis, this));
-            Menu.Children.Add(new UserControlMenuItem(Thesis, this));
+            Menu.Children.Add(new UserControlMenuItem(VPThesis, this));
+            Menu.Children.Add(new UserControlMenuItem(CSThesis, this));
 
             //Menu.Children.Add(new UserControlMenuItem(Schedules, this));
 

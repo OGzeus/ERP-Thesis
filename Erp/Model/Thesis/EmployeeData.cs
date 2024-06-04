@@ -1,5 +1,6 @@
 ﻿using Erp.Model.Enums;
 using Erp.Model.Interfaces;
+using Erp.Model.Thesis.CrewScheduling;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -12,7 +13,24 @@ namespace Erp.Model.Thesis
 {
     public class EmployeeData : RecordBaseModel
     {
-        public int EmployeeId { get; set; }
+
+        #region Employee CrewScheduling Settings
+
+        private EmployeeCR_Settings _EmpCrSettings { get; set; }
+        public EmployeeCR_Settings EmpCrSettings
+        {
+            get { return _EmpCrSettings; }
+            set { _EmpCrSettings = value; OnPropertyChanged("EmpCrSettings"); }
+        }
+        #endregion 
+
+        private int _EmployeeId { get; set; }
+
+        public int EmployeeId
+        {
+            get { return _EmployeeId; }
+            set { _EmployeeId = value; OnPropertyChanged("EmployeeId"); }
+        }
         private string _Code { get; set; }
 
         private string _Descr { get; set; }

@@ -58,6 +58,13 @@ namespace Erp.DataBase.Τhesis
         public int? BaseAirportId { get; set; }
         public int? CertificationID { get; set; }
 
+
+        [Column(TypeName = "int")]
+        public int? LowerBound { get; set; }
+
+        [Column(TypeName = "int")]
+        public int? UpperBound { get; set; }
+
         [ForeignKey("BaseAirportId")]
         public virtual AirportsDataEntity Airports { get; set; }
 

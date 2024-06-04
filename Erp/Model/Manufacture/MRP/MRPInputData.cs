@@ -146,6 +146,7 @@ namespace Erp.Model.Manufacture.MRP
 
         public int P { get; set; }//Number Of MPS end-item Products
         public int Q { get; set; }//Number Of MRP Component Products
+
         private int _W;
         public int W
         {

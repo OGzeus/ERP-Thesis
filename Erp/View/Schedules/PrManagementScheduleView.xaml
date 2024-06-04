@@ -14,10 +14,7 @@
     </UserControl.DataContext>
     <Grid>
         <Grid>
-            <syncfusion:SfScheduler x:Name="scheduler"
-                                
-                                >
-            </syncfusion:SfScheduler>
+
         </Grid>
     </Grid>
 </UserControl>

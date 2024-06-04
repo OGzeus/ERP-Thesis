@@ -34,6 +34,10 @@ using Erp.Model.Thesis.VacationPlanning;
 using Microsoft.EntityFrameworkCore.Internal;
 using Erp.View.Thesis.CustomButtons;
 using Newtonsoft.Json.Linq;
+using Erp.Model.SupplyChain;
+using Erp.Model.Thesis.CrewScheduling;
+using OxyPlot;
+using NetTopologySuite.Mathematics;
 
 namespace Erp.CommonFiles
 {
@@ -42,6 +46,262 @@ namespace Erp.CommonFiles
     {
 
         #region Thesis
+
+        #region FlightRoutes
+
+        public bool SaveFlightRoutesData(ObservableCollection<FlightRoutesData> Data, List<CityData> CityList)
+        {
+            var Cities = CityList;
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
+
+
+                    bool hasChanges = false;
+                    foreach (var row in Data)
+                    {
+                        var existingrow = dbContext.FlightRoutes.SingleOrDefault(b => b.FlightRouteId == row.FlightRouteId);
+
+                        if (existingrow == null)
+                        {
+                            FlightRoutesDataEntity newrow = new FlightRoutesDataEntity();
+
+
+                            newrow.CityFrom = Cities.Where(d => d.CityCode == row.CityCodeFrom).FirstOrDefault().CityId;
+                            newrow.CityTo = Cities.Where(d => d.CityCode == row.CityCodeTo).FirstOrDefault().CityId;
+
+                            newrow.FlightTime = row.FlightTime;
+                            newrow.Code = row.Code;
+                            newrow.StartDate = row.StartDate;
+                            newrow.EndDate = row.EndDate;
+                            newrow.IsDeleted = false;
+
+                            dbContext.FlightRoutes.Add(newrow);
+                            hasChanges = true;
+                        }
+                        else if (existingrow != null)
+                        {
+
+                            existingrow.CityFrom = Cities.Where(d => d.CityCode == row.CityCodeFrom).FirstOrDefault().CityId;
+                            existingrow.CityTo = Cities.Where(d => d.CityCode == row.CityCodeTo).FirstOrDefault().CityId;
+
+                            existingrow.FlightTime = row.FlightTime;
+                            existingrow.Code = row.Code;
+                            existingrow.StartDate = row.StartDate;
+                            existingrow.EndDate = row.EndDate;
+                            existingrow.IsDeleted = row.IsDeleted;
+
+                            hasChanges = true;
+
+
+
+                        }
+
+
+                    }
+
+                    if (hasChanges)
+                    {
+                        dbContext.SaveChanges();
+                    }
+
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "SaveFlightRoutesData", "Notes");
+                return false;
+            }
+        }
+
+        public ObservableCollection<FlightRoutesData> GetFlightRoutesData(bool ShowDeleted)
+        {
+            ObservableCollection<FlightRoutesData> DataList = new ObservableCollection<FlightRoutesData>();
+            string FilterStr = "";
+            using (var connection = GetConnection())
+            using (var command = new SqlCommand())
+            {
+                connection.Open();
+                command.Connection = connection;
+
+
+                if (ShowDeleted == false)
+                {
+                    command.Parameters.AddWithValue("@ShowDeleted", ShowDeleted);
+                    FilterStr = String.Format(@" and F.IsDeleted =@ShowDeleted");
+                }
+
+                command.CommandText = string.Format(@"select F.FlightRouteId,F.Code,F.IsDeleted,F.StartDate, F.EndDate,F.FlightTime,
+CityFrom.CityId as CityFromId,CityFrom.CityCode as CityFromCode, CityFrom.CityDescr as CityFromDescr, PrefFrom.PrefCode as PrefFromCode, PrefFrom.PrefDescr as PrefFromDescr, CountryFrom.CountryCode as CountryFromCode, CountryFrom.CountryDescr as CountryFromDescr, CityFrom.Longitude as CityFromLongitude, CityFrom.Latitude as CityFromLatitude, 
+                                               CityTo.CityId as CityToId,CityTo.CityCode as CityToCode, CityTo.CityDescr as CityToDescr, PrefTo.PrefCode as PrefToCode, PrefTo.PrefDescr as PrefToDescr, CountryTo.CountryCode as CountryToCode, CountryTo.CountryDescr as CountryToDescr, CityTo.Longitude as CityToLongitude, CityTo.Latitude as CityToLatitude
+                                               
+                                               from FlightRoutes as F
+                                               inner join City as CityFrom on F.CityFrom = CityFrom.CityId
+                                               inner join Prefecture as PrefFrom on CityFrom.PrefId = PrefFrom.PrefId
+                                               inner join Country as CountryFrom on PrefFrom.CountryId = CountryFrom.CountryId
+                                               inner join City as CityTo on F.CityTo = CityTo.CityId
+                                               inner join Prefecture as PrefTo on CityTo.PrefId = PrefTo.PrefId
+                                               inner join Country as CountryTo on PrefTo.CountryId = CountryTo.CountryId
+Where 1=1 {0}", FilterStr);
+
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        FlightRoutesData data = new FlightRoutesData();
+                        data.FlightRouteId = int.Parse(reader["FlightRouteId"].ToString());
+                        data.Code = reader["Code"].ToString();
+                        data.StartDate = DateTime.Parse(reader["StartDate"].ToString());
+                        data.EndDate = DateTime.Parse(reader["EndDate"].ToString());
+
+                        data.StartDate_String = data.StartDate.ToString("dd/MM/yyyy HH:mm");
+                        data.EndDate_String = data.EndDate.ToString("dd/MM/yyyy HH:mm");
+
+
+                        data.FlightTime = float.Parse(reader["FlightTime"].ToString());
+                        data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
+
+                        CityData cityFrom = new CityData();
+                        cityFrom.CityId = int.Parse(reader["CityFromId"].ToString());
+                        cityFrom.CityCode = reader["CityFromCode"].ToString();
+                        cityFrom.CityDescr = reader["CityFromDescr"].ToString();
+                        cityFrom.PrefCode = reader["PrefFromCode"].ToString();
+                        cityFrom.PrefDescr = reader["PrefFromDescr"].ToString();
+                        cityFrom.CountryCode = reader["CountryFromCode"].ToString();
+                        cityFrom.CountryDescr = reader["CountryFromDescr"].ToString();
+                        cityFrom.Longitude = float.Parse(reader["CityFromLongitude"].ToString());
+                        cityFrom.Latitude = float.Parse(reader["CityFromLatitude"].ToString());
+
+                        data.CityDataFrom = cityFrom;
+                        data.CityCodeFrom = cityFrom.CityCode;
+                        data.CountryCodeFrom = cityFrom.CountryCode;
+
+                        CityData cityTo = new CityData();
+                        cityTo.CityId = int.Parse(reader["CityToId"].ToString());
+                        cityTo.CityCode = reader["CityToCode"].ToString();
+                        cityTo.CityDescr = reader["CityToDescr"].ToString();
+                        cityTo.PrefCode = reader["PrefToCode"].ToString();
+                        cityTo.PrefDescr = reader["PrefToDescr"].ToString();
+                        cityTo.CountryCode = reader["CountryToCode"].ToString();
+                        cityTo.CountryDescr = reader["CountryToDescr"].ToString();
+                        cityTo.Longitude = float.Parse(reader["CityToLongitude"].ToString());
+                        cityTo.Latitude = float.Parse(reader["CityToLatitude"].ToString());
+
+                        data.CityDataTo = cityTo;
+                        data.CityCodeTo = cityTo.CityCode;
+                        data.CountryCodeTo = cityTo.CountryCode;
+
+
+
+                        DataList.Add(data);
+                    }
+                }
+
+                connection.Close();
+            }
+
+            return DataList;
+        }
+        public ObservableCollection<FlightRoutesData> GetCSFlightRoutesData(bool ShowDeleted, CSInputData InputData)
+        {
+            ObservableCollection<FlightRoutesData> DataList = new ObservableCollection<FlightRoutesData>();
+            string FilterStr = "";
+            using (var connection = GetConnection())
+            using (var command = new SqlCommand())
+            {
+                connection.Open();
+                command.Connection = connection;
+
+
+                if (ShowDeleted == false)
+                {
+                    command.Parameters.AddWithValue("@ShowDeleted", ShowDeleted);
+                    FilterStr = String.Format(@" and F.IsDeleted =@ShowDeleted");
+
+
+
+                }
+                command.Parameters.AddWithValue("@StartDate", InputData.DateFrom);
+                command.Parameters.AddWithValue("@EndDate", InputData.DateTo);
+
+                FilterStr += " AND F.StartDate >= @StartDate";
+                FilterStr += " AND F.EndDate <= @EndDate";
+
+
+                command.CommandText = string.Format(@"select F.FlightRouteId,F.Code,F.IsDeleted,F.StartDate, F.EndDate,F.FlightTime,
+CityFrom.CityId as CityFromId,CityFrom.CityCode as CityFromCode, CityFrom.CityDescr as CityFromDescr, PrefFrom.PrefCode as PrefFromCode, PrefFrom.PrefDescr as PrefFromDescr, CountryFrom.CountryCode as CountryFromCode, CountryFrom.CountryDescr as CountryFromDescr, CityFrom.Longitude as CityFromLongitude, CityFrom.Latitude as CityFromLatitude, 
+                                               CityTo.CityId as CityToId,CityTo.CityCode as CityToCode, CityTo.CityDescr as CityToDescr, PrefTo.PrefCode as PrefToCode, PrefTo.PrefDescr as PrefToDescr, CountryTo.CountryCode as CountryToCode, CountryTo.CountryDescr as CountryToDescr, CityTo.Longitude as CityToLongitude, CityTo.Latitude as CityToLatitude
+                                               
+                                               from FlightRoutes as F
+                                               inner join City as CityFrom on F.CityFrom = CityFrom.CityId
+                                               inner join Prefecture as PrefFrom on CityFrom.PrefId = PrefFrom.PrefId
+                                               inner join Country as CountryFrom on PrefFrom.CountryId = CountryFrom.CountryId
+                                               inner join City as CityTo on F.CityTo = CityTo.CityId
+                                               inner join Prefecture as PrefTo on CityTo.PrefId = PrefTo.PrefId
+                                               inner join Country as CountryTo on PrefTo.CountryId = CountryTo.CountryId
+Where 1=1 {0}", FilterStr);
+
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        FlightRoutesData data = new FlightRoutesData();
+                        data.FlightRouteId = int.Parse(reader["FlightRouteId"].ToString());
+                        data.Code = reader["Code"].ToString();
+                        data.StartDate = DateTime.Parse(reader["StartDate"].ToString());
+                        data.EndDate = DateTime.Parse(reader["EndDate"].ToString());
+
+                        data.StartDate_String = data.StartDate.ToString("dd/MM/yyyy HH:mm");
+                        data.EndDate_String = data.EndDate.ToString("dd/MM/yyyy HH:mm");
+
+
+                        data.FlightTime = float.Parse(reader["FlightTime"].ToString());
+                        data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
+
+                        CityData cityFrom = new CityData();
+                        cityFrom.CityId = int.Parse(reader["CityFromId"].ToString());
+                        cityFrom.CityCode = reader["CityFromCode"].ToString();
+                        cityFrom.CityDescr = reader["CityFromDescr"].ToString();
+                        cityFrom.PrefCode = reader["PrefFromCode"].ToString();
+                        cityFrom.PrefDescr = reader["PrefFromDescr"].ToString();
+                        cityFrom.CountryCode = reader["CountryFromCode"].ToString();
+                        cityFrom.CountryDescr = reader["CountryFromDescr"].ToString();
+                        cityFrom.Longitude = float.Parse(reader["CityFromLongitude"].ToString());
+                        cityFrom.Latitude = float.Parse(reader["CityFromLatitude"].ToString());
+
+                        data.CityDataFrom = cityFrom;
+                        data.CityCodeFrom = cityFrom.CityCode;
+                        data.CountryCodeFrom = cityFrom.CountryCode;
+
+                        CityData cityTo = new CityData();
+                        cityTo.CityId = int.Parse(reader["CityToId"].ToString());
+                        cityTo.CityCode = reader["CityToCode"].ToString();
+                        cityTo.CityDescr = reader["CityToDescr"].ToString();
+                        cityTo.PrefCode = reader["PrefToCode"].ToString();
+                        cityTo.PrefDescr = reader["PrefToDescr"].ToString();
+                        cityTo.CountryCode = reader["CountryToCode"].ToString();
+                        cityTo.CountryDescr = reader["CountryToDescr"].ToString();
+                        cityTo.Longitude = float.Parse(reader["CityToLongitude"].ToString());
+                        cityTo.Latitude = float.Parse(reader["CityToLatitude"].ToString());
+
+                        data.CityDataTo = cityTo;
+                        data.CityCodeTo = cityTo.CityCode;
+                        data.CountryCodeTo = cityTo.CountryCode;
+
+
+
+                        DataList.Add(data);
+                    }
+                }
+
+                connection.Close();
+            }
+
+            return DataList;
+        }
+        #endregion
 
         #region Language
 
@@ -1020,6 +1280,65 @@ Where  1=1 {0}", FilterStr);
         #region Employee
 
         #region 1stTab General Info
+        public ObservableCollection<EmployeeData> GetEmployeesByTypeData(BasicEnums.EmployeeType employeeType, bool ShowDeleted)
+        {
+            ObservableCollection<EmployeeData> DataList = new ObservableCollection<EmployeeData>();
+
+            string FilterStr = "";
+
+            using (var connection = GetConnection())
+            using (var command = new SqlCommand())
+            {
+                connection.Open();
+                command.Connection = connection;
+
+                if (ShowDeleted == false)
+                {
+                    command.Parameters.AddWithValue("@ShowDeleted", ShowDeleted);
+                    FilterStr = string.Concat(FilterStr, " AND E.IsDeleted = @ShowDeleted");
+                }
+                command.Parameters.AddWithValue("@Position", employeeType.ToString());
+                FilterStr = string.Concat(FilterStr, " AND E.Position = @Position");
+
+                command.CommandText = string.Format(@"SELECT E.EmployeeID, E.Code, E.Descr, E.LowerBound, E.UpperBound,  
+E.Position,E.Seniority,E.IsDeleted
+FROM Employees AS E
+WHERE 1=1 {0}
+ORDER BY E.Seniority", FilterStr);
+
+
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        EmployeeData data = new EmployeeData();
+                        data.EmpCrSettings = new EmployeeCR_Settings();
+                        data.Certification = new CertificationData();
+                        data.BaseAirport = new AirportData();
+                        data.BaseAirport.City = new CityData();
+
+
+                        data.EmployeeId = int.Parse(reader["EmployeeID"].ToString());
+                        data.Code = reader["Code"].ToString();
+                        data.Descr = reader["Descr"].ToString();
+                        data.Position = (BasicEnums.EmployeeType)Enum.Parse(typeof(BasicEnums.EmployeeType), reader["Position"].ToString());
+                        data.Seniority = int.Parse(reader["Seniority"].ToString());
+                        data.EmpCrSettings.LowerBound = int.Parse(reader["LowerBound"].ToString());
+                        data.EmpCrSettings.UpperBound = int.Parse(reader["UpperBound"].ToString());
+
+                        data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
+
+
+
+                        DataList.Add(data);
+                    }
+                }
+
+                connection.Close();
+            }
+
+            return DataList;
+        }
 
         public int SaveEmployeeData(EmployeeData flatData)
         {
@@ -1058,6 +1377,8 @@ Where  1=1 {0}", FilterStr);
 
                         existing.DateOfBirth = DateTime.Now;
                         existing.HireDate = DateTime.Now;
+                        existing.LowerBound = flatData.EmpCrSettings.LowerBound;
+                        existing.UpperBound = flatData.EmpCrSettings.UpperBound;
 
                         existing.BaseAirportId = flatData.BaseAirport.Id;
                         existing.CertificationID = flatData.Certification.Id;
@@ -1108,6 +1429,8 @@ Where  1=1 {0}", FilterStr);
                         newItem.TotalFlightHours = 0;
                         newItem.Seniority = 0;
                         newItem.Language = 0;
+                        newItem.LowerBound = 70;
+                        newItem.UpperBound = 80;
 
                         newItem.DateOfBirth = DateTime.Now;
                         newItem.HireDate = DateTime.Now;
@@ -1164,7 +1487,7 @@ Where  1=1 {0}", FilterStr);
 
                     }
                     command.CommandText = string.Format(@"SELECT Employees.EmployeeID, Employees.Code, Employees.Descr, 
-Employees.FirstName,Employees.LastName, Employees.Gender, Employees.DateOfBirth, 
+Employees.FirstName,Employees.LastName, Employees.Gender, Employees.DateOfBirth, Employees.LowerBound, Employees.UpperBound, 
 Employees.ContactNumber, Employees.Email,Employees.Address,Employees.Position,Employees.CertificationID,Employees.HireDate,Employees.TotalFlightHours,
 Employees.Seniority,Employees.Language,Employees.BaseAirportId,Employees.IsDeleted,
 C.CertID,C.Code as CCODE,C.Descr CDESCR,C.ValidityPeriod,C.ValidityTimeBucket,C.DateFrom,
@@ -1181,7 +1504,7 @@ INNER JOIN Airports AS A ON Employees.BaseAirportId = A.AirportID
                             data.Certification = new CertificationData();
                             data.BaseAirport = new AirportData();
                             data.BaseAirport.City = new CityData();
-
+                            data.EmpCrSettings = new EmployeeCR_Settings();
 
                             data.EmployeeId = int.Parse(reader["EmployeeID"].ToString());
                             data.Code = reader["Code"].ToString();
@@ -1199,6 +1522,9 @@ INNER JOIN Airports AS A ON Employees.BaseAirportId = A.AirportID
                             data.TotalFlightHours = int.Parse(reader["TotalFlightHours"].ToString());
                             data.Seniority = int.Parse(reader["Seniority"].ToString());
                             data.Language = int.Parse(reader["Language"].ToString());
+
+                            data.EmpCrSettings.LowerBound = int.Parse(reader["LowerBound"].ToString());
+                            data.EmpCrSettings.UpperBound = int.Parse(reader["UpperBound"].ToString());
 
                             data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
 
@@ -1251,7 +1577,7 @@ INNER JOIN Airports AS A ON Employees.BaseAirportId = A.AirportID
                     FilterStr = String.Format(@" and Employees.IsDeleted =@ShowDeleted");
                 }
                 command.CommandText = string.Format(@"SELECT Employees.EmployeeID, Employees.Code, Employees.Descr, 
-Employees.FirstName,Employees.LastName, Employees.Gender, Employees.DateOfBirth, 
+Employees.FirstName,Employees.LastName, Employees.Gender, Employees.DateOfBirth, Employees.LowerBound, Employees.UpperBound, 
 Employees.ContactNumber, Employees.Email,Employees.Address,Employees.Position,Employees.CertificationID,Employees.HireDate,Employees.TotalFlightHours,
 Employees.Seniority,Employees.Language,Employees.BaseAirportId,Employees.IsDeleted,
 C.CertID,C.Code as CCODE,C.Descr CDESCR,C.ValidityPeriod,C.ValidityTimeBucket,C.DateFrom,
@@ -1269,6 +1595,7 @@ INNER JOIN Airports AS A ON Employees.BaseAirportId = A.AirportID
                         data.Certification = new CertificationData();
                         data.BaseAirport = new AirportData();
                         data.BaseAirport.City = new CityData();
+                        data.EmpCrSettings = new EmployeeCR_Settings();
 
 
                         data.EmployeeId = int.Parse(reader["EmployeeID"].ToString());
@@ -1290,6 +1617,9 @@ INNER JOIN Airports AS A ON Employees.BaseAirportId = A.AirportID
 
                         data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
 
+
+                        data.EmpCrSettings.LowerBound = int.Parse(reader["LowerBound"].ToString());
+                        data.EmpCrSettings.UpperBound = int.Parse(reader["UpperBound"].ToString());
 
                         data.Certification.Id = int.Parse(reader["CertId"].ToString());
                         data.Certification.Code = reader["CCODE"].ToString();
@@ -2068,9 +2398,6 @@ Where 1=1 {0}", FilterStr);
             return Data;
         }
         #endregion
-
-        #region Calculate Vacation Planning
-
 
         #region  Optimization
 
@@ -3174,8 +3501,8 @@ Where 1=1 {0}", FilterStr);
                         Rvalue = RBidsDict.TryGetValue((Employees[i], BidCode), out int valueR) ? valueR : Zvalue;
                         #endregion
                         for (int r = 0; r < Rvalue; r++)
-                        {                         
-                          sumLeaveBids.AddTerm(1.0, R[i,j,r]);                      
+                        {                                               
+                           sumLeaveBids.AddTerm(1.0, R[i,j,r]);                      
                         }
 
 
@@ -4255,21 +4582,111 @@ Where 1=1 {0}", FilterStr);
         }
         #endregion
 
-
-        #region Crew Rostering
-
-        #region Optimisation
-
         #endregion
 
-        #endregion
+        #region Crew Scheduling
+        #region CRUD Commands
 
-        public ObservableCollection<EmployeeData> GetEmployeesByTypeData(VacationPlanningInputData InputData, bool ShowDeleted)
+        public int SaveCSInputData(CSInputData flatData)
         {
-            ObservableCollection<EmployeeData> DataList = new ObservableCollection<EmployeeData>();
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
+                    // Separate query from execution
+                    int Id = flatData.Id;
+                    var existingQuery = dbContext.CSInput.Where(c => c.CSID == Id);
+                    var existing = existingQuery.SingleOrDefault();
+
+                    // Execute the query and get the result
+
+
+                    if (existing != null)
+                    {
+
+
+                        // Update existing customer
+                        existing.CSCODE = flatData.Code;
+                        existing.CSDESCR = flatData.Descr;
+                        existing.EMPLOYEETYPE = flatData.Position.ToString();
+                        existing.DateFrom = flatData.DateFrom;
+                        existing.DateTo = flatData.DateTo;
+                        existing.RoutesPenalty = flatData.RoutesPenalty;
+                        existing.BoundsPenalty = flatData.BoundsPenalty;
+                        existing.IsDeleted = flatData.IsDeleted;
+
+                        dbContext.SaveChanges();
+                        return 1;
+
+
+
+
+                    }
+                    else
+                    {
+                        return -1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "SaveCSInputData", "Notes");
+                return -1;
+            }
+        }
+        public int AddCSInputData(CSInputData flatData)
+        {
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
+                    // Separate query from execution
+                    var existingQuery = dbContext.CSInput.Where(r => r.CSCODE == flatData.Code);
+                    var existing = existingQuery.SingleOrDefault();
+                    // Execute the query and get the result
+
+
+                    if (existing == null)
+                    {
+                        var newCS = new CSInputDataEntity();
+                        // Insert new item
+                        newCS.CSCODE = flatData.Code;
+                        newCS.CSDESCR = flatData.Descr;
+                        newCS.EMPLOYEETYPE = flatData.Position.ToString();
+                        newCS.DateFrom = flatData.DateFrom;
+                        newCS.DateTo = flatData.DateTo;
+                        newCS.RoutesPenalty = flatData.RoutesPenalty;
+                        newCS.BoundsPenalty = flatData.BoundsPenalty;
+                        newCS.IsDeleted = flatData.IsDeleted;
+
+
+
+
+                        dbContext.CSInput.Add(newCS);
+
+                        dbContext.SaveChanges();
+                        return 0;
+                    }
+                    else
+                    {
+                        // Else Print messages
+                        return 1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "AddCSInputData", "Notes");
+                return 2;
+
+            }
+        }
+
+        public ObservableCollection<CSInputData> GetCSInputData(bool ShowDeleted)
+        {
+            ObservableCollection<CSInputData> DataList = new ObservableCollection<CSInputData>();
 
             string FilterStr = "";
-
             using (var connection = GetConnection())
             using (var command = new SqlCommand())
             {
@@ -4279,34 +4696,35 @@ Where 1=1 {0}", FilterStr);
                 if (ShowDeleted == false)
                 {
                     command.Parameters.AddWithValue("@ShowDeleted", ShowDeleted);
-                    FilterStr = string.Concat(FilterStr, " AND E.IsDeleted = @ShowDeleted");
-                }
-                command.Parameters.AddWithValue("@Position", InputData.EmployeeType.ToString());
-                FilterStr = string.Concat(FilterStr, " AND E.Position = @Position");
+                    FilterStr = String.Format(@"and IsDeleted = @ShowDeleted");
 
-                command.CommandText = string.Format(@"SELECT E.EmployeeID, E.Code, E.Descr,  
-E.Position,E.Seniority,E.IsDeleted
-FROM Employees AS E
-WHERE 1=1 {0}
-ORDER BY E.Seniority", FilterStr);
+                }
+
+                command.CommandText = string.Format(@"SELECT CSID,CSCODE,CSDESCR,EMPLOYEETYPE,DateFrom,DateTo,RoutesPenalty,
+                                                     BoundsPenalty,IsDeleted 
+                                                     FROM CSInput
+                                                     Where 1=1 {0}", FilterStr);
 
 
                 using (var reader = command.ExecuteReader())
                 {
                     while (reader.Read())
                     {
-                        EmployeeData data = new EmployeeData();
-                        data.Certification = new CertificationData();
-                        data.BaseAirport = new AirportData();
-                        data.BaseAirport.City = new CityData();
+                        CSInputData data = new CSInputData();
+                        data.Id = int.Parse(reader["CSID"].ToString());
+                        data.Code = reader["CSCODE"].ToString();
+                        data.Descr = reader["CSDESCR"].ToString();
+                        data.DateFrom = DateTime.Parse(reader["DateFrom"].ToString());
+                        data.DateTo = DateTime.Parse(reader["DateTo"].ToString());
+                        data.RoutesPenalty = int.Parse(reader["RoutesPenalty"].ToString());
+                        data.BoundsPenalty = int.Parse(reader["BoundsPenalty"].ToString());
 
-
-                        data.EmployeeId = int.Parse(reader["EmployeeID"].ToString());
-                        data.Code = reader["Code"].ToString();
-                        data.Descr = reader["Descr"].ToString();
-                        data.Position = (BasicEnums.EmployeeType)Enum.Parse(typeof(BasicEnums.EmployeeType), reader["Position"].ToString());
-                        data.Seniority = int.Parse(reader["Seniority"].ToString());
+                        data.Position = (BasicEnums.EmployeeType)Enum.Parse(typeof(BasicEnums.EmployeeType), reader["EMPLOYEETYPE"].ToString());
                         data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
+
+                        data.DateFrom_Str = data.DateFrom.ToString("dd/MM/yyyy HH:mm");
+                        data.DateTo_Str = data.DateTo.ToString("dd/MM/yyyy HH:mm");
+
 
 
 
@@ -4320,10 +4738,191 @@ ORDER BY E.Seniority", FilterStr);
             return DataList;
         }
 
+        public CSInputData GetCSInputChooserData(int CSId, string CSCode, CSInputData Data)
+        {
+
+            string FilterStr = "";
+            using (var connection = GetConnection())
+            using (var command = new SqlCommand())
+            {
+                connection.Open();
+                command.Connection = connection;
+
+                if (CSId > 0)
+                {
+                    command.Parameters.AddWithValue("@CSID", CSId);
+                    FilterStr += " and CSID = @CSID";
+                }
+                else if (!string.IsNullOrWhiteSpace(CSCode))
+                {
+                    command.Parameters.AddWithValue("@CSCODE", CSCode);
+                    FilterStr += " and CSCODE = @CSCODE";
+                }
+
+                command.CommandText = string.Format(@"SELECT CSID,CSCODE,CSDESCR,EMPLOYEETYPE,DateFrom,DateTo,RoutesPenalty,
+                                                     BoundsPenalty,IsDeleted 
+                                                     FROM CSInput
+                                                     Where 1=1 {0}", FilterStr);
+
+
+
+                using (var reader = command.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+
+                        Data.Id = int.Parse(reader["CSID"].ToString());
+                        Data.Code = reader["CSCODE"].ToString();
+                        Data.Descr = reader["CSDESCR"].ToString();
+                        Data.DateFrom = DateTime.Parse(reader["DateFrom"].ToString());
+                        Data.DateTo = DateTime.Parse(reader["DateTo"].ToString());
+
+                        Data.DateFrom_Str = Data.DateFrom.ToString("dd/MM/yyyy HH:mm");
+                        Data.DateTo_Str = Data.DateTo.ToString("dd/MM/yyyy HH:mm");
+                        Data.RoutesPenalty = int.Parse(reader["RoutesPenalty"].ToString());
+                        Data.BoundsPenalty = int.Parse(reader["BoundsPenalty"].ToString());
+
+                        Data.Position = (BasicEnums.EmployeeType)Enum.Parse(typeof(BasicEnums.EmployeeType), reader["EMPLOYEETYPE"].ToString());
+                        Data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
+                    }
+                }
+
+                connection.Close();
+            }
+
+            return Data;
+        }
+        #endregion
+        #region Optimisation
+        public VPCGOutputData CalculateCrewScheduling(CSInputData InputData)
+        {
+            GRBEnv env = new GRBEnv("cslogfile.log");
+            GRBModel model = new GRBModel(env);
+            GRBEnv finalenv = new GRBEnv("cslogfile_final.log");
+            VPCGOutputData Data = new VPCGOutputData();
+            //Data.VPYijResultsDataGrid = new ObservableCollection<VPYijResultsData>();
+            //Data.VPYijzResultsDataGrid = new ObservableCollection<VPYijResultsData>();
+
+
+            List<string> rows = new List<string>();
+            List<string> columns = new List<string>();
+
+            try
+            {
+                #region Optimization
+
+                #region Optimization paramaters
+
+                var T = InputData.T; // Planning Horizon
+                var N = InputData.N; // Number Of Employees Empty Schedules
+                var R = InputData.R; // Number Of Routes
+
+                var DatesIndexMap = InputData.DatesIndexMap;
+                var EmployeesIndexMap = InputData.EmployeesIndexMap;
+                var RoutesIndexMap = InputData.RoutesIndexMap;
+
+                var RoutesDates_Dict = InputData.RoutesDates_Dict;
+                var RoutesDay_Dict = InputData.RoutesDay_Dict;
+                var RoutesTime_Dict = InputData.RoutesTime_Dict;
+
+                var EmpBounds_Dict = InputData.EmpBounds_Dict;
+
+                #endregion
+
+
+                #region Decision Variables
+                // Decision variables
+
+                GRBVar[] X = new GRBVar[R+N];
+
+                for (int i = 0; i < R+N; i++)
+                {
+                    // Define the variable name
+                    string varNameX = $"X{i + 1}";
+
+                    // Create the binary variable with a name
+                    X[i] = model.AddVar(0.0, 1.0, 0.0, GRB.BINARY, varNameX);
+                }
+
+                #endregion
+
+                #region Objective Function
+
+                GRBLinExpr objective = 0;
+
+                for (int i = 0; i < R; i++)
+                {
+                    int RoutesPenalty = InputData.RoutesPenalty;
+                    objective.AddTerm(RoutesPenalty, X[i]);
+                }
+
+                //var NumberOfSchedules = 0;
+                //for (int i = N; i < NumberOfSchedules; i++)
+                //{
+                //    int PenaltyPerDay = InputData.BoundsPenalty;
+                //    int TotalPenantly = PenaltyPerDay;
+                //    objective.AddTerm(TotalPenantly, X[i]);
+                //}
+
+                model.SetObjective(objective, GRB.MINIMIZE);
+
+                #endregion
+
+                //#region Constrains
+
+                // #1. C1 -> C40 , X174-> X213 ROUTES 
+                for (int i = R; i < R+N; i++)
+                {
+                    GRBLinExpr expr = 0;
+                    expr.AddTerm(1, X[i]);
+                    model.AddConstr(expr, GRB.EQUAL, 1, "C_" + (i-R + 1));
+                }
+
+                // #2. C41 -> C213 , X1-> X173 ROUTES 
+                for (int i = 0; i < R; i++)
+                {
+                    GRBLinExpr expr = 0;
+                    expr.AddTerm(1, X[i]);
+                    model.AddConstr(expr, GRB.EQUAL, 1, "C_" + (i + R + 1));
+                }
+
+
+
+                model.Update();
+                model.Optimize();
+                bool solution = (model.Status == GRB.Status.OPTIMAL);
+                if (solution)
+                {
+                    Data.ObjValue = model.ObjVal;
+                    model.Update();
+                    model.Write("outCS.mst");
+                    model.Write("outCS.sol");
+                    model.Write("CSFeasable.lp");
+                    model.Write("CSFeasableMPS.mps");
+
+
+                }
+                return Data;
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("An error occurred: " + ex.Message);
+                return Data;
+            }
+
+        }
+
+        #endregion
+
+        #endregion
+
+        #region Crud Commands
         #endregion
         #endregion
 
         #endregion
+
 
         #region ERP Factory Program
 
@@ -5510,7 +6109,7 @@ WHERE
                     FilterStr = String.Format(@" and City.IsDeleted =@ShowDeleted");
                 }
                 command.CommandText = string.Format(@"select City.CityId,City.CityCode,City.CityDescr ,Prefecture.PrefId,Prefecture.PrefCode,Prefecture.PrefDescr ,Country.CountryId,Country.CountryCode ,Country.CountryDescr,City.Longitude,
-City.Latitude,City.IsDeleted
+City.Latitude,City.Population,City.IsDeleted
                                                     from City 
                                                     Inner Join Prefecture on CiTY.PrefId = Prefecture.PrefId
                                                     Inner JOIN  Country on Prefecture.CountryId = Country.CountryId Where 1=1 {0}",FilterStr);
@@ -5533,6 +6132,7 @@ City.Latitude,City.IsDeleted
                         data.CountryDescr = reader["CountryDescr"].ToString();
                         data.Longitude = float.Parse(reader["Longitude"].ToString());
                         data.Latitude = float.Parse(reader["Latitude"].ToString());
+                        data.Population = int.Parse(reader["Population"].ToString());
                         data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
 
 
@@ -5572,6 +6172,7 @@ City.Latitude,City.IsDeleted
                                 PrefId = row.PrefId,
                                 Longitude = row.Longitude,
                                 Latitude = row.Latitude,
+                                Population = row.Population,
                                 IsDeleted = false
                                 
                             };
@@ -5588,6 +6189,7 @@ City.Latitude,City.IsDeleted
                             existingCity.PrefId = row.PrefId;
                             existingCity.Longitude = row.Longitude;
                             existingCity.Latitude = row.Latitude;
+                            existingCity.Population = row.Population;
                             existingCity.IsDeleted = row.IsDeleted;
 
                         }
@@ -5742,6 +6344,104 @@ Where 1=1 {0}",FilterStr);
             return DataList;
         }
         #endregion
+
+        #region Vehicles
+
+        public ObservableCollection<CountryData> GetVehicleData(bool ShowDeleted)
+        {
+            ObservableCollection<CountryData> DataList = new ObservableCollection<CountryData>();
+
+            string FilterStr = "";
+
+            using (var connection = GetConnection())
+            using (var command = new SqlCommand())
+            {
+                connection.Open();
+                command.Connection = connection;
+
+                if (ShowDeleted == false)
+                {
+                    command.Parameters.AddWithValue("@ShowDeleted", ShowDeleted);
+                    FilterStr = String.Format(@" and IsDeleted =@ShowDeleted");
+                }
+                command.CommandText = string.Format(@"select CountryId,CountryCode,CountryDescr,IsDeleted from Country Where 1=1 {0}", FilterStr);
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        CountryData data = new CountryData();
+
+                        data.CountryId = int.Parse(reader["CountryId"].ToString());
+                        data.CountryCode = reader["CountryCode"].ToString();
+                        data.CountryDescr = reader["CountryDescr"].ToString();
+                        data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
+
+                        DataList.Add(data);
+                    }
+                }
+
+                connection.Close();
+
+            }
+
+            return DataList;
+        }
+
+        public bool SaveVehicleData(ObservableCollection<CountryData> Data)
+        {
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
+
+
+                    bool hasChanges = false;
+                    foreach (var row in Data)
+                    {
+                        var existingrow = dbContext.Country.SingleOrDefault(b => b.CountryId == row.CountryId);
+
+                        if (existingrow == null)
+                        {
+                            CountryDataEntity newrow = new CountryDataEntity();
+                            newrow.CountryCode = row.CountryCode;
+                            newrow.CountryDescr = row.CountryDescr;
+                            newrow.IsDeleted = false;
+                            dbContext.Country.Add(newrow);
+                            hasChanges = true;
+                        }
+                        else if (existingrow != null)
+                        {
+
+                            existingrow.CountryCode = row.CountryCode;
+                            existingrow.CountryDescr = row.CountryDescr;
+                            existingrow.IsDeleted = row.IsDeleted;
+
+                            hasChanges = true;
+
+
+
+                        }
+
+
+                    }
+
+                    if (hasChanges)
+                    {
+                        dbContext.SaveChanges();
+                    }
+
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "SaveDemandForecast", "Notes");
+                return false;
+            }
+        }
+
+        #endregion
+
         #endregion
 
         #region Customer
@@ -9705,8 +10405,8 @@ Where 1=1 {0}", FilterStr);
                         existingMRP.FORECASTFLAG = flatData.ForecastFlag;
                         existingMRP.ORDERSFLAG = flatData.OrdersFlag;
                         existingMRP.SELECTEDITEMS = flatData.SelectedItems;
-                        existingMRP.ORDERSDATEFROM = flatData.OrdersDateFrom;
-                        existingMRP.ORDERSDATETO = flatData.OrdersDateTo;
+                        existingMRP.ORDERSDATEFROM = DateTime.Now;
+                        existingMRP.ORDERSDATETO = DateTime.Now;
                         existingMRP.ISDELETED = flatData.IsDeleted;
 
 
@@ -9852,6 +10552,7 @@ Where 1=1 {0}", FilterStr);
 
                 Dictionary<int, (double, double)> Ii = new Dictionary<int, (double, double)>();
                 Dictionary<int, (double, double)> Imax_min = new Dictionary<int, (double, double)>();
+                Dictionary<int, int> NDict = new Dictionary<int, int>();
 
                 #region from string to int 
                 // Mapping from string keys to integer indices
@@ -9926,7 +10627,6 @@ Where 1=1 {0}", FilterStr);
 
                 #region Calculate N
                 // Create a new dictionary to store the setup counts for each w
-                Dictionary<int, int> NDict = new Dictionary<int, int>();
 
                 // Initialize the maximum count to zero
                 int maxListCount = 0;
@@ -11088,7 +11788,7 @@ Where 1=1 {0}", FilterStr);
                 // Create decision variables Y
                 for (int i = 0; i < Q; i++)
                 {
-         for (int j = 0; j < Q; j++)
+                    for (int j = 0; j < Q; j++)
                     {
                         for (int w = 0; w < W; w++)
                         {
@@ -11311,7 +12011,7 @@ Where 1=1 {0}", FilterStr);
 
                 #region 5,6,7,8,9,10 Constrains
 
-                //////#5.
+                //#5.
                 for (int w = 0; w < W; w++)
                 {
                     List<int> productsInW = Qw.TryGetValue(w, out var productList) ? productList : new List<int>();
@@ -11329,10 +12029,9 @@ Where 1=1 {0}", FilterStr);
                         }
                     }
                 }
-                //foreach (int w in Qw.Where(kv => kv.Value.Contains(j)).Select(kv => kv.Key))
 
 
-                    ////#6.
+                //#6.
                 for (int w = 0; w < W; w++)
                 {
                     GRBLinExpr setupSum = 0;
@@ -11346,7 +12045,7 @@ Where 1=1 {0}", FilterStr);
                     model.AddConstr(setupSum == 1, $"Constraint_6_w{w + 1}");
                 }
 
-                ////#7. 
+                //#7. 
                 for (int w = 0; w < W; w++)
                 {
                     List<int> productsInW = Qw.TryGetValue(w, out var productList) ? productList : new List<int>();
@@ -11383,6 +12082,7 @@ Where 1=1 {0}", FilterStr);
                         model.AddConstr(sumY == 1, "Constrain8_" + w + t);
                     }
                 }
+
                //#9.
                 for (int w = 0; w < W; w++)
                 {
@@ -11437,6 +12137,7 @@ Where 1=1 {0}", FilterStr);
                 }
 
                 #endregion
+
                 #region 11,12 Constrains
                 //#11 
                 for (int w = 0; w < W; w++)
@@ -11490,7 +12191,7 @@ Where 1=1 {0}", FilterStr);
                 #region Optimization Solver
 
 
-                model.Parameters.TimeLimit = 10;
+                model.Parameters.TimeLimit = 1;
 
                 model.Update();
                 model.Optimize();
@@ -11657,6 +12358,77 @@ Where 1=1 {0}", FilterStr);
                 #endregion
                 #endregion
                 #endregion
+
+                #region CSV Files
+
+                // Create a message box to ask the user if they want to save the results
+                MessageBoxResult result = MessageBox.Show("Do you want to save the results to CSV files?", "Save Results", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    // Define the path to the directory
+                    string desktopPath = "C:\\Users\\npoly\\Source\\Repos\\Optimization\\CSVFiles";
+                    string directoryPath = Path.Combine(desktopPath, "CSVFiles");
+
+                    // Create the directory if it doesn't exist
+                    if (!Directory.Exists(directoryPath))
+                    {
+                        Directory.CreateDirectory(directoryPath);
+                    }
+
+                    // Prompt the user to enter a unique code for the CSV group
+                    string csvGroupCode = InputData.MRPCode +"_"+"W"+W;
+                    string codeListPath = Path.Combine(directoryPath, "CSVGroupCodes.txt");
+                    // Check if the csvGroupCode already exists in the codeListPath
+                    if (!File.Exists(codeListPath) || !File.ReadLines(codeListPath).Contains(csvGroupCode))
+                    {
+                        File.AppendAllText(codeListPath, csvGroupCode + Environment.NewLine);
+                    }
+
+                    #region Sort Dictionaries
+                    // Function to sort a Dictionary by its keys
+
+                    // Sort all the dictionaries
+                    Pw = SortDictionary(Pw);
+                    Qw = SortDictionary(Qw);
+                    Dit = SortDictionary(Dit);
+                    var adjustedDit = Dit.ToDictionary(kvp => (kvp.Key.Item1, kvp.Key.Item2 - 1), kvp => kvp.Value);
+                    Ci = SortDictionary(Ci);
+                    Rij = SortDictionary(Rij);
+                    Awt = SortDictionary(Awt);
+                    Miwt = SortDictionary(Miwt);
+                    Sijw = SortDictionary(Sijw);
+                    Uiw = SortDictionary(Uiw);
+                    Hi = SortDictionary(Hi);
+                    Gi = SortDictionary(Gi);
+                    I0W = SortDictionary(I0W);
+                    Ii = SortDictionary(Ii);
+                    Imax_min = SortDictionary(Imax_min);
+                    NDict = SortDictionary(NDict);
+                    #endregion
+
+                    // Append the group code to each CSV filename
+                    WriteToCsv(Path.Combine(directoryPath, $"Pw_{csvGroupCode}.csv"), Pw);
+                    WriteToCsv(Path.Combine(directoryPath, $"Qw_{csvGroupCode}.csv"), Qw);
+                    WriteToCsv(Path.Combine(directoryPath, $"Dit_{csvGroupCode}.csv"), adjustedDit);
+                    WriteToCsv(Path.Combine(directoryPath, $"Ci_{csvGroupCode}.csv"), Ci);
+                    WriteToCsv(Path.Combine(directoryPath, $"Rij_{csvGroupCode}.csv"), Rij);
+                    WriteToCsv(Path.Combine(directoryPath, $"Awt_{csvGroupCode}.csv"), Awt);
+                    WriteToCsv(Path.Combine(directoryPath, $"Miwt_{csvGroupCode}.csv"), Miwt);
+                    WriteToCsv(Path.Combine(directoryPath, $"Sijw_{csvGroupCode}.csv"), Sijw);
+                    WriteToCsv(Path.Combine(directoryPath, $"Uiw_{csvGroupCode}.csv"), Uiw);
+                    WriteToCsv(Path.Combine(directoryPath, $"Hi_{csvGroupCode}.csv"), Hi);
+                    WriteToCsv(Path.Combine(directoryPath, $"Gi_{csvGroupCode}.csv"), Gi);
+                    WriteToCsv(Path.Combine(directoryPath, $"I0W_{csvGroupCode}.csv"), I0W);
+                    WriteToCsv(Path.Combine(directoryPath, $"Ii_{csvGroupCode}.csv"), Ii);
+                    WriteToCsv(Path.Combine(directoryPath, $"Imax_min_{csvGroupCode}.csv"), Imax_min);
+                    WriteToCsv(Path.Combine(directoryPath, $"NDict_{csvGroupCode}.csv"), NDict);
+
+                    // Write variables T, P, Q, W, N to a separate CSV file
+                    WriteVariablesToCsv(Path.Combine(directoryPath, $"Variables_{csvGroupCode}.csv"), T, P, Q, W, N);
+                }
+
+                #endregion
                 return OutputData;
 
             }
@@ -11666,6 +12438,99 @@ Where 1=1 {0}", FilterStr);
                 return OutputData;
             }
         }
+
+        #region Write To CSV
+        static Dictionary<TKey, TValue> SortDictionary<TKey, TValue>(Dictionary<TKey, TValue> dict)
+        {
+            return dict.OrderBy(kv => kv.Key).ToDictionary(kv => kv.Key, kv => kv.Value);
+        }
+
+        static void WriteToCsv(string fileName, Dictionary<int, List<int>> dictionary)
+        {
+            using (var writer = new StreamWriter(fileName))
+            {
+                writer.WriteLine("Key,Values");
+                foreach (var kvp in dictionary)
+                {
+                    writer.WriteLine($"{kvp.Key},{string.Join(";", kvp.Value)}");
+                }
+            }
+        }
+
+        static void WriteToCsv(string fileName, Dictionary<(int, int), double> dictionary)
+        {
+            using (var writer = new StreamWriter(fileName))
+            {
+                writer.WriteLine("Key1,Key2,Value");
+                foreach (var kvp in dictionary)
+                {
+                    writer.WriteLine($"{kvp.Key.Item1},{kvp.Key.Item2},{kvp.Value}");
+                }
+            }
+        }
+
+        static void WriteToCsv(string fileName, Dictionary<(int, int, int), double> dictionary)
+        {
+            using (var writer = new StreamWriter(fileName))
+            {
+                writer.WriteLine("Key1,Key2,Key3,Value");
+                foreach (var kvp in dictionary)
+                {
+                    writer.WriteLine($"{kvp.Key.Item1},{kvp.Key.Item2},{kvp.Key.Item3},{kvp.Value}");
+                }
+            }
+        }
+
+        static void WriteToCsv(string fileName, Dictionary<int, double> dictionary)
+        {
+            using (var writer = new StreamWriter(fileName))
+            {
+                writer.WriteLine("Key,Value");
+                foreach (var kvp in dictionary)
+                {
+                    writer.WriteLine($"{kvp.Key},{kvp.Value}");
+                }
+            }
+        }
+
+        static void WriteToCsv(string fileName, Dictionary<int, int> dictionary)
+        {
+            using (var writer = new StreamWriter(fileName))
+            {
+                writer.WriteLine("Key,Value");
+                foreach (var kvp in dictionary)
+                {
+                    writer.WriteLine($"{kvp.Key},{kvp.Value}");
+                }
+            }
+        }
+
+        static void WriteToCsv(string fileName, Dictionary<int, (double, double)> dictionary)
+        {
+            using (var writer = new StreamWriter(fileName))
+            {
+                writer.WriteLine("Key,Value1,Value2");
+                foreach (var kvp in dictionary)
+                {
+                    writer.WriteLine($"{kvp.Key},{kvp.Value.Item1},{kvp.Value.Item2}");
+                }
+            }
+        }
+
+        static void WriteVariablesToCsv(string fileName, int T, int P, int Q, int W, int N)
+        {
+            using (var writer = new StreamWriter(fileName))
+            {
+                writer.WriteLine("Variable,Value");
+                writer.WriteLine($"T,{T}");
+                writer.WriteLine($"P,{P}");
+                writer.WriteLine($"Q,{Q}");
+                writer.WriteLine($"W,{W}");
+                writer.WriteLine($"N,{N}");
+            }
+        }
+
+        #endregion
         public ObservableCollection<MrpInputData> GetMrpInputData(string FinalItemCode)
         {
             ObservableCollection<MrpInputData> DataList = new ObservableCollection<MrpInputData>();

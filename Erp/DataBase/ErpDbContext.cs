@@ -64,6 +64,8 @@ namespace Erp.DataBase
         public DbSet<CertificationsDataEntity> Certifications { get; set; }
         public DbSet<AirportsDataEntity> Airports { get; set; }
         public DbSet<AircraftDataEntity> Aircrafts { get; set; }
+        public DbSet<FlightRoutesDataEntity> FlightRoutes { get; set; }
+        public DbSet<CSInputDataEntity> CSInput { get; set; }
 
 
         #endregion

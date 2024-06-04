@@ -122,11 +122,11 @@
                                         <TextBlock Text="DateTo : " Grid.Row="3" Grid.Column="2" Margin="2"/>
 
                                         <TextBlock Text="Period Num : " Grid.Row="4" Grid.Column="0" Margin="2"/>
-
+                
 
                                         <StackPanel Grid.Row="1" Grid.Column="1" HorizontalAlignment="Left"  Orientation="Horizontal" Margin="2">
-                                            <TextBox Text="{Binding InputData.Forecast.ForCode, Mode=TwoWay}" HorizontalAlignment="left" Width="120" Height="18"  IsReadOnly="True" />
-                                            <Button Content="f" Width="15" Height="18"                     Command="{Binding ShowForecastDemand}"/>
+                                            <TextBox Text="{Binding InputData.Forecast.ForCode, Mode=TwoWay}" HorizontalAlignment="left" Width="115"   IsReadOnly="True" />
+                                            <Button Content="f" Width="20"                     Command="{Binding ShowForecastDemand}"/>
                                         </StackPanel>
                                         <StackPanel Grid.Row="1" Grid.Column="3" HorizontalAlignment="Left"  Margin="2" Orientation="Horizontal">
                                             <TextBox Text="{Binding  InputData.Forecast.ForDescr, Mode=TwoWay}" HorizontalAlignment="left" Width="135" Height="18" IsReadOnly="True" />
@@ -307,7 +307,7 @@
                             </Button>
 
 
-                            <Button x:Name="CalculateMPS"  Width="210"  HorizontalAlignment="Left" Margin="2"  Command="{Binding CalculateMps}">
+                            <Button x:Name="CalculateMPS"  Width="280"  HorizontalAlignment="Left" Margin="2"  Command="{Binding CalculateMps}">
                                 <TextBlock Text="Calculate Production Schedule" FontWeight="Bold"/>
                             </Button>
                         </StackPanel>

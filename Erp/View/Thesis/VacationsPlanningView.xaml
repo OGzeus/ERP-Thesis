@@ -169,8 +169,12 @@
                             </Button>
 
 
-                            <Button x:Name="CalculateMPS"   HorizontalAlignment="Left" Margin="4"  Command="{Binding CalculateVacationPlanning}">
-                                <TextBlock Text="Calculate Vacation Planning" FontWeight="Bold"/>
+                            <Button x:Name="Calculate_GB"   HorizontalAlignment="Left" Margin="4"  Command="{Binding CalculateVacationPlanningGB}">
+                                <TextBlock Text="Calculate Vacation Planning GB" FontWeight="Bold"/>
+                            </Button>
+
+                            <Button x:Name="Calculate_Cplex"   HorizontalAlignment="Left" Margin="4"  Command="{Binding CalculateVacationPlanningCP}">
+                                <TextBlock Text="Calculate Vacation Planning CPLEX" FontWeight="Bold"/>
                             </Button>
                         </StackPanel>
 
@@ -276,7 +280,7 @@
                                         <syncfusion:GridTextColumn MappingName="NumberOfDaysMax" HeaderText="Max" AllowEditing="False"/>
 
                                         <syncfusion:GridTextColumn MappingName="Yij" HeaderText="Yij" AllowEditing="False"/>
-                                        <syncfusion:GridCheckBoxColumn MappingName="YijFlag" HeaderText="Confirmed " AllowEditing="False"/>
+                                        <syncfusion:GridCheckBoxColumn MappingName="YijFlag" HeaderText="Granted " AllowEditing="False"/>
 
                                     </syncfusion:SfDataGrid.Columns>
 
@@ -354,7 +358,7 @@
                                         <syncfusion:GridTextColumn MappingName="Yijr" HeaderText="Yijr" AllowEditing="False"/>
                                         <syncfusion:GridTextColumn MappingName="Yijrz" HeaderText="Yijrz" AllowEditing="False"/>
 
-                                        <syncfusion:GridCheckBoxColumn MappingName="YijFlag" HeaderText="Confirmed " AllowEditing="False"/>
+                                        <syncfusion:GridCheckBoxColumn MappingName="YijFlag" HeaderText="Granted " AllowEditing="False"/>
 
                                     </syncfusion:SfDataGrid.Columns>
 

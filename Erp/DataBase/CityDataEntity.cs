@@ -23,6 +23,9 @@ namespace Erp.DataBase
         [Column(TypeName = "double")]
         public double? Latitude { get; set; }
 
+        [Column(TypeName = "int")]
+        public int? Population { get; set; }
+
         [Column(TypeName = "bit")]
         public bool? IsDeleted { get; set; }
 

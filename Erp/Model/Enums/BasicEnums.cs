@@ -54,6 +54,21 @@ namespace Erp.Model.Enums
         #endregion
 
 
+        #region Clustering_VRP
+        public enum Clustering_Techniques
+        {
+            K_means,
+            Hierarchical,
+            Optimization
+        }
+        public enum VRP_Techniques
+        {
+            Simulation_Annealing,
+            Optimization,
+            Tabu_Search,
+            Ant_Colony
+        }
+        #endregion
         #region Inventory Control
 
 
@@ -103,6 +118,7 @@ namespace Erp.Model.Enums
         }
         #endregion
 
+        #region General 
         public enum CustomerType
         {
             Retail,
@@ -184,7 +200,7 @@ namespace Erp.Model.Enums
             DDP
         }
 
-
+        #endregion
 
 
         #region INotifyPropertyChanged

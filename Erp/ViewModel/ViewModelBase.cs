@@ -127,6 +127,7 @@ namespace Erp.ViewModel
 
         public CommonFunctions CommonFunctions = new CommonFunctions();
         public CPLEXFunctions CplexFunctions = new CPLEXFunctions();
+        public ML_AI_Functions ML_AiFunctions = new ML_AI_Functions();
 
         public F7Common F7Common = new F7Common();
 

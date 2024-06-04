@@ -25,6 +25,11 @@ namespace Erp.Model.BasicFiles
         private float _Longitude { get; set; }
         private float _Latitude { get; set; }
 
+        private int _Population { get; set; }
+        private int _Demand { get; set; }
+
+        private bool _Selected { get; set; }
+
         public int PrefId
         {
             get { return _PrefId; }
@@ -84,6 +89,20 @@ namespace Erp.Model.BasicFiles
             get { return _PrefDescr; }
             set { _PrefDescr = value; OnPropertyChanged("PrefDescr"); }
         }
-
+        public int Population
+        {
+            get { return _Population; }
+            set { _Population = value; OnPropertyChanged("Population"); }
+        }
+        public int Demand
+        {
+            get { return _Demand; }
+            set { _Demand = value; OnPropertyChanged("Demand"); }
+        }
+        public bool Selected
+        {
+            get { return _Selected; }
+            set { _Selected = value; OnPropertyChanged("Selected"); }
+        }
     }
 }

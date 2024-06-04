@@ -529,6 +529,46 @@
                     </StackPanel>
 
                 </TabItem>
+                <TabItem Header="Crew Scheduling Settings">
+                    <StackPanel>
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+
+
+                            <TextBlock Text="Lower Bound : " Grid.Row="1" Grid.Column="0" Margin="2"/>
+                            <TextBlock Text="Upper Bound : " Grid.Row="1" Grid.Column="2" Margin="2"/>
+
+
+                            <TextBox Text="{Binding FlatData.EmpCrSettings.LowerBound, Mode=TwoWay}" Grid.Row="1" Grid.Column="1" Margin="2" HorizontalAlignment="Stretch"  />
+                            <TextBox Text="{Binding FlatData.EmpCrSettings.UpperBound, Mode=TwoWay}" Grid.Row="1" Grid.Column="3" Margin="2" HorizontalAlignment="Stretch" />
+
+                        </Grid>
+
+
+                    </StackPanel>
+                </TabItem>
                 <TabItem Header="Languages">
                     <Grid>
                         <Grid.RowDefinitions>

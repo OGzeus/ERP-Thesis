@@ -215,6 +215,7 @@
 
             </Grid>
         </StackPanel>
+        
         <StackPanel x:Name="Pending_Orders"
                             Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3" Grid.RowSpan="3" Orientation="Horizontal" Background="Aqua"
                                 Visibility="{Binding Filter.CurrentActivePanel, Converter={StaticResource ActivePanelToVisibilityConverter}, ConverterParameter= PendingOrders}">
@@ -391,6 +392,7 @@
 
             </Grid>
         </StackPanel>
+        
         <StackPanel x:Name="Multiple_Products_Single_Supplier"
                             Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3" Grid.RowSpan="3" Orientation="Horizontal" Background="Aqua"
                                 Visibility="{Binding Filter.CurrentActivePanel, Converter={StaticResource ActivePanelToVisibilityConverter}, ConverterParameter= Multiple_Products_Single_Supplier}">
@@ -449,6 +451,7 @@
 
             </Grid>
         </StackPanel>
+        
         <StackPanel x:Name="Multiple_Products_Multiple_Supplier"
                             Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3" Grid.RowSpan="3" Orientation="Horizontal" Background="Aqua"
                                 Visibility="{Binding Filter.CurrentActivePanel, Converter={StaticResource ActivePanelToVisibilityConverter}, ConverterParameter= Multiple_Products_Multiple_Supplier}">
@@ -596,7 +599,6 @@
 
             </Grid>
         </StackPanel>
-
 
         <StackPanel x:Name="TimeVarying_Finite"
                             Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3" Grid.RowSpan="3" Orientation="Horizontal" Background="Aqua"
