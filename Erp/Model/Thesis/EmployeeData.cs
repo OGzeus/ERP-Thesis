@@ -194,5 +194,13 @@ namespace Erp.Model.Thesis
             get { return _LeaveBidDataGridStatic; }
             set { _LeaveBidDataGridStatic = value; INotifyPropertyChanged("LeaveBidDataGridStatic"); }
         }
+
+        private bool _IsSelected { get; set; }
+
+        public bool IsSelected
+        {
+            get { return _IsSelected; }
+            set { _IsSelected = value; INotifyPropertyChanged("IsSelected"); }
+        }
     }
 }

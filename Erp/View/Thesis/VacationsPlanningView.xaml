@@ -77,7 +77,7 @@
         </StackPanel>
         <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="6"  converters:MainStackPanelReadonly.IsEnabledBasedOnProperty="{Binding InputData.VPCode}" >
             <TabControl SelectedIndex="{Binding SelectedTabIndex}">
-                <TabItem Header="Insert Vacation Planning Input">
+                <TabItem Header="Vacation Planning Input">
                     <StackPanel>
                         <Grid  Margin="0,0,-193,0">
                             <Grid.RowDefinitions>
@@ -262,7 +262,7 @@
 
                                                     FontSize="18">
 
-                                    
+
                                     <syncfusion:SfDataGrid.GroupColumnDescriptions>
                                         <syncfusion:GroupColumnDescription ColumnName="Employee.Code" />
                                     </syncfusion:SfDataGrid.GroupColumnDescriptions>
@@ -524,7 +524,7 @@
                                                     FontSize="18"
                                                     AutoExpandGroups="True">
 
-  
+
                                     <syncfusion:SfDataGrid.Columns>
                                         <syncfusion:GridTextColumn Width="110" MappingName="LLi" HeaderText="LLi" AllowEditing="False"/>
                                         <syncfusion:GridTextColumn Width="110"  MappingName="Date" HeaderText="Date" AllowEditing="False"/>
@@ -541,10 +541,31 @@
 
                             </Grid>
                         </TabItem>
+                        <TabItem Header="Column Generation Results">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="770"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Objective Value : " Grid.Row="0" Grid.Column="0" Margin="2"/>
+                                <TextBox Text="{Binding CGOutputdata.ObjValue, Mode=TwoWay}" Grid.Row="0" Grid.Column="1"  HorizontalAlignment="Stretch" Width="135" Margin="2" />
+
+
+
+                            </Grid>
+                        </TabItem>
                     </TabControl>
-
-
-
                 </TabItem>
             </TabControl>
         </StackPanel>

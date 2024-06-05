@@ -96,7 +96,18 @@ namespace Erp.ViewModel.Thesis
 
             }
         }
+        private CSOutputData _OutputData;
+        public CSOutputData OutputData
+        {
+            get { return _OutputData; }
+            set
+            {
+                _OutputData = value;
+                INotifyPropertyChanged(nameof(OutputData));
 
+
+            }
+        }
 
 
         private Columns sfGridColumns;
@@ -165,7 +176,11 @@ namespace Erp.ViewModel.Thesis
             this.sfGridColumns = new Columns();
             this.SfGridColumnsRepair = new Columns();
 
-            CalculateCS = new RelayCommand2(ExecuteCalculateCS);
+            CalculateCS_GB = new RelayCommand2(ExecuteCalculateCS_Gurobi);
+            CalculateCS_CP = new RelayCommand2(ExecuteCalculateCS_Cplex);
+
+
+
             ShowEmployeesGridCommand = new RelayCommand2(ExecuteShowEmployeesGridCommand);
             ShowFlightRoutestGridCommand = new RelayCommand2(ExecuteShowFlightRoutestGridCommand);
             ShowCrewSchedulingGridCommand = new RelayCommand2(ExecuteShowCrewSchedulingGridCommand);
@@ -230,7 +245,10 @@ namespace Erp.ViewModel.Thesis
             F7key = F7input.F7key;
 
             var Data = CommonFunctions.GetEmployeesByTypeData(InputData.Position, false);
-
+            foreach(var row in Data)
+            {
+                row.IsSelected = true;
+            }
 
 
             CollectionView = CollectionViewSource.GetDefaultView(Data);
@@ -408,9 +426,10 @@ namespace Erp.ViewModel.Thesis
 
 
         #region Calculate MRP
-        public ICommand CalculateCS { get; }
+        public ICommand CalculateCS_GB { get; }
+        public ICommand CalculateCS_CP { get; }
 
-        private void ExecuteCalculateCS(object obj)
+        private void ExecuteCalculateCS_Gurobi(object obj)
         {
             InputData.Employees = CommonFunctions.GetEmployeesByTypeData(InputData.Position, false);
             InputData.FlightRoutesData = CommonFunctions.GetCSFlightRoutesData(false, InputData);
@@ -487,13 +506,115 @@ namespace Erp.ViewModel.Thesis
 
             #endregion
 
-            var a = CommonFunctions.CalculateCrewScheduling(InputData);
+            OutputData = new CSOutputData();
+            OutputData = CommonFunctions.CalculateCrewScheduling_GB(InputData);
 
+            if (OutputData != null ) // Assuming IsValid is a property indicating success
+            {
+                MessageBox.Show($"Crew Scheduling Succeeded");
+                SelectedTabIndex = 1;
+            }
+            else
+            {
+                MessageBox.Show("Error during data processing", "", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
 
             #endregion            
-            //SelectedTabIndex = 2;
 
         }
+        private void ExecuteCalculateCS_Cplex(object obj)
+        {
+            InputData.Employees = CommonFunctions.GetEmployeesByTypeData(InputData.Position, false);
+            InputData.FlightRoutesData = CommonFunctions.GetCSFlightRoutesData(false, InputData);
+
+            #region Column Generation
+
+            #region Input Data
+
+            InputData.T = new int(); // DATES
+            InputData.N = new int(); // EMPLOYEES
+            InputData.R = new int(); // ROUTES
+
+            InputData.DatesIndexMap = new Dictionary<int, DateTime>();
+            InputData.EmployeesIndexMap = new Dictionary<int, string>();
+            InputData.RoutesIndexMap = new Dictionary<int, string>();
+
+            InputData.RoutesDates_Dict = new Dictionary<int, (DateTime, DateTime)>();
+            InputData.RoutesDay_Dict = new Dictionary<int, (int, int)>();
+            InputData.RoutesTime_Dict = new Dictionary<int, (int, int)>();
+
+            InputData.EmpBounds_Dict = new Dictionary<int, (double, double)>();
+            #endregion  
+
+            #region Fill Data to Dictionaries
+
+            #region Dates
+
+
+            InputData.T = (int)Math.Ceiling((InputData.DateTo - InputData.DateFrom).TotalDays);
+
+            int dateCounter = 1;
+            for (var date = InputData.DateFrom; date <= InputData.DateTo; date = date.AddDays(1))
+            {
+                InputData.DatesIndexMap.Add(dateCounter, date.Date);
+                dateCounter++;
+            }
+
+            #endregion
+
+            #region Routes
+            InputData.R = InputData.FlightRoutesData.Count;
+            int RoutCounter = 1;
+            foreach (var Route in InputData.FlightRoutesData)
+            {
+                InputData.RoutesDates_Dict.Add(RoutCounter, (Route.StartDate, Route.EndDate));
+
+                int StartDayIndex = InputData.DatesIndexMap.FirstOrDefault(x => x.Value.Date.Date == Route.StartDate.Date).Key;
+                int EndDayIndex = InputData.DatesIndexMap.FirstOrDefault(x => x.Value.Date.Date == Route.EndDate.Date).Key;
+
+                int StartTime = Route.StartDate.Minute >= 30 ? Route.StartDate.Hour + 1 : Route.StartDate.Hour;
+
+                int EndTime = Route.EndDate.Minute >= 30 ? Route.EndDate.Hour + 1 : Route.EndDate.Hour;
+
+                InputData.RoutesDay_Dict.Add(RoutCounter, (StartDayIndex, EndDayIndex));
+
+                InputData.RoutesTime_Dict.Add(RoutCounter, (StartTime, EndTime));
+
+                RoutCounter++;
+
+            }
+            #endregion
+
+            #region Employees
+            InputData.N = InputData.Employees.Count;
+            int EmployeeCounter = 1;
+            foreach (var emp in InputData.Employees)
+            {
+                InputData.EmployeesIndexMap.Add(EmployeeCounter, emp.Code);
+                InputData.EmpBounds_Dict.Add(EmployeeCounter, (emp.EmpCrSettings.LowerBound, emp.EmpCrSettings.UpperBound));
+                EmployeeCounter++;
+
+            }
+            #endregion
+
+            #endregion
+
+            OutputData = new CSOutputData();
+            //OutputData = CplexFunctions.CalculateCrewScheduling_Cplex(InputData);
+
+            if (OutputData != null) // Assuming IsValid is a property indicating success
+            {
+                MessageBox.Show($"Crew Scheduling Succeeded");
+                SelectedTabIndex = 1;
+            }
+            else
+            {
+                MessageBox.Show("Error during data processing", "", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            #endregion            
+
+        }
+
         #endregion
 
 

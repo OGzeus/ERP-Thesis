@@ -289,7 +289,7 @@ Where 1=1 {0}", FilterStr);
                         data.CityDataTo = cityTo;
                         data.CityCodeTo = cityTo.CityCode;
                         data.CountryCodeTo = cityTo.CountryCode;
-
+                        data.Selected = true;
 
 
                         DataList.Add(data);
@@ -4794,18 +4794,16 @@ Where 1=1 {0}", FilterStr);
         }
         #endregion
         #region Optimisation
-        public VPCGOutputData CalculateCrewScheduling(CSInputData InputData)
+        public CSOutputData CalculateCrewScheduling_GB(CSInputData InputData)
         {
             GRBEnv env = new GRBEnv("cslogfile.log");
             GRBModel model = new GRBModel(env);
             GRBEnv finalenv = new GRBEnv("cslogfile_final.log");
-            VPCGOutputData Data = new VPCGOutputData();
+            CSOutputData Data = new CSOutputData();
             //Data.VPYijResultsDataGrid = new ObservableCollection<VPYijResultsData>();
             //Data.VPYijzResultsDataGrid = new ObservableCollection<VPYijResultsData>();
 
 
-            List<string> rows = new List<string>();
-            List<string> columns = new List<string>();
 
             try
             {
@@ -4828,7 +4826,6 @@ Where 1=1 {0}", FilterStr);
                 var EmpBounds_Dict = InputData.EmpBounds_Dict;
 
                 #endregion
-
 
                 #region Decision Variables
                 // Decision variables
@@ -4868,7 +4865,7 @@ Where 1=1 {0}", FilterStr);
 
                 #endregion
 
-                //#region Constrains
+                #region Constrains
 
                 // #1. C1 -> C40 , X174-> X213 ROUTES 
                 for (int i = R; i < R+N; i++)
@@ -4886,7 +4883,7 @@ Where 1=1 {0}", FilterStr);
                     model.AddConstr(expr, GRB.EQUAL, 1, "C_" + (i + R + 1));
                 }
 
-
+                #endregion
 
                 model.Update();
                 model.Optimize();
@@ -4903,7 +4900,7 @@ Where 1=1 {0}", FilterStr);
 
                 }
                 return Data;
-
+                #endregion
             }
             catch (Exception ex)
             {
@@ -4918,7 +4915,6 @@ Where 1=1 {0}", FilterStr);
         #endregion
 
         #region Crud Commands
-        #endregion
         #endregion
 
         #endregion

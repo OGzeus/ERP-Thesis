@@ -252,6 +252,7 @@
     <Compile Include="Model\Thesis\AirportData.cs" />
     <Compile Include="Model\Thesis\CertificationData.cs" />
     <Compile Include="Model\Thesis\CrewScheduling\CSInputData.cs" />
+    <Compile Include="Model\Thesis\CrewScheduling\CSOutputData.cs" />
     <Compile Include="Model\Thesis\CrewScheduling\EmployeeCR_Settings.cs" />
     <Compile Include="Model\Thesis\CrewScheduling\FlightRoutesData.cs" />
     <Compile Include="Model\Thesis\EMPLanguageData.cs" />
@@ -714,6 +715,10 @@
     </EmbeddedResource>
     <None Include="bin\Debug\CSFeasable.lp" />
     <None Include="bin\Debug\CSFeasableMPS.mps" />
+    <None Include="bin\Debug\CSFeasableMPS_Cplex.mps" />
+    <None Include="bin\Debug\CSFeasable_Cplex.lp" />
+    <None Include="bin\Debug\cslogfile.log" />
+    <None Include="bin\Debug\cslogfile_final.log" />
     <None Include="bin\Debug\outCG_CPLEX.sol" />
     <None Include="bin\Debug\outCS.mst" />
     <None Include="bin\Debug\outCS.sol" />

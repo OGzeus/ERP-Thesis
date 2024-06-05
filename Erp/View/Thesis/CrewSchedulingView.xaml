@@ -33,7 +33,6 @@
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="Auto"/>
-
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="Auto"/>
 
@@ -70,7 +69,7 @@
         <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="8"  converter:MainStackPanelReadonly.IsEnabledBasedOnProperty="{Binding InputData.Code}" >
 
             <TabControl SelectedIndex="{Binding SelectedTabIndex}">
-                <TabItem Header="Settings">
+                <TabItem Header="Crew Scheduling Input ">
                     <StackPanel>
                         <Grid  Margin="0,0,-193,0">
                             <Grid.RowDefinitions>
@@ -88,10 +87,7 @@
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
 
                             </Grid.ColumnDefinitions>
@@ -117,7 +113,6 @@
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="Auto"/>
-
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Text="Date From : " Grid.Row="1" Grid.Column="0" Margin="2"/>
@@ -133,7 +128,7 @@
                              TimeFormat = "Custom"
                              TimeFormatString="HH:MM"
                              FormatString="dd/MM/yyyy HH:mm" 
-                             Grid.Row="1" Grid.Column="1" Margin="5" HorizontalAlignment="Left" />
+                             Grid.Row="1" Grid.Column="1" Margin="2" HorizontalAlignment="Left" />
 
                                         <!-- DateTimePicker for DateTo -->
                                         <xctk:DateTimePicker Value="{Binding InputData.DateTo, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" 
@@ -141,11 +136,11 @@
                              TimeFormat = "Custom"
                              TimeFormatString="HH:MM"
                              FormatString="dd/MM/yyyy HH:mm" 
-                             Grid.Row="1" Grid.Column="3" Margin="5" HorizontalAlignment="Left" />
+                             Grid.Row="1" Grid.Column="3" Margin="2" HorizontalAlignment="Left" />
 
 
-                                        <TextBox Grid.Row="2"  Grid.Column="1" Text="{Binding InputData.RoutesPenalty, Mode=TwoWay}" HorizontalAlignment="Stretch" Width="135" />
-                                        <TextBox Grid.Row="2"  Grid.Column="3" Text="{Binding InputData.BoundsPenalty, Mode=TwoWay}" HorizontalAlignment="Stretch" Width="135" />
+                                        <TextBox Grid.Row="2"  Grid.Column="1" Text="{Binding InputData.RoutesPenalty, Mode=TwoWay}" HorizontalAlignment="Stretch" Width="182" />
+                                        <TextBox Grid.Row="2"  Grid.Column="3" Text="{Binding InputData.BoundsPenalty, Mode=TwoWay}" HorizontalAlignment="Stretch" Width="182" />
                                         
                                         <ComboBox Grid.Row="3"  Grid.Column="1" ItemsSource="{Binding EmployeeTypes}"  SelectedItem="{Binding InputData.Position , UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"  Margin="2"/>
 
@@ -175,8 +170,13 @@
                             <Button Content="Show Employees" Width="170" Margin="2" Command="{Binding ShowEmployeesGridCommand}"/>
                             <Button Content="Show Flight Routes" Width="170" Margin="2" Command="{Binding ShowFlightRoutestGridCommand}"/>
 
-                            <Button x:Name="CalculateCS"  Width="230" HorizontalAlignment="Left" Margin="2"  Command="{Binding CalculateCS}">
-                                <TextBlock Text="Calculate Crew Scheduling"/>
+
+                            <Button x:Name="Calculate_GB"   HorizontalAlignment="Left" Margin="4"  Command="{Binding CalculateCS_GB}">
+                                <TextBlock Text="Calculate Crew Scheduling GB" FontWeight="Bold"/>
+                            </Button>
+
+                            <Button x:Name="Calculate_Cplex"   HorizontalAlignment="Left" Margin="4"  Command="{Binding CalculateCS_CP}">
+                                <TextBlock Text="Calculate Crew Scheduling CPLEX" FontWeight="Bold"/>
                             </Button>
                         </StackPanel>
 
@@ -215,54 +215,31 @@
                 </TabItem>
                 <TabItem Header="Crew Scheduling Results">
                     <TabControl>
-                        <!--<TabItem Header="Production Plan">
+                        <TabItem Header="Crew Scheduling Results">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="500"/>
-                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="770"/>
+                                    <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
                                 <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="*"/>
 
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Objective Value: " Grid.Row="0" Grid.Column="0" Margin="2"/>
+                                <TextBlock Text="Objective Value : " Grid.Row="0" Grid.Column="0" Margin="2"/>
                                 <TextBox Text="{Binding OutputData.ObjValue, Mode=TwoWay}" Grid.Row="0" Grid.Column="1"  HorizontalAlignment="Stretch" Width="135" Margin="2" />
-                                <syncfusion:SfDataGrid x:Name="sfGrid3"
-                                                    Grid.Row="1"
-                                                    Grid.Column="0"
-                                                    Grid.ColumnSpan="5"
-                                                    ColumnSizer="Star"
-                                                    Background="White"
-                                                    AllowSorting="True"
-                                                    ShowSortNumbers="True"
-                                                    AllowEditing="True"
-                                                    AllowResizingColumns="True"
-                                                    FilterRowPosition="FixedTop"
-                                                    ScrollViewer.VerticalScrollBarVisibility="Visible"
-                                                    ScrollViewer.HorizontalScrollBarVisibility="Visible"
-                                                    ShowToolTip="True"
-                                                    AllowGrouping="True"
-                                                    ShowGroupDropArea="True"
-                                                    AllowFiltering="True"
-                                                    AutoGenerateColumns="True"
-                                                    ItemsSource="{Binding OutputData.XData , Mode=TwoWay , UpdateSourceTrigger=PropertyChanged}"
-                                                    ShowRowHeader="True" 
-                                                >
 
-
-                                </syncfusion:SfDataGrid>
 
 
                             </Grid>
-                        </TabItem>-->
+                        </TabItem>
                     </TabControl>
-
-
-
                 </TabItem>
             </TabControl>
         </StackPanel>

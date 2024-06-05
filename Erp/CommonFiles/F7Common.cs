@@ -55,16 +55,16 @@ namespace Erp.CommonFiles
 
             // Assuming GridData is an instance of SfDataGrid
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Code", HeaderText = "Route Code", AllowEditing = false });
-            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "CityCodeFrom", HeaderText = "City Code From", AllowEditing = false });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "CityCodeFrom", HeaderText = "City  From", AllowEditing = false });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "CountryCodeFrom", HeaderText = "Country From ", AllowEditing = false });
-            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "CityCodeTo", HeaderText = "City Code To", AllowEditing = false });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "CityCodeTo", HeaderText = "City  To", AllowEditing = false });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "CountryCodeTo", HeaderText = "Country To ", AllowEditing = false });
 
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "StartDate_String", HeaderText = "Start Date", AllowEditing = false });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "EndDate_String", HeaderText = "End Date", AllowEditing = false });
 
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "FlightTime", HeaderText = "Flight Time ", AllowEditing = false });
-            GridData.SfGridColumns.Add(new GridCheckBoxColumn() { MappingName = "Selected", HeaderText = "Selected ", AllowEditing = true });
+            //GridData.SfGridColumns.Add(new GridCheckBoxColumn() { MappingName = "Selected", HeaderText = "Selected ", AllowEditing = true });
 
 
 
@@ -106,17 +106,16 @@ namespace Erp.CommonFiles
             GridData.SfGridColumns = new Columns();
             var Data = CommonFunctions.GetEmployeesByTypeData(InputData.Position,false).ToList();
 
+            
             GridData.CollectionView = CollectionViewSource.GetDefaultView(Data);
 
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Code", HeaderText = "Employee Code" });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Descr", HeaderText = "Employee Descr" });
-            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "FirstName", HeaderText = "First Name " });
-            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "LastName", HeaderText = "Last Name " });
-            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Gender", HeaderText = "Gender" });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Position", HeaderText = "Position" });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Seniority", HeaderText = "Seniority" });
-            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "TotalFlightHours", HeaderText = "Total Flight Hours" });
-            GridData.SfGridColumns.Add(new GridCheckBoxColumn() { MappingName = "IsDeleted", HeaderText = "Deleted" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "EmpCrSettings.LowerBound", HeaderText = "Lower Bound" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "EmpCrSettings.UpperBound", HeaderText = "Upper Bound" });
+
 
 
             GridData.F7key = "Employee";

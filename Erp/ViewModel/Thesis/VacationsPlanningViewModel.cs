@@ -688,7 +688,8 @@ namespace Erp.ViewModel.Thesis
                 t++;
 
             }
-            var a = CplexFunctions.CalculateVPColumnGeneration(CGInputdata);
+            CGOutputdata = new VPCGOutputData();
+            CGOutputdata = CommonFunctions.CalculateVPColumnGeneration(CGInputdata);
 
             #endregion
 
@@ -812,8 +813,7 @@ namespace Erp.ViewModel.Thesis
             #endregion
 
 
-            OutputData = CplexFunctions.CalculateVacationPlanning_CPLEX(InputData);
-            //OutputData = CommonFunctions.CalculateVacationPlanning_Gurobi(InputData);
+            //OutputData = CplexFunctions.CalculateVacationPlanning_CPLEX(InputData);
 
             OutputData.VPYijResultsDataGrid = OutputData.VPYijResultsDataGrid.OrderBy(item => item.Employee.Seniority).ToObservableCollection();
             OutputData.VPYijzResultsDataGrid = OutputData.VPYijzResultsDataGrid.OrderBy(item => item.Employee.Seniority).ToObservableCollection();
@@ -858,7 +858,8 @@ namespace Erp.ViewModel.Thesis
                     t++;
                 
             }
-            var a = CplexFunctions.CalculateVPColumnGeneration(CGInputdata);
+            CGOutputdata = new VPCGOutputData();
+            //CGOutputdata = CplexFunctions.CalculateVPColumnGeneration(CGInputdata);
 
             #endregion
 

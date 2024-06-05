@@ -49,6 +49,8 @@ namespace Erp.ViewModel.BasicFiles
 
         public void OnLoad()
         {
+            CountryList = new List<CountryData>();
+            Data = new ObservableCollection<PrefectureData>();
             CountryList = CommonFunctions.GetCountryData(false).ToList();
 
             Data = CommonFunctions.GetPrefectureData();

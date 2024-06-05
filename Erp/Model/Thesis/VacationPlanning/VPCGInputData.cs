@@ -29,8 +29,8 @@ namespace Erp.Model.Thesis.VacationPlanning
                 OnPropertyChanged(nameof(VPXiResultsDataGrid));
             }
         }
-        public Dictionary<int, int> LeaveDays { get; set; }
-        public Dictionary<int, int> LLiDict { get; set; }
+        public Dictionary<int, int> LeaveDays { get; set; } //Remaining Leave Days Per Employee
+        public Dictionary<int, int> LLiDict { get; set; } // Remaining Limit Line Per Day
 
     }
 }
