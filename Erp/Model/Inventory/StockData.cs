@@ -15,6 +15,8 @@ namespace Erp.Model.Inventory
         private int finalitemid { get; set; }
         private ItemData stockitem  { get; set; }
         private double _stock { get; set; }
+        private double _backlog { get; set; }
+
         private double _InvMin { get; set; }
         private double _InvMax { get; set; }
 
@@ -32,6 +34,11 @@ namespace Erp.Model.Inventory
         {
             get { return _stock; }
             set { _stock = value; OnPropertyChanged("Stock"); }
+        }
+        public double Backlog
+        {
+            get { return _backlog; }
+            set { _backlog = value; OnPropertyChanged("Backlog"); }
         }
         public double InvMax
         {

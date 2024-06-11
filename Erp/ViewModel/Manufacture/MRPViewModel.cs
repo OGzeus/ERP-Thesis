@@ -35,6 +35,7 @@ using System.Diagnostics;
 using Syncfusion.Windows.Shared;
 using System.Windows.Markup;
 using static OfficeOpenXml.ExcelErrorValue;
+using System.IO;
 
 namespace Erp.ViewModel.Manufacture
 {
@@ -342,7 +343,7 @@ namespace Erp.ViewModel.Manufacture
 
                 InputData.Inventory.InvCode = (SelectedItem as MRPInputData).Inventory.InvCode;
                 InputData.Inventory.InvId = (SelectedItem as MRPInputData).Inventory.InvId;
-                InputData.W = 5;
+                InputData.W = 3;
 
                 #region Forecast
                 InputData.Forecast = new ForecastInfoData();
@@ -425,7 +426,7 @@ namespace Erp.ViewModel.Manufacture
                         newitem.Stock = 0;
                         newitem.InvMax = 1050;
                         newitem.InvMin = 0;
-
+                        newitem.Backlog = 0;
                         InputData.Inventory.StockData.Add(newitem);
                     }
 
@@ -440,7 +441,7 @@ namespace Erp.ViewModel.Manufacture
                         newitem.Stock = 0;
                         newitem.InvMax = 1050;
                         newitem.InvMin = 0;
-
+                        newitem.Backlog = 0;
                         InputData.Inventory.StockData.Add(newitem);
                     }
 
@@ -584,6 +585,87 @@ namespace Erp.ViewModel.Manufacture
 
         #endregion
         #region InsertData For Optimisation
+
+        #region ReadFromCSV
+        public  void ReadVariablesFromCsv(string filePath)
+        {
+            var variables = new Dictionary<string, int>();
+
+            // Read all lines from the CSV file
+            var lines = File.ReadAllLines(filePath);
+
+            // Skip the header and parse the lines
+            foreach (var line in lines.Skip(1))
+            {
+                var parts = line.Split(',');
+                if (parts.Length == 2)
+                {
+                    var variable = parts[0].Trim();
+                    if (int.TryParse(parts[1].Trim(), out int value))
+                    {
+                        variables[variable] = value;
+                    }
+                }
+            }
+
+            // Assign values to InputData properties
+            if (variables.ContainsKey("T")) InputData.T = variables["T"];
+            if (variables.ContainsKey("P")) InputData.P = variables["P"];
+            if (variables.ContainsKey("Q")) InputData.Q = variables["Q"];
+            if (variables.ContainsKey("W")) InputData.W = variables["W"];
+        }
+        private  Dictionary<TKey, TValue> ReadFromCsv<TKey, TValue>(string fileName)
+        {
+            var dictionary = new Dictionary<TKey, TValue>();
+            using (var reader = new StreamReader(fileName))
+            {
+                var header = reader.ReadLine(); // Skip header
+                while (!reader.EndOfStream)
+                {
+                    var line = reader.ReadLine();
+                    var values = line.Split(',');
+
+                    if (typeof(TKey) == typeof(string) && typeof(TValue) == typeof(List<string>))
+                    {
+                        var key = (TKey)(object)values[0];
+                        var value = (TValue)(object)values[1].Split(';').ToList();
+                        dictionary[key] = value;
+                    }
+                    else if (typeof(TKey) == typeof((string, string)) && typeof(TValue) == typeof(double))
+                    {
+                        var key = (TKey)(object)(values[0], values[1]);
+                        var value = (TValue)(object)double.Parse(values[2]);
+                        dictionary[key] = value;
+                    }
+                    else if (typeof(TKey) == typeof((string, string, string)) && typeof(TValue) == typeof(double))
+                    {
+                        var key = (TKey)(object)(values[0], values[1], values[2]);
+                        var value = (TValue)(object)double.Parse(values[3]);
+                        dictionary[key] = value;
+                    }
+                    else if (typeof(TKey) == typeof(string) && typeof(TValue) == typeof(double))
+                    {
+                        var key = (TKey)(object)values[0];
+                        var value = (TValue)(object)double.Parse(values[1]);
+                        dictionary[key] = value;
+                    }
+                    else if (typeof(TKey) == typeof(string) && typeof(TValue) == typeof(string))
+                    {
+                        var key = (TKey)(object)values[0];
+                        var value = (TValue)(object)values[1];
+                        dictionary[key] = value;
+                    }
+                    else if (typeof(TKey) == typeof(string) && typeof(TValue) == typeof((double, double)))
+                    {
+                        var key = (TKey)(object)values[0];
+                        var value = (TValue)(object)(double.Parse(values[1]), double.Parse(values[2]));
+                        dictionary[key] = value;
+                    }
+                }
+            }
+            return dictionary;
+        }
+        #endregion
         public ICommand InsertDataCommand { get; }
         private void ExecuteInsertDataCommand(object obj)
         {
@@ -604,6 +686,8 @@ namespace Erp.ViewModel.Manufacture
             InputData.Hi = new Dictionary<string, double>();
             InputData.Gi = new Dictionary<string, double>();
             InputData.I0W = new Dictionary<string, string>();
+            InputData.Sijw = new Dictionary<(string, string, string), double>();
+            InputData.SCijw = new Dictionary<(string, string, string), double>();
 
             InputData.Ii = new Dictionary<string, (double, double)>();
             InputData.Imax_min = new Dictionary<string, (double, double)>();
@@ -611,525 +695,815 @@ namespace Erp.ViewModel.Manufacture
 
             #endregion
 
-            Random random = new Random();
+            MessageBoxResult result = MessageBox.Show("Do you want to Retrieve Data from  CSV files?", "Save Results", MessageBoxButton.YesNo, MessageBoxImage.Question);
 
-            #region T,P,Q,W ,Hi_Dict,Gi_Dict
 
-            InputData.T = InputData.Forecast.NumberOfBuckets;
-            InputData.P = InputData.EndItems.Count;
-            var DistinctBomItems = GetDistinctBOMItems(InputData);
-            InputData.Q = DistinctBomItems.Count + InputData.P;
-
-            #region  Bom Items + Hi,Gi
-
-            foreach (var code in DistinctBomItems)
+            if (result == MessageBoxResult.Yes)
             {
-                ItemData row = new ItemData();
-                row = CommonFunctions.GetItemChooserData(0, code);
+                string desktopPath = "C:\\Users\\npoly\\Source\\Repos\\Optimization\\";
+                string directoryPath = Path.Combine(desktopPath, "CSVFiles");
+                string codeListPath = Path.Combine(directoryPath, "CSVGroupCodes.txt");
 
-                //InputData.BomItems.Add(row);
-
-                InputData.Hi.Add(row.ItemCode, Math.Round(row.HoldingCost,2));
-                InputData.Gi.Add(row.ItemCode, Math.Round(row.HoldingCost*100,2));
-            }
-
-            #endregion
-
-            #endregion
-
-            #region Dit
-
-            foreach (var a in InputData.Forecast.DemandForecast)
-            {          
-                var Demand = a.Demand;
-                var Itemcode = a.Item.ItemCode;
-                string formattedDate = a.DateStr;
-                var key = (Itemcode, formattedDate);
-
-                // Add the data to the Dit dictionary
-                InputData.Dit[key] = (double)Demand;              
-
-            }
-
-            foreach (var date in InputData.Dates)
-            {
-                foreach (var code in DistinctBomItems)
+                // Check if the CSVGroupCodes file exists
+                if (File.Exists(codeListPath))
                 {
-                    var key = (code, date);
-                    if (!InputData.Dit.ContainsKey(key))
+                    // Read the codes from the file
+                    var csvGroupCodes = File.ReadAllLines(codeListPath).ToList();
+
+                    // Print the codes with an ID
+                    string message = "Available CSV Group Codes:\n";
+                    for (int i = 0; i < csvGroupCodes.Count; i++)
                     {
-                        InputData.Dit[key] = 0;
+                        message += $"{i + 1}. {csvGroupCodes[i]}\n";
                     }
 
-                }
-            }
-            #endregion
 
-            #region Ci,Rij, Hi and Gi for End Items
 
-            // Assuming Ci is already initialized somewhere in your code
-
-            // Iterate through InputData.Items to populate Ci
-            foreach (var item in InputData.EndItems)
-            {
-                // Check if the item is an end item
-                if (item.Bom.Count != 0)
-                {
-                    // Initialize the list of subcomponents for this end item
-                    List<string> subcomponents = new List<string>();
-
-                    // Iterate through the BOMData of this end item to get subcomponents and their quantities
-                    foreach (var row in item.Bom)
+                    // Ask the user to choose a CSV group code
+                    string input = Microsoft.VisualBasic.Interaction.InputBox(message, "Choose CSV Group Code", "1");
+                    if (int.TryParse(input, out int choice) && choice > 0 && choice <= csvGroupCodes.Count)
                     {
-                        // Add the component to the list of subcomponents
-                        subcomponents.Add(row.BomItem.ItemCode);
+                        string selectedCsvGroupCode = csvGroupCodes[choice - 1];
+                        MessageBox.Show($"You selected: {selectedCsvGroupCode}", "Selection Confirmed");
 
-                        // Add the relationship to the Rij dictionary
-                        InputData.Rij.Add((item.ItemCode, row.BomItem.ItemCode), Math.Round((double)row.BomPercentage,2));
-                        //ChatGpthere
+                        // Initialize InputData properties
+                        InputData.T = 0;
+                        InputData.P = 0;
+                        InputData.Q = 0;
+                        InputData.Pw = new Dictionary<string, List<string>>();
+                        InputData.Qw = new Dictionary<string, List<string>>();
+                        InputData.Dit = new Dictionary<(string, string), double>();
+                        InputData.Ci = new Dictionary<string, List<string>>();
+                        InputData.Rij = new Dictionary<(string, string), double>();
+                        InputData.Miwt = new Dictionary<(string, string, string), double>();
+                        InputData.Awt = new Dictionary<(string, string), double>();
+                        InputData.Uiw = new Dictionary<(string, string), double>();
+                        InputData.Hi = new Dictionary<string, double>();
+                        InputData.Gi = new Dictionary<string, double>();
+                        InputData.I0W = new Dictionary<string, string>();
+                        InputData.Ii = new Dictionary<string, (double, double)>();
+                        InputData.Imax_min = new Dictionary<string, (double, double)>();
+
+                        // Process each CSV file based on the selected CSV group code
+                        InputData.Pw = ReadFromCsv<string, List<string>>(Path.Combine(directoryPath, $"Pw_{selectedCsvGroupCode}.csv"));
+                        InputData.Qw = ReadFromCsv<string, List<string>>(Path.Combine(directoryPath, $"Qw_{selectedCsvGroupCode}.csv"));
+                        InputData.Dit = ReadFromCsv<(string, string), double>(Path.Combine(directoryPath, $"Dit_{selectedCsvGroupCode}.csv"));
+                        InputData.Ci = ReadFromCsv<string, List<string>>(Path.Combine(directoryPath, $"Ci_{selectedCsvGroupCode}.csv"));
+                        InputData.Rij = ReadFromCsv<(string, string), double>(Path.Combine(directoryPath, $"Rij_{selectedCsvGroupCode}.csv"));
+                        InputData.Awt = ReadFromCsv<(string, string), double>(Path.Combine(directoryPath, $"Awt_{selectedCsvGroupCode}.csv"));
+                        InputData.Miwt = ReadFromCsv<(string, string, string), double>(Path.Combine(directoryPath, $"Miwt_{selectedCsvGroupCode}.csv"));
+                        InputData.Sijw = ReadFromCsv<(string, string, string), double>(Path.Combine(directoryPath, $"Sijw_{selectedCsvGroupCode}.csv"));
+                        InputData.SCijw = ReadFromCsv<(string, string, string), double>(Path.Combine(directoryPath, $"SCijw_{selectedCsvGroupCode}.csv"));
+                        InputData.Uiw = ReadFromCsv<(string, string), double>(Path.Combine(directoryPath, $"Uiw_{selectedCsvGroupCode}.csv"));
+                        InputData.Hi = ReadFromCsv<string, double>(Path.Combine(directoryPath, $"Hi_{selectedCsvGroupCode}.csv"));
+                        InputData.Gi = ReadFromCsv<string, double>(Path.Combine(directoryPath, $"Gi_{selectedCsvGroupCode}.csv"));
+                        InputData.I0W = ReadFromCsv<string, string>(Path.Combine(directoryPath, $"I0W_{selectedCsvGroupCode}.csv"));
+                        InputData.Ii = ReadFromCsv<string, (double, double)>(Path.Combine(directoryPath, $"Ii_{selectedCsvGroupCode}.csv"));
+                        InputData.Imax_min = ReadFromCsv<string, (double, double)>(Path.Combine(directoryPath, $"Imax_min_{selectedCsvGroupCode}.csv"));
+                        ReadVariablesFromCsv(Path.Combine(directoryPath, $"Variables_{selectedCsvGroupCode}.csv"));
+
 
                     }
-
-                    // Add the end item and its subcomponents to the Ci dictionary
-                    InputData.Ci.Add(item.ItemCode, subcomponents);
-                    InputData.Hi.Add(item.ItemCode, Math.Round(item.HoldingCost, 2));
-                    InputData.Gi.Add(item.ItemCode, Math.Round(item.HoldingCost * 100, 2));
-                }
-
-            }
-            #endregion
-
-            #region Pw,Qw
-
-            // Initialize dictionaries to store end-items and products for each work center
-            InputData.Pw = new Dictionary<string, List<string>>();
-            InputData.Qw = new Dictionary<string, List<string>>();
-
-            // Determine the number of end items and BOM items based on the total work centers (W)
-            int numberOfEndItems = (int)Math.Ceiling((double)InputData.W * 0.6); // 60% for end items
-            int numberOfBomItems = InputData.W - numberOfEndItems; // Remaining for BOM items
-
-            foreach (var workCenter in Enumerable.Range(1, InputData.W))
-            {
-                WorkcenterData workcenter = new WorkcenterData();
-
-                // Determine if this workstation will contain only end items or only BOM items
-                bool isEndItemWorkstation = numberOfEndItems > 0 ? true : false;
-
-                // Initialize the list of products for this work center
-                List<string> productsForWorkCenter = new List<string>();
-
-                if (isEndItemWorkstation)
-                {
-                    // Workstation contains only end items
-                    var endItems = InputData.EndItems.Select(e => e.ItemCode).ToList();
-
-                    for (int i = 0; i < numberOfEndItems; i++)
+                    else
                     {
-                        // Randomly choose an end item
-                        int randomEndItemIndex = random.Next(0, endItems.Count);
-                        string selectedProduct = endItems[randomEndItemIndex];
-
-                        // Add the selected end item to the list of products for this work center
-                        productsForWorkCenter.Add(selectedProduct);
-
-                        // Remove the selected end item to prevent duplicate assignment
-                        endItems.RemoveAt(randomEndItemIndex);
+                        Console.WriteLine("Invalid selection.");
                     }
-
-                    // Decrement the count of end items
-                    numberOfEndItems--;
-
-                    // Add the list of end items to the Pw dictionary
-                    InputData.Pw.Add($"WorkCenter{workCenter}", productsForWorkCenter);
-                    workcenter.WorkCode = $"WorkCenter{workCenter}";
                 }
                 else
                 {
-                    // Workstation contains only BOM items
-                    var bomItems = InputData.BomItems.Select(b => b.ItemCode).ToList();
+                    Console.WriteLine("CSVGroupCodes.txt file does not exist.");
+                }
+            }
+            else
+            {
+                Random random = new Random();
 
-                    for (int i = 0; i < numberOfBomItems; i++)
+                #region T,P,Q,W ,Hi_Dict,Gi_Dict
+
+                InputData.T = InputData.Forecast.NumberOfBuckets;
+                InputData.P = InputData.EndItems.Count;
+                var DistinctBomItems = GetDistinctBOMItems(InputData);
+                InputData.Q = DistinctBomItems.Count + InputData.P;
+
+                #region  Bom Items + Hi,Gi
+
+                foreach (var code in DistinctBomItems)
+                {
+                    ItemData row = new ItemData();
+                    row = CommonFunctions.GetItemChooserData(0, code);
+
+                    //InputData.BomItems.Add(row);
+
+                    InputData.Hi.Add(row.ItemCode, Math.Round(row.HoldingCost, 2));
+                    InputData.Gi.Add(row.ItemCode, Math.Round(row.HoldingCost * 100, 2));
+                }
+
+                #endregion
+
+                #endregion
+
+                #region Dit
+
+                foreach (var a in InputData.Forecast.DemandForecast)
+                {
+                    var Demand = a.Demand;
+                    var Itemcode = a.Item.ItemCode;
+                    string formattedDate = a.DateStr;
+                    var key = (Itemcode, formattedDate);
+
+                    // Add the data to the Dit dictionary
+                    InputData.Dit[key] = (double)Demand;
+
+                }
+
+                foreach (var date in InputData.Dates)
+                {
+                    foreach (var code in DistinctBomItems)
                     {
-                        // Randomly choose a BOM item
-                        int randomBomItemIndex = random.Next(0, bomItems.Count);
-                        string selectedProduct = bomItems[randomBomItemIndex];
+                        var key = (code, date);
+                        if (!InputData.Dit.ContainsKey(key))
+                        {
+                            InputData.Dit[key] = 0;
+                        }
 
-                        // Add the selected BOM item to the list of products for this work center
-                        productsForWorkCenter.Add(selectedProduct);
+                    }
+                }
+                #endregion
 
-                        // Remove the selected BOM item to prevent duplicate assignment
-                        bomItems.RemoveAt(randomBomItemIndex);
+                #region Ci,Rij, Hi and Gi for End Items
+
+                // Assuming Ci is already initialized somewhere in your code
+
+                // Iterate through InputData.Items to populate Ci
+                foreach (var item in InputData.EndItems)
+                {
+                    // Check if the item is an end item
+                    if (item.Bom.Count != 0)
+                    {
+                        // Initialize the list of subcomponents for this end item
+                        List<string> subcomponents = new List<string>();
+
+                        // Iterate through the BOMData of this end item to get subcomponents and their quantities
+                        foreach (var row in item.Bom)
+                        {
+                            // Add the component to the list of subcomponents
+                            subcomponents.Add(row.BomItem.ItemCode);
+
+                            // Add the relationship to the Rij dictionary
+                            InputData.Rij.Add((item.ItemCode, row.BomItem.ItemCode), Math.Round((double)row.BomPercentage, 2));
+                            //ChatGpthere
+
+                        }
+
+                        // Add the end item and its subcomponents to the Ci dictionary
+                        InputData.Ci.Add(item.ItemCode, subcomponents);
+                        InputData.Hi.Add(item.ItemCode, Math.Round(item.HoldingCost, 2));
+                        InputData.Gi.Add(item.ItemCode, Math.Round(item.HoldingCost * 100, 2));
                     }
 
-                    // Decrement the count of BOM items
-                    numberOfBomItems--;
-
-                    // Add the list of BOM items to the Qw dictionary
-                    InputData.Qw.Add($"WorkCenter{workCenter}", productsForWorkCenter);
-                    workcenter.WorkCode = $"WorkCenter{workCenter}";
                 }
-                InputData.Workcenters.Add(workcenter);
-            }
+                #endregion
 
-            // Ensure that each product is processed on at least two work centers
-            foreach (var product in InputData.EndItems.Select(e => e.ItemCode))
-            {
-                EnsureProductAssignedToTwoWorkCenters(InputData.Pw, product);
-            }
+                #region Pw,Qw Old
 
-            foreach (var product in InputData.BomItems.Select(b => b.ItemCode))
-            {
-                EnsureProductAssignedToTwoWorkCenters(InputData.Qw, product);
-            }
+                //// Initialize dictionaries to store end-items and products for each work center
+                //InputData.Pw = new Dictionary<string, List<string>>();
+                //InputData.Qw = new Dictionary<string, List<string>>();
 
-            #endregion
+                //// Determine the number of end items and BOM items based on the total work centers (W)
+                //int numberOfEndItems = (int)Math.Ceiling((double)InputData.W * 0.6); // 60% for end items
+                //int numberOfBomItems = InputData.W - numberOfEndItems; // Remaining for BOM items
 
-            // Function to ensure that each product is assigned to at least two work centers
-            void EnsureProductAssignedToTwoWorkCenters(Dictionary<string, List<string>> workCenterProducts, string product)
-            {
-                // Check if the product is assigned to only one work center
-                if (workCenterProducts.Count(wp => wp.Value.Contains(product)) < 2)
+                //foreach (var workCenter in Enumerable.Range(1, InputData.W))
+                //{
+                //    WorkcenterData workcenter = new WorkcenterData();
+
+                //    // Determine if this workstation will contain only end items or only BOM items
+                //    bool isEndItemWorkstation = numberOfEndItems > 0 ? true : false;
+
+                //    // Initialize the list of products for this work center
+                //    List<string> productsForWorkCenter = new List<string>();
+
+                //    if (isEndItemWorkstation)
+                //    {
+                //        // Workstation contains only end items
+                //        var endItems = InputData.EndItems.Select(e => e.ItemCode).ToList();
+
+                //        for (int i = 0; i < numberOfEndItems && endItems.Count > 0; i++)
+                //        {
+                //            // Randomly choose an end item
+                //            int randomEndItemIndex = random.Next(0, endItems.Count);
+                //            string selectedProduct = endItems[randomEndItemIndex];
+
+                //            // Add the selected end item to the list of products for this work center
+                //            productsForWorkCenter.Add(selectedProduct);
+
+                //            // Remove the selected end item to prevent duplicate assignment
+                //            endItems.RemoveAt(randomEndItemIndex);
+                //        }
+
+                //        // Decrement the count of end items
+                //        numberOfEndItems--;
+
+                //        // Add the list of end items to the Pw dictionary
+                //        InputData.Pw.Add($"WorkCenter{workCenter}", productsForWorkCenter);
+                //        workcenter.WorkCode = $"WorkCenter{workCenter}";
+                //    }
+                //    else
+                //    {
+                //        // Workstation contains only BOM items
+                //        var bomItems = InputData.BomItems.Select(b => b.ItemCode).ToList();
+
+                //        for (int i = 0; i < numberOfBomItems && bomItems.Count > 0; i++)
+                //        {
+                //            // Randomly choose a BOM item
+                //            int randomBomItemIndex = random.Next(0, bomItems.Count);
+                //            string selectedProduct = bomItems[randomBomItemIndex];
+
+                //            // Add the selected BOM item to the list of products for this work center
+                //            productsForWorkCenter.Add(selectedProduct);
+
+                //            // Remove the selected BOM item to prevent duplicate assignment
+                //            bomItems.RemoveAt(randomBomItemIndex);
+                //        }
+
+                //        // Decrement the count of BOM items
+                //        numberOfBomItems--;
+
+                //        // Add the list of BOM items to the Qw dictionary
+                //        InputData.Qw.Add($"WorkCenter{workCenter}", productsForWorkCenter);
+                //        workcenter.WorkCode = $"WorkCenter{workCenter}";
+                //    }
+
+                //    InputData.Workcenters.Add(workcenter);
+                //}
+
+                //// Ensure that each product is processed on at least two work centers
+                //foreach (var product in InputData.EndItems.Select(e => e.ItemCode))
+                //{
+                //    EnsureProductAssignedToTwoWorkCenters(InputData.Pw, product);
+                //}
+
+                //foreach (var product in InputData.BomItems.Select(b => b.ItemCode))
+                //{
+                //    EnsureProductAssignedToTwoWorkCenters(InputData.Qw, product);
+                //}
+
+                //// Function to ensure that each product is assigned to at least two work centers
+                //void EnsureProductAssignedToTwoWorkCenters(Dictionary<string, List<string>> workCenterProducts, string product)
+                //{
+                //    // Check if the product is assigned to only one work center
+                //    if (workCenterProducts.Count(wp => wp.Value.Contains(product)) < 2)
+                //    {
+                //        // Find another work center to assign the product
+                //        foreach (var workCenter in workCenterProducts.Keys)
+                //        {
+                //            if (!workCenterProducts[workCenter].Contains(product))
+                //            {
+                //                workCenterProducts[workCenter].Add(product);
+                //                break;
+                //            }
+                //        }
+                //    }
+                //}
+
+                #endregion
+
+                #region Pw,Qw New
+
+                // Initialize dictionaries to store end-items and products for each work center
+                InputData.Pw = new Dictionary<string, List<string>>();
+                InputData.Qw = new Dictionary<string, List<string>>();
+
+                // Determine the number of end items and BOM items based on the total work centers (W)
+                int numberOfEndItems = (int)Math.Ceiling((double)InputData.W * 0.3); // 60% for end items
+                int numberOfBomItems = InputData.W - numberOfEndItems; // Remaining for BOM items
+
+                foreach (var workCenter in Enumerable.Range(1, InputData.W))
                 {
-                    // Find another work center to assign the product
-                    foreach (var workCenter in workCenterProducts.Keys)
+                    WorkcenterData workcenter = new WorkcenterData();
+
+                    // Determine if this workstation will contain only end items or only BOM items
+                    bool isEndItemWorkstation = numberOfEndItems > 0 ? true : false;
+
+                    // Initialize the list of products for this work center
+                    List<string> productsForWorkCenter = new List<string>();
+
+                    if (isEndItemWorkstation)
                     {
-                        if (!workCenterProducts[workCenter].Contains(product))
+                        // Workstation contains only end items
+                        var endItems = InputData.EndItems.Select(e => e.ItemCode).ToList();
+
+                        for (int i = 0; i < numberOfEndItems && endItems.Count > 0; i++)
                         {
-                            workCenterProducts[workCenter].Add(product);
-                            break;
+                            // Randomly choose an end item
+                            int randomEndItemIndex = random.Next(0, endItems.Count);
+                            string selectedProduct = endItems[randomEndItemIndex];
+
+                            // Add the selected end item to the list of products for this work center
+                            productsForWorkCenter.Add(selectedProduct);
+
+                            // Remove the selected end item to prevent duplicate assignment
+                            endItems.RemoveAt(randomEndItemIndex);
+                        }
+
+                        // Decrement the count of end items
+                        numberOfEndItems--;
+
+                        // Add the list of end items to the Pw dictionary
+                        InputData.Pw.Add($"WorkCenter{workCenter}", productsForWorkCenter);
+                        workcenter.WorkCode = $"WorkCenter{workCenter}";
+                    }
+                    else
+                    {
+                        // Workstation contains only BOM items
+                        var bomItems = InputData.BomItems.Select(b => b.ItemCode).ToList();
+
+                        for (int i = 0; i < numberOfBomItems && bomItems.Count > 0; i++)
+                        {
+                            // Randomly choose a BOM item
+                            int randomBomItemIndex = random.Next(0, bomItems.Count);
+                            string selectedProduct = bomItems[randomBomItemIndex];
+
+                            // Add the selected BOM item to the list of products for this work center
+                            productsForWorkCenter.Add(selectedProduct);
+
+                            // Remove the selected BOM item to prevent duplicate assignment
+                            bomItems.RemoveAt(randomBomItemIndex);
+                        }
+
+                        // Decrement the count of BOM items
+                        numberOfBomItems--;
+
+                        // Add the list of BOM items to the Qw dictionary
+                        InputData.Qw.Add($"WorkCenter{workCenter}", productsForWorkCenter);
+                        workcenter.WorkCode = $"WorkCenter{workCenter}";
+                    }
+
+                    InputData.Workcenters.Add(workcenter);
+                }
+
+                // Ensure that each product is processed on at least two work centers
+                foreach (var product in InputData.EndItems.Select(e => e.ItemCode))
+                {
+                    EnsureProductAssignedToTwoWorkCenters(InputData.Pw, product);
+                }
+
+                foreach (var product in InputData.BomItems.Select(b => b.ItemCode))
+                {
+                    EnsureProductAssignedToTwoWorkCenters(InputData.Qw, product);
+                }
+
+                // Function to ensure that each product is assigned to at least two work centers
+                void EnsureProductAssignedToTwoWorkCenters(Dictionary<string, List<string>> workCenterProducts, string product)
+                {
+                    // Check if the product is assigned to only one work center
+                    if (workCenterProducts.Count(wp => wp.Value.Contains(product)) < 2)
+                    {
+                        // Find another work center to assign the product
+                        foreach (var workCenter in workCenterProducts.Keys)
+                        {
+                            if (!workCenterProducts[workCenter].Contains(product))
+                            {
+                                workCenterProducts[workCenter].Add(product);
+                                break;
+                            }
                         }
                     }
                 }
-            }
 
+                #endregion
 
-            #region I0W
-            foreach (var workCenter in InputData.Pw.Keys)
-            {
-                // Get the list of products that can be processed at this work center
-                var productsForWorkCenter = InputData.Pw[workCenter];
-
-                // Ensure there are products available for this work center
-                if (productsForWorkCenter.Count > 0)
+                #region I0W
+                foreach (var workCenter in InputData.Pw.Keys)
                 {
-                    // Randomly select a product from the list
-                    string randomProduct = productsForWorkCenter[random.Next(productsForWorkCenter.Count)];
+                    // Get the list of products that can be processed at this work center
+                    var productsForWorkCenter = InputData.Pw[workCenter];
 
-                    // Assign the random product to the work center
-                    InputData.I0W[workCenter] = randomProduct;
-                }
-            }
-
-            foreach (var workCenter in InputData.Qw.Keys)
-            {
-                // Get the list of products that can be processed at this work center
-                var productsForWorkCenter = InputData.Qw[workCenter];
-
-                // Ensure there are products available for this work center
-                if (productsForWorkCenter.Count > 0)
-                {
-                    // Randomly select a product from the list
-                    string randomProduct = productsForWorkCenter[random.Next(productsForWorkCenter.Count)];
-
-                    // Assign the random product to the work center
-                    InputData.I0W[workCenter] = randomProduct;
-                }
-            }
-
-            #endregion
-            #region Uiw  
-
-            // Generate production times for Pw dictionary
-            foreach (var workCenter in InputData.Pw.Keys)
-            {
-                foreach (var product in InputData.Pw[workCenter])
-                {
-                    // Check if the key already exists in the dictionary
-                    if (!InputData.Uiw.ContainsKey((product, workCenter)))
+                    // Ensure there are products available for this work center
+                    if (productsForWorkCenter.Count > 0)
                     {
-                        double mean = 0.01;
-                        double range = 0.015 - 0.005;
-                        double standardDeviation = range / Math.Sqrt(12); // Calculate the standard deviation for a uniform distribution
-                        double halfRange = range / 2.0;
+                        // Randomly select a product from the list
+                        string randomProduct = productsForWorkCenter[random.Next(productsForWorkCenter.Count)];
 
-                        // Generate a random value from a normal distribution with the specified mean and standard deviation
-                        double productionTime = random.NextDouble() * range + (mean - halfRange);
-
-                        // Ensure production time is within the specified range
-                        productionTime = Math.Max(0.005, Math.Min(0.015, productionTime));
-
-                        // Round to four decimal places
-                        productionTime = Math.Round(productionTime, 4);
-
-                        // Add the generated production time to the dictionary
-                        InputData.Uiw.Add((product, workCenter), productionTime);
+                        // Assign the random product to the work center
+                        randomProduct = productsForWorkCenter[0];
+                        InputData.I0W[workCenter] = randomProduct;
                     }
                 }
-            }
 
-            // Generate production times for Qw dictionary
-            foreach (var workCenter in InputData.Qw.Keys)
-            {
-                foreach (var product in InputData.Qw[workCenter])
+                foreach (var workCenter in InputData.Qw.Keys)
                 {
-                    // Check if the key already exists in the dictionary
-                    if (!InputData.Uiw.ContainsKey((product, workCenter)))
+                    // Get the list of products that can be processed at this work center
+                    var productsForWorkCenter = InputData.Qw[workCenter];
+
+                    // Ensure there are products available for this work center
+                    if (productsForWorkCenter.Count > 0)
                     {
-                        double mean = 0.01;
-                        double range = 0.015 - 0.005;
-                        double standardDeviation = range / Math.Sqrt(12); // Calculate the standard deviation for a uniform distribution
-                        double productionTime = random.NextDouble() * range + 0.005; // Random value between 0.005 and 0.015
-                        productionTime = Math.Max(0.005, Math.Min(0.015, productionTime)); // Ensure production time is within the specified range
-                        productionTime = Math.Round(productionTime, 4); // Round to four decimal places
-                        InputData.Uiw.Add((product, workCenter), productionTime);
+                        // Randomly select a product from the list
+                        string randomProduct = productsForWorkCenter[random.Next(productsForWorkCenter.Count)];
+
+                        // Assign the random product to the work center
+                        randomProduct = productsForWorkCenter[0];
+                        InputData.I0W[workCenter] = randomProduct;
                     }
                 }
-            }
 
-            #endregion
+                #endregion
 
-            #region Sijw
+                #region Uiw  
 
-            // Fill in the values for Sijw
-            InputData.Sijw = new Dictionary<(string, string, string), double>();
-
-            foreach (var fromWorkCenter in InputData.Pw.Keys)
-            {
-                foreach (var fromProduct in InputData.Pw[fromWorkCenter])
-                {
-                    foreach (var toWorkCenter in InputData.Pw.Keys)
-                    {
-                        foreach (var toProduct in InputData.Pw[toWorkCenter])
-                        {
-                            // Skip if the key already exists
-                            if (InputData.Sijw.ContainsKey((fromProduct, toProduct, fromWorkCenter)))
-                            {
-                                continue;
-                            }
-
-                            if (fromWorkCenter == toWorkCenter && fromProduct == toProduct)
-                            {
-                                // Setup time from the same product at the same workstation is zero
-                                InputData.Sijw.Add((fromProduct, toProduct, fromWorkCenter), 0);
-                            }
-                            else
-                            {
-                                // Generate setup time with mean 1.0 hour
-                                double mean = 1.0;
-                                double setupTime = random.NextDouble() * mean; // Random value between 0 and mean
-                                setupTime = Math.Round(setupTime, 4); // Round to four decimal places
-                                InputData.Sijw.Add((fromProduct , toProduct,fromWorkCenter), setupTime);
-                            }
-                        }
-                    }
-                }
-            }
-
-            foreach (var fromWorkCenter in InputData.Qw.Keys)
-            {
-                foreach (var fromProduct in InputData.Qw[fromWorkCenter])
-                {
-                    foreach (var toWorkCenter in InputData.Qw.Keys)
-                    {
-                        foreach (var toProduct in InputData.Qw[toWorkCenter])
-                        {
-                            // Skip if the key already exists
-                            if (InputData.Sijw.ContainsKey((fromProduct, toProduct, fromWorkCenter)))
-                            {
-                                continue;
-                            }
-
-                            if (fromWorkCenter == toWorkCenter && fromProduct == toProduct)
-                            {
-                                // Setup time from the same product at the same workstation is zero
-                                InputData.Sijw.Add((fromProduct , toProduct,fromWorkCenter), 0);
-                            }
-                            else
-                            {
-                                // Generate setup time with mean 1.0 hour
-                                double mean = 1.0;
-                                double setupTime = random.NextDouble() * mean; // Random value between 0 and mean
-                                setupTime = Math.Round(setupTime, 4); // Round to four decimal places
-                                InputData.Sijw.Add((fromProduct, toProduct, fromWorkCenter), setupTime);
-                            }
-                        }
-                    }
-                }
-            }
-
-            #endregion
-
-            #region  Mjwt represents the maximum production quantity for product j at work center w during period t
-            // Fill in the values for Miwt
-
-            // Define the mean and range
-            double PmeanMiwt = 395.0;
-            double PrangeMiwt = 30.0; // Range from 80 to 110
-
-            double QmeanMiwt = PmeanMiwt*2;
-            double QrangeMiwt = PrangeMiwt;
-            // Generate maximum production quantity values for each product, work center, and date
-            foreach (var date in InputData.Dates)
-            {
-
-                // Generate maximum production quantity values for Pw work centers
+                // Generate production times for Pw dictionary
                 foreach (var workCenter in InputData.Pw.Keys)
                 {
                     foreach (var product in InputData.Pw[workCenter])
                     {
-                        double maxProduction = PmeanMiwt + (random.NextDouble() * PrangeMiwt) - (PrangeMiwt / 2.0); // Random value around the mean
-                        maxProduction = Math.Round(maxProduction, 4); // Round to four decimal places
-                        InputData.Miwt.Add((product, workCenter, date), maxProduction); // Inserting date as Item2
+                        // Check if the key already exists in the dictionary
+                        if (!InputData.Uiw.ContainsKey((product, workCenter)))
+                        {
+                            double mean = 0.01;
+                            double range = 0.015 - 0.005;
+                            double standardDeviation = range / Math.Sqrt(12); // Calculate the standard deviation for a uniform distribution
+                            double halfRange = range / 2.0;
+
+                            // Generate a random value from a normal distribution with the specified mean and standard deviation
+                            double productionTime = random.NextDouble() * range + (mean - halfRange);
+
+                            // Ensure production time is within the specified range
+                            productionTime = Math.Max(0.005, Math.Min(0.015, productionTime));
+
+                            // Round to four decimal places
+                            productionTime = Math.Round(productionTime, 4);
+
+                            // Add the generated production time to the dictionary
+                            productionTime = 0.015;
+                            InputData.Uiw.Add((product, workCenter), productionTime);
+                        }
                     }
                 }
 
-                // Generate maximum production quantity values for Qw work centers
+                // Generate production times for Qw dictionary
                 foreach (var workCenter in InputData.Qw.Keys)
                 {
                     foreach (var product in InputData.Qw[workCenter])
                     {
-                        double maxProduction = QmeanMiwt + (random.NextDouble() * QrangeMiwt) - (QrangeMiwt / 2.0); // Random value around the mean
-                        maxProduction = Math.Round(maxProduction, 4); // Round to four decimal places
-                        InputData.Miwt.Add((product, workCenter, date), maxProduction); // Inserting date as Item2
+                        // Check if the key already exists in the dictionary
+                        if (!InputData.Uiw.ContainsKey((product, workCenter)))
+                        {
+                            double mean = 0.01;
+                            double range = 0.015 - 0.005;
+                            double standardDeviation = range / Math.Sqrt(12); // Calculate the standard deviation for a uniform distribution
+                            double productionTime = random.NextDouble() * range + 0.005; // Random value between 0.005 and 0.015
+                            productionTime = Math.Max(0.005, Math.Min(0.015, productionTime)); // Ensure production time is within the specified range
+                            productionTime = Math.Round(productionTime, 4); // Round to four decimal places
+
+                            productionTime = 0.007;
+                            InputData.Uiw.Add((product, workCenter), productionTime);
+                        }
                     }
                 }
-            }
-            #endregion
 
-            #region Awt represents the available capacity at work center w during period t.
-            // Fill in the values for Awt
+                #endregion
 
-            // Define the mean and range
-            double PmeanAwt = 40.0;
-            double PrangeAwt = 30.0; // Range from 90 to 120
-            double QmeanAwt = PmeanAwt *3;
-            double QrangeAwt = PrangeAwt;
-            // Generate capacity values for each work center and date
-            foreach (var date in InputData.Dates)
-            {
+                #region Sijw
 
-                // Generate capacity values for Pw work centers
-                foreach (var workCenter in InputData.Pw.Keys)
+                // Fill in the values for Sijw
+                InputData.Sijw = new Dictionary<(string, string, string), double>();
+
+                foreach (var fromWorkCenter in InputData.Pw.Keys)
                 {
-                    double capacity = PmeanAwt + (random.NextDouble() * PrangeAwt) - (PrangeAwt / 2.0); // Random value around the mean
-                    capacity = Math.Round(capacity, 4); // Round to four decimal places
-                    InputData.Awt.Add((workCenter, date), capacity); // Inserting date as Item2
+                    foreach (var fromProduct in InputData.Pw[fromWorkCenter])
+                    {
+                        foreach (var toWorkCenter in InputData.Pw.Keys)
+                        {
+                            foreach (var toProduct in InputData.Pw[toWorkCenter])
+                            {
+                                // Skip if the key already exists
+                                if (InputData.Sijw.ContainsKey((fromProduct, toProduct, fromWorkCenter)))
+                                {
+                                    continue;
+                                }
+
+                                if (fromWorkCenter == toWorkCenter && fromProduct == toProduct)
+                                {
+                                    // Setup time from the same product at the same workstation is zero
+                                    InputData.Sijw.Add((fromProduct, toProduct, fromWorkCenter), 0);
+                                }
+                                else
+                                {
+
+
+                                    double mean = 1.0;
+                                    double setupTime = random.NextDouble() * mean; // Random value between 0 and mean
+                                    setupTime = Math.Round(setupTime, 4); // Round to four decimal places
+
+                                    setupTime = 0.5;
+
+                                    if (fromProduct == "Bicycle_Green" || fromProduct == "Bicycle_Red")
+                                    {
+                                        setupTime = 0.5;
+
+                                    }
+                                    InputData.Sijw.Add((fromProduct, toProduct, fromWorkCenter), setupTime);
+                                }
+                            }
+                        }
+                    }
                 }
 
-                // Generate capacity values for Qw work centers
-                foreach (var workCenter in InputData.Qw.Keys)
+                foreach (var fromWorkCenter in InputData.Qw.Keys)
                 {
-                    double capacity = QmeanAwt + (random.NextDouble() * QrangeAwt) - (QrangeAwt / 2.0); // Random value around the mean
-                    capacity = Math.Round(capacity, 4); // Round to four decimal places
-                    InputData.Awt.Add((workCenter, date), capacity); // Inserting date as Item2
+                    foreach (var fromProduct in InputData.Qw[fromWorkCenter])
+                    {
+                        foreach (var toWorkCenter in InputData.Qw.Keys)
+                        {
+                            foreach (var toProduct in InputData.Qw[toWorkCenter])
+                            {
+                                // Skip if the key already exists
+                                if (InputData.Sijw.ContainsKey((fromProduct, toProduct, fromWorkCenter)))
+                                {
+                                    continue;
+                                }
+
+                                if (fromWorkCenter == toWorkCenter && fromProduct == toProduct)
+                                {
+                                    // Setup time from the same product at the same workstation is zero
+                                    InputData.Sijw.Add((fromProduct, toProduct, fromWorkCenter), 0);
+                                }
+                                else
+                                {
+                                    // Generate setup time with mean 1.0 hour
+                                    double mean = 1.0;
+                                    double setupTime = random.NextDouble() * mean; // Random value between 0 and mean
+                                    setupTime = Math.Round(setupTime, 4); // Round to four decimal places
+
+                                    setupTime = 0.3;
+
+                                    if (fromProduct == "Wheel" || fromProduct == "Frame" ||
+    fromProduct == "Handlebars" || fromProduct == "Red_Paint" || fromProduct == "GreenPaint")
+                                    {
+                                        setupTime = 0.3;
+
+                                    }
+
+                                    InputData.Sijw.Add((fromProduct, toProduct, fromWorkCenter), setupTime);
+                                }
+                            }
+                        }
+                    }
                 }
-            }
-            #endregion
 
-            #region Ii ,Imax_min
-            foreach(var row in InputData.Inventory.StockData) 
-            {
-                InputData.Ii.Add(row.StockItem.ItemCode, (row.Stock,0));
+                #endregion
 
-                InputData.Imax_min.Add(row.StockItem.ItemCode, (row.InvMax, row.InvMin));
+                #region SCijw
 
-            }
+                // Fill in the values for SCijw
+                InputData.SCijw = new Dictionary<(string, string, string), double>();
 
-
-
-            #endregion
-
-            #region Print Dictionaries
-            // Print Pw dictionary
-            Console.WriteLine("Pw (End-Items for each Work Center):");
-            foreach (var kvp in InputData.Pw)
-            {
-                Console.WriteLine($"Work Center: {kvp.Key}");
-                Console.WriteLine("End-Items:");
-                foreach (var item in kvp.Value)
+                foreach (var fromWorkCenter in InputData.Pw.Keys)
                 {
-                    Console.WriteLine($"- {item}");
-                }
-            }
+                    foreach (var fromProduct in InputData.Pw[fromWorkCenter])
+                    {
+                        foreach (var toWorkCenter in InputData.Pw.Keys)
+                        {
+                            foreach (var toProduct in InputData.Pw[toWorkCenter])
+                            {
+                                // Skip if the key already exists
+                                if (InputData.SCijw.ContainsKey((fromProduct, toProduct, fromWorkCenter)))
+                                {
+                                    continue;
+                                }
 
-            // Print Qw dictionary
-            Console.WriteLine("\nQw (Products for each Work Center):");
-            foreach (var kvp in InputData.Qw)
-            {
-                Console.WriteLine($"Work Center: {kvp.Key}");
-                Console.WriteLine("Products:");
-                foreach (var item in kvp.Value)
+                                if (fromWorkCenter == toWorkCenter && fromProduct == toProduct)
+                                {
+                                    // Setup time from the same product at the same workstation is zero
+                                    InputData.SCijw.Add((fromProduct, toProduct, fromWorkCenter), 0);
+                                }
+                                else
+                                {
+                                    double SetupCost = 1;
+                                    if(fromProduct == "Bicycle_Green" || fromProduct == "Bicycle_Red")
+                                    {
+                                        SetupCost = 2.6;
+
+                                    }
+
+                                    InputData.SCijw.Add((fromProduct, toProduct, fromWorkCenter), SetupCost);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                foreach (var fromWorkCenter in InputData.Qw.Keys)
                 {
-                    Console.WriteLine($"- {item}");
+                    foreach (var fromProduct in InputData.Qw[fromWorkCenter])
+                    {
+                        foreach (var toWorkCenter in InputData.Qw.Keys)
+                        {
+                            foreach (var toProduct in InputData.Qw[toWorkCenter])
+                            {
+                                // Skip if the key already exists
+                                if (InputData.SCijw.ContainsKey((fromProduct, toProduct, fromWorkCenter)))
+                                {
+                                    continue;
+                                }
+
+                                if (fromWorkCenter == toWorkCenter && fromProduct == toProduct)
+                                {
+                                    // Setup time from the same product at the same workstation is zero
+                                    InputData.SCijw.Add((fromProduct, toProduct, fromWorkCenter), 0);
+                                }
+                                else
+                                {
+
+                                    double SetupCost = 1;
+                                    if (fromProduct == "Wheel" || fromProduct == "Frame" ||
+                                        fromProduct == "Handlebars" || fromProduct == "Red_Paint" || fromProduct == "GreenPaint")
+                                    {
+                                        SetupCost = 1.7;
+
+                                    }
+                                    InputData.SCijw.Add((fromProduct, toProduct, fromWorkCenter), SetupCost);
+                                }
+                            }
+                        }
+                    }
                 }
-            }
+                #endregion
 
-            // Print Dit dictionary
-            Console.WriteLine("\nDit (Demand for each product at the end of period t):");
-            foreach (var kvp in InputData.Dit)
-            {
-                Console.WriteLine($"Product: {kvp.Key}, Demand: {kvp.Value}");
-            }
+                #region  Mjwt represents the maximum production quantity for product j at work center w during period t
+                // Fill in the values for Miwt
 
-            // Print Ci dictionary
-            Console.WriteLine("\nCi (Direct subcomponents of each component or end-item):");
-            foreach (var kvp in InputData.Ci)
-            {
-                Console.WriteLine($"Component or End-Item: {kvp.Key}");
-                Console.WriteLine("Subcomponents:");
-                foreach (var subcomponent in kvp.Value)
+                // Define the mean and range
+                double PmeanMiwt = 395.0;
+                double PrangeMiwt = 30.0; // Range from 80 to 110
+
+                double QmeanMiwt = PmeanMiwt * 2;
+                double QrangeMiwt = PrangeMiwt;
+                // Generate maximum production quantity values for each product, work center, and date
+                foreach (var date in InputData.Dates)
                 {
-                    Console.WriteLine($"- {subcomponent}");
+
+                    // Generate maximum production quantity values for Pw work centers
+                    foreach (var workCenter in InputData.Pw.Keys)
+                    {
+                        foreach (var product in InputData.Pw[workCenter])
+                        {
+                            double maxProduction = PmeanMiwt + (random.NextDouble() * PrangeMiwt) - (PrangeMiwt / 2.0); // Random value around the mean
+                            maxProduction = Math.Round(maxProduction, 4); // Round to four decimal places
+                            InputData.Miwt.Add((product, workCenter, date), maxProduction); // Inserting date as Item2
+                        }
+                    }
+
+                    // Generate maximum production quantity values for Qw work centers
+                    foreach (var workCenter in InputData.Qw.Keys)
+                    {
+                        foreach (var product in InputData.Qw[workCenter])
+                        {
+                            double maxProduction = QmeanMiwt + (random.NextDouble() * QrangeMiwt) - (QrangeMiwt / 2.0); // Random value around the mean
+                            maxProduction = Math.Round(maxProduction, 4); // Round to four decimal places
+                            InputData.Miwt.Add((product, workCenter, date), maxProduction); // Inserting date as Item2
+                        }
+                    }
                 }
+                #endregion
+
+                #region Awt represents the available capacity at work center w during period t.
+                // Fill in the values for Awt
+
+                // Define the mean and range
+                double PmeanAwt = 15.0;
+                double PrangeAwt = 0.0;
+                double QmeanAwt = PmeanAwt * 1.2;
+                double QrangeAwt = PrangeAwt;
+                // Generate capacity values for each work center and date
+                foreach (var date in InputData.Dates)
+                {
+
+                    // Generate capacity values for Pw work centers
+                    foreach (var workCenter in InputData.Pw.Keys)
+                    {
+                        double capacity = PmeanAwt + (random.NextDouble() * PrangeAwt) - (PrangeAwt / 2.0); // Random value around the mean
+                        capacity = Math.Round(capacity, 4); // Round to four decimal places
+
+                        capacity = 16;
+                        InputData.Awt.Add((workCenter, date), capacity); // Inserting date as Item2
+
+                    }
+
+                    // Generate capacity values for Qw work centers
+                    foreach (var workCenter in InputData.Qw.Keys)
+                    {
+                        double capacity = QmeanAwt + (random.NextDouble() * QrangeAwt) - (QrangeAwt / 2.0); // Random value around the mean
+                        capacity = Math.Round(capacity, 4); // Round to four decimal places
+
+                        capacity = 24;
+                        InputData.Awt.Add((workCenter, date), capacity); // Inserting date as Item2
+                    }
+                }
+                #endregion
+
+                #region Ii ,Imax_min
+                foreach (var row in InputData.Inventory.StockData)
+                {
+                    InputData.Ii.Add(row.StockItem.ItemCode, (row.Stock, row.Backlog));
+
+                    InputData.Imax_min.Add(row.StockItem.ItemCode, (row.InvMax, row.InvMin));
+
+                }
+
+
+                #endregion
+
+                #region Print Dictionaries
+                // Print Pw dictionary
+                Console.WriteLine("Pw (End-Items for each Work Center):");
+                foreach (var kvp in InputData.Pw)
+                {
+                    Console.WriteLine($"Work Center: {kvp.Key}");
+                    Console.WriteLine("End-Items:");
+                    foreach (var item in kvp.Value)
+                    {
+                        Console.WriteLine($"- {item}");
+                    }
+                }
+
+                // Print Qw dictionary
+                Console.WriteLine("\nQw (Products for each Work Center):");
+                foreach (var kvp in InputData.Qw)
+                {
+                    Console.WriteLine($"Work Center: {kvp.Key}");
+                    Console.WriteLine("Products:");
+                    foreach (var item in kvp.Value)
+                    {
+                        Console.WriteLine($"- {item}");
+                    }
+                }
+
+                // Print Dit dictionary
+                Console.WriteLine("\nDit (Demand for each product at the end of period t):");
+                foreach (var kvp in InputData.Dit)
+                {
+                    Console.WriteLine($"Product: {kvp.Key}, Demand: {kvp.Value}");
+                }
+
+                // Print Ci dictionary
+                Console.WriteLine("\nCi (Direct subcomponents of each component or end-item):");
+                foreach (var kvp in InputData.Ci)
+                {
+                    Console.WriteLine($"Component or End-Item: {kvp.Key}");
+                    Console.WriteLine("Subcomponents:");
+                    foreach (var subcomponent in kvp.Value)
+                    {
+                        Console.WriteLine($"- {subcomponent}");
+                    }
+                }
+
+                // Print Rij dictionary
+                Console.WriteLine("\nRij (Number of units of direct subcomponent i required in each unit of component or end-item j):");
+                foreach (var kvp in InputData.Rij)
+                {
+                    Console.WriteLine($"Component or End-Item: {kvp.Key.Item2}, Subcomponent: {kvp.Key.Item1}, Quantity: {kvp.Value}");
+                }
+
+                // Print Awt dictionary
+                Console.WriteLine("\nAwt (Available capacity at each work center during period t):");
+                foreach (var kvp in InputData.Awt)
+                {
+                    Console.WriteLine($"Work Center: {kvp.Key.Item1}, Capacity: {kvp.Value}");
+                }
+
+                // Print Sijw dictionary
+                Console.WriteLine("\nSijw (Setup times for all products and workstations):");
+                foreach (var kvp in InputData.Sijw)
+                {
+                    Console.WriteLine($"From Work Center: {kvp.Key.Item1}, From Product: {kvp.Key.Item2}, To Product: {kvp.Key.Item3}, Setup Time: {kvp.Value}");
+                }
+
+                // Print Miwt dictionary
+                Console.WriteLine("\nMiwt (Maximum production quantity for product j at work center w during period t):");
+                foreach (var kvp in InputData.Miwt)
+                {
+                    Console.WriteLine($"Work Center: {kvp.Key.Item1}, Product: {kvp.Key.Item2}, Max Quantity: {kvp.Value}");
+                }
+
+                // Print Uiw dictionary
+                Console.WriteLine("\nUiw (Unit production times for all products and workstations):");
+                foreach (var kvp in InputData.Uiw)
+                {
+                    Console.WriteLine($"Work Center: {kvp.Key.Item1}, Product: {kvp.Key.Item2}, Production Time: {kvp.Value}");
+                }
+
+                // Print Hi dictionary
+                Console.WriteLine("\nHi (Except from Awt and Miwt):");
+                foreach (var kvp in InputData.Hi)
+                {
+                    Console.WriteLine($"Product: {kvp.Key}, Value: {kvp.Value}");
+                }
+
+                #endregion
             }
-
-            // Print Rij dictionary
-            Console.WriteLine("\nRij (Number of units of direct subcomponent i required in each unit of component or end-item j):");
-            foreach (var kvp in InputData.Rij)
-            {
-                Console.WriteLine($"Component or End-Item: {kvp.Key.Item2}, Subcomponent: {kvp.Key.Item1}, Quantity: {kvp.Value}");
-            }
-
-            // Print Awt dictionary
-            Console.WriteLine("\nAwt (Available capacity at each work center during period t):");
-            foreach (var kvp in InputData.Awt)
-            {
-                Console.WriteLine($"Work Center: {kvp.Key.Item1}, Capacity: {kvp.Value}");
-            }
-
-            // Print Sijw dictionary
-            Console.WriteLine("\nSijw (Setup times for all products and workstations):");
-            foreach (var kvp in InputData.Sijw)
-            {
-                Console.WriteLine($"From Work Center: {kvp.Key.Item1}, From Product: {kvp.Key.Item2}, To Product: {kvp.Key.Item3}, Setup Time: {kvp.Value}");
-            }
-
-            // Print Miwt dictionary
-            Console.WriteLine("\nMiwt (Maximum production quantity for product j at work center w during period t):");
-            foreach (var kvp in InputData.Miwt)
-            {
-                Console.WriteLine($"Work Center: {kvp.Key.Item1}, Product: {kvp.Key.Item2}, Max Quantity: {kvp.Value}");
-            }
-
-            // Print Uiw dictionary
-            Console.WriteLine("\nUiw (Unit production times for all products and workstations):");
-            foreach (var kvp in InputData.Uiw)
-            {
-                Console.WriteLine($"Work Center: {kvp.Key.Item1}, Product: {kvp.Key.Item2}, Production Time: {kvp.Value}");
-            }
-
-            // Print Hi dictionary
-            Console.WriteLine("\nHi (Except from Awt and Miwt):");
-            foreach (var kvp in InputData.Hi)
-            {
-                Console.WriteLine($"Product: {kvp.Key}, Value: {kvp.Value}");
-            }
-
-            #endregion
-
-            var dd = 1;
-
         }
         #endregion
 
@@ -1155,7 +1529,7 @@ namespace Erp.ViewModel.Manufacture
 
         private void ExecuteCalculateMrp(object obj)
         {
-            OutputData = CommonFunctions.CalculateMRP2(InputData);
+            OutputData = CommonFunctions.CalculateMRP(InputData);
             SelectedTabIndex = 2;
 
         }
@@ -1301,15 +1675,6 @@ namespace Erp.ViewModel.Manufacture
                     Values = new ChartValues<double>(DiagramData_1.Select(d => Convert.ToDouble(d.Make))),
                 };
                 OutputData.Diagram1.SeriesCollection.Add(makeSeries);
-
-                //// Add "Make2" series
-                //var make2Series = new StackedColumnSeries
-                //{
-                //    Title = "Make2",
-                //    Values = new ChartValues<double>(XData.Select(d => Convert.ToDouble(d.Value))),
-                //    StackMode = StackMode.Values
-                //};
-                //OutputData.Diagram1.SeriesCollection.Add(make2Series);
 
                 // Add "Store" series
                 var storeSeries = new ColumnSeries

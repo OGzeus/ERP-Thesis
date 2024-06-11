@@ -218,10 +218,12 @@ namespace Erp.CommonFiles
             var Data = CommonFunctions.GetAirportsData(ShowDeleted).ToList();
             GridData.CollectionView = CollectionViewSource.GetDefaultView(Data);
 
-            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Code", HeaderText = "Code" });
-            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Descr", HeaderText = "Descr" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Code", HeaderText = "Airport Code" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Descr", HeaderText = "Airport Descr" });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "City.CityCode", HeaderText = "City Code" });
-            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "City.CityDescr", HeaderText = "City Descr" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "City.CityDescr", HeaderText = "City Description" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "City.PrefDescr", HeaderText = "Prefecture" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "City.CountryDescr", HeaderText = "Country" });
 
             GridData.SfGridColumns.Add(new GridCheckBoxColumn() { MappingName = "IsDeleted", HeaderText = "Deleted" });
 
@@ -764,8 +766,10 @@ namespace Erp.CommonFiles
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "StockItem.ItemType", HeaderText = "Item Type", AllowEditing = false });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "StockItem.Assembly", HeaderText = "Assembly", AllowEditing = false });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Stock", HeaderText = "Stock", AllowEditing = true });
-            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "InvMax", HeaderText = "Inv Max", AllowEditing = true });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Backlog", HeaderText = "Backlog", AllowEditing = true });
+           
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "InvMin", HeaderText = "Inv Min", AllowEditing = true });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "InvMax", HeaderText = "Inv Max", AllowEditing = true });
 
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "StockItem.LotPolicy.Code", HeaderText = "Lot Policy Code", AllowEditing = true });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "StockItem.LotPolicy.LeadTime", HeaderText = "Lead Time", AllowEditing = false });

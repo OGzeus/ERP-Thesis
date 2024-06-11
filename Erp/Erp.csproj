@@ -228,6 +228,7 @@
     <Compile Include="Model\SupplyChain\ActivePanelToVisibilityConverter_CL.cs" />
     <Compile Include="Model\SupplyChain\ActivePanelToVisibilityConverter_VRP.cs" />
     <Compile Include="Model\SupplyChain\Clusters\ClusterDatapoint.cs" />
+    <Compile Include="Model\SupplyChain\Clusters\DiagramClusteringData.cs" />
     <Compile Include="Model\SupplyChain\Clusters\HierarchicalInputData.cs" />
     <Compile Include="Model\SupplyChain\Clusters\KmeansInputData.cs" />
     <Compile Include="Model\SupplyChain\Clusters\KmeansOutputData.cs" />
@@ -322,6 +323,7 @@
     <Compile Include="ViewModel\SupplyChain\VehicleRoutingViewModel.cs" />
     <Compile Include="ViewModel\SupplyChain\VrpVisViewModel.cs" />
     <Compile Include="ViewModel\TabViewModel.cs" />
+    <Compile Include="ViewModel\Thesis\AirportsViewmodel.cs" />
     <Compile Include="ViewModel\Thesis\CrewSchedulingViewModel.cs" />
     <Compile Include="ViewModel\Thesis\EmployeeViewModel.cs" />
     <Compile Include="ViewModel\Thesis\FlightRoutesViewModel.cs" />
@@ -453,6 +455,9 @@
     </Compile>
     <Compile Include="View\SupplyChain\VrpVisView.xaml.cs">
       <DependentUpon>VrpVisView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\Thesis\AirportsView.xaml.cs">
+      <DependentUpon>AirportsView.xaml</DependentUpon>
     </Compile>
     <Compile Include="View\Thesis\CrewSchedulingView.xaml.cs">
       <DependentUpon>CrewSchedulingView.xaml</DependentUpon>
@@ -666,6 +671,10 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="View\Thesis\AirportsView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="View\Thesis\CrewSchedulingView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -719,6 +728,7 @@
     <None Include="bin\Debug\CSFeasable_Cplex.lp" />
     <None Include="bin\Debug\cslogfile.log" />
     <None Include="bin\Debug\cslogfile_final.log" />
+    <None Include="bin\Debug\MRPFeasable.lp" />
     <None Include="bin\Debug\outCG_CPLEX.sol" />
     <None Include="bin\Debug\outCS.mst" />
     <None Include="bin\Debug\outCS.sol" />
@@ -794,6 +804,9 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="3.1.0" />
     <PackageReference Include="Microsoft.ML">
       <Version>3.0.1</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.VisualBasic">
+      <Version>10.3.0</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools">
       <Version>10.0.26100.1</Version>

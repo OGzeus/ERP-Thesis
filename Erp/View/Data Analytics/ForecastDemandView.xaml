@@ -216,50 +216,50 @@
                         </Button>
 
                     </StackPanel>
-                    <syncfusion:SfDataGrid x:Name="sfGrid2"
-                                                    Grid.Row="1"
-                                                    Grid.Column="0"
-                                                    Grid.ColumnSpan="5"
-                                                    ColumnSizer="Star"
-                                                    Background="White"
-                                                    AllowSorting="True"
-                                                    ShowSortNumbers="True"
+                        <syncfusion:SfDataGrid x:Name="sfGrid2"
+                       Grid.Row="1"
+                       Grid.Column="0"
+                       Grid.ColumnSpan="5"
+                       ColumnSizer="Star"
+                       Background="White"
+                       AllowSorting="True"
+                       ShowSortNumbers="True"
+                       AllowFiltering="True"
+                       AutoGenerateColumns="False"
+                       ItemsSource="{Binding FlatData.DemandForecast, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                       ShowRowHeader="True" 
+                       AllowResizingColumns="True"
+                       FilterRowPosition="FixedTop"
+                       ScrollViewer.VerticalScrollBarVisibility="Visible"
+                       ScrollViewer.HorizontalScrollBarVisibility="Visible"
+                       ShowToolTip="True"
+                       AllowGrouping="True"
+                       ShowGroupDropArea="True">
 
-                                                    AllowFiltering="True"
-                                                    AutoGenerateColumns="False"
-                                                    ItemsSource="{Binding FlatData.DemandForecast , Mode=TwoWay , UpdateSourceTrigger=PropertyChanged}"
-                                                    ShowRowHeader="True" 
-                                           
-                                                    AllowResizingColumns="True"
-                                                    FilterRowPosition="FixedTop"
-                                                    ScrollViewer.VerticalScrollBarVisibility="Visible"
-                                                    ScrollViewer.HorizontalScrollBarVisibility="Visible"
-                                                    ShowToolTip="True"
-                                                    AllowGrouping="True"
-                                                    ShowGroupDropArea="True"
-                                           
-                                                >
-                        <syncfusion:SfDataGrid.GroupColumnDescriptions>
-                            <syncfusion:GroupColumnDescription ColumnName="Item.ItemCode" />
-                        </syncfusion:SfDataGrid.GroupColumnDescriptions>
-                        
-                        <syncfusion:SfDataGrid.Columns>
-                            <syncfusion:GridTextColumn MappingName="Item.ItemCode" HeaderText="Item Code" IsReadOnly="True"/>
-                            <!--<syncfusion:GridTextColumn MappingName="Date" HeaderText="Date" IsReadOnly="True" />-->
-                            <syncfusion:GridTextColumn MappingName="DateStr" HeaderText="Date "  IsReadOnly="True" />
-                            <syncfusion:GridTextColumn MappingName="Demand" HeaderText="Demand"  AllowEditing="True"/>
+                            <syncfusion:SfDataGrid.SortColumnDescriptions>
+                                <syncfusion:SortColumnDescription ColumnName="DateStr" />
+                            </syncfusion:SfDataGrid.SortColumnDescriptions>
+
+                            <syncfusion:SfDataGrid.GroupColumnDescriptions>
+                                <syncfusion:GroupColumnDescription ColumnName="Item.ItemCode" />
+                            </syncfusion:SfDataGrid.GroupColumnDescriptions>
+
+                            <syncfusion:SfDataGrid.Columns>
+                                <syncfusion:GridTextColumn MappingName="Item.ItemCode" HeaderText="Item Code" IsReadOnly="True"/>
+                                <syncfusion:GridTextColumn MappingName="DateStr" HeaderText="Date" IsReadOnly="True" />
+                                <syncfusion:GridTextColumn MappingName="Demand" HeaderText="Demand" AllowEditing="True"/>
                                 <syncfusion:GridCheckBoxColumn MappingName="Selected" HeaderText="Selected" AllowEditing="True" />
-
                             </syncfusion:SfDataGrid.Columns>
-                        <!--<i:Interaction.Triggers>
-                            <i:EventTrigger EventName="MouseDoubleClick">
-                                <i:InvokeCommandAction Command="{Binding Path=DataContext.RowDataCommand,ElementName=sfGrid}" CommandParameter="{Binding}"/>
-                            </i:EventTrigger>
-                        </i:Interaction.Triggers>-->
-                    </syncfusion:SfDataGrid>
+
+                            <!--<i:Interaction.Triggers>
+        <i:EventTrigger EventName="MouseDoubleClick">
+            <i:InvokeCommandAction Command="{Binding Path=DataContext.RowDataCommand,ElementName=sfGrid}" CommandParameter="{Binding}"/>
+        </i:EventTrigger>
+    </i:Interaction.Triggers>-->
+                        </syncfusion:SfDataGrid>
 
 
-                </Grid>
+                    </Grid>
             </TabItem>
 
             <TabItem Header="Diagrams">

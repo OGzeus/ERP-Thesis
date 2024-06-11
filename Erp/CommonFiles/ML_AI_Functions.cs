@@ -177,7 +177,7 @@ namespace Erp.CommonFiles
                     NewPoint.Latitude = point.Latitude;
                     cluster.DataPoints.Add(NewPoint);
                 }
-
+                outputData.Clusters.OrderBy(d => d.ClusterId);
                 return outputData;
             }
             catch (Exception ex)

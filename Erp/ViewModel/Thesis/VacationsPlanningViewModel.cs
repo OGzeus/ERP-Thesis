@@ -813,7 +813,7 @@ namespace Erp.ViewModel.Thesis
             #endregion
 
 
-            //OutputData = CplexFunctions.CalculateVacationPlanning_CPLEX(InputData);
+            OutputData = CplexFunctions.CalculateVacationPlanning_CPLEX(InputData);
 
             OutputData.VPYijResultsDataGrid = OutputData.VPYijResultsDataGrid.OrderBy(item => item.Employee.Seniority).ToObservableCollection();
             OutputData.VPYijzResultsDataGrid = OutputData.VPYijzResultsDataGrid.OrderBy(item => item.Employee.Seniority).ToObservableCollection();
@@ -859,7 +859,7 @@ namespace Erp.ViewModel.Thesis
                 
             }
             CGOutputdata = new VPCGOutputData();
-            //CGOutputdata = CplexFunctions.CalculateVPColumnGeneration(CGInputdata);
+            CGOutputdata = CplexFunctions.CalculateVPColumnGeneration(CGInputdata);
 
             #endregion
 

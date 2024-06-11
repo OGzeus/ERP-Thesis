@@ -38,6 +38,8 @@ using Erp.Model.SupplyChain;
 using Erp.Model.Thesis.CrewScheduling;
 using OxyPlot;
 using NetTopologySuite.Mathematics;
+using System.Collections;
+using static OfficeOpenXml.ExcelErrorValue;
 
 namespace Erp.CommonFiles
 {
@@ -515,7 +517,7 @@ Where 1=1 {0}", FilterStr);
                     command.CommandText = string.Format(@"SELECT A.AirportID,A.AirportCode,A.AirportDescr,A.IsDeleted,
 City.CityId,City.CityCode,City.CityDescr
 FROM Airports AS A
-INNER JOIN City ON City.CityId = A.AirportID
+INNER JOIN City ON City.CityId = A.CityId
                                               Where 1=1 {0}", FilterStr);
                     using (var reader = command.ExecuteReader())
                     {
@@ -566,11 +568,15 @@ INNER JOIN City ON City.CityId = A.AirportID
                     command.Parameters.AddWithValue("@ShowDeleted", ShowDeleted);
                     FilterStr = String.Format(@" and A.IsDeleted =@ShowDeleted");
                 }
-                command.CommandText = string.Format(@"SELECT A.AirportID,A.AirportCode,A.AirportDescr,A.IsDeleted,
-City.CityId,City.CityCode,City.CityDescr
+                command.CommandText = string.Format(@"SELECT A.AirportID,A.AirportCode,A.AirportDescr,A.IsDeleted,City.CityId,
+City.CityCode,City.CityDescr,Country.CountryCode ,Country.CountryDescr,Prefecture.PrefCode,Prefecture.PrefDescr 
 FROM Airports AS A
-INNER JOIN City ON City.CityId = A.AirportID
+INNER JOIN City ON City.CityId = A.CityId
+INNER JOIN Prefecture ON Prefecture.PrefId = City.PrefId 
+Inner JOIN Country on Prefecture.CountryId = Country.CountryId
                                               Where 1=1 {0}", FilterStr);
+
+
 
                 using (var reader = command.ExecuteReader())
                 {
@@ -591,6 +597,10 @@ INNER JOIN City ON City.CityId = A.AirportID
                         data.City.CityCode = reader["CityCode"].ToString();
                         data.City.CityDescr = reader["CityDescr"].ToString();
 
+                        data.City.PrefCode = reader["PrefCode"].ToString();
+                        data.City.PrefDescr = reader["PrefDescr"].ToString();
+                        data.City.CountryCode = reader["CountryCode"].ToString();
+                        data.City.CountryDescr = reader["CountryDescr"].ToString();
 
 
 
@@ -6128,6 +6138,8 @@ City.Latitude,City.Population,City.IsDeleted
                         data.CountryDescr = reader["CountryDescr"].ToString();
                         data.Longitude = float.Parse(reader["Longitude"].ToString());
                         data.Latitude = float.Parse(reader["Latitude"].ToString());
+                        data.Longitude = (float)Math.Round(data.Longitude, 4);
+                        data.Latitude = (float)Math.Round(data.Latitude, 4);
                         data.Population = int.Parse(reader["Population"].ToString());
                         data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
 
@@ -10492,929 +10504,8 @@ Where 1=1 {0}", FilterStr);
             }
         }
 
-        public MRPOutputData  CalculateMRPFake(MRPInputData InputData)
-        {          
-            GRBEnv env = new GRBEnv("mrplogfile.log");
-            GRBModel model = new GRBModel(env);
-            MRPOutputData OutputData = new MRPOutputData();
-            OutputData.XData = new ObservableCollection<DecisionVariableX>();
-            OutputData.YData = new ObservableCollection<DecisionVariableY>();
-            OutputData.InvData = new ObservableCollection<DecisionVariablesInvStatus>();
 
-            try
-            {
-                #region Optimization
-
-                #region Optimization paramaters
-
-                int T = InputData.T; //Planning Horizon
-                int P = InputData.P; //Number Of MPS end-item Products
-                int Q = InputData.Q; //Number Of MRP Component Products
-                int W = InputData.W; //Number Of Capacitated Work Cenetrs
-                int N = new int(); //Number Of Seuts
-
-                string[] Dates = InputData.Dates; //Πινακας με τα Dates
-
-                Dictionary<string, List<string>> Pw_String = InputData.Pw; // P(w) is the set of end-items that can be processed on work center w.
-                Dictionary<string, List<string>> Qw_String = InputData.Qw; // Q(w) is the set of products that can be processed on work center w.
-                Dictionary<(string, string), double> Dit_String = InputData.Dit; // Dit represents the demand for product i at the end of period t.
-                Dictionary<string, List<string>> Ci_String = InputData.Ci; // C(i) represents the set of direct subcomponents of each component or end-item 
-                Dictionary<(string, string), double> Rij_String = InputData.Rij; // Rij represents the number of units of direct subcomponent i required in each unit of component or end-item j.
-                Dictionary<(string, string), double> Awt_String = InputData.Awt; // Awt represents the available capacity at work center w during period t.
-                Dictionary<(string, string, string), double> Miwt_String = InputData.Miwt; // Mjwt represents the maximum production quantity for product j at work center w during period t
-                Dictionary<(string, string,string), double> Sijw_String = InputData.Sijw; // Sijw represents the setup times for all products and workstations. 
-                Dictionary<(string, string), double> Uiw_String = InputData.Uiw; // Ujw represents the unit production times for all products and workstations
-                Dictionary<string, double> Hi_String = InputData.Hi; // Ujw represents the unit production times for all products and workstations
-                Dictionary<string, double> Gi_String = InputData.Gi; // Ujw represents the unit production times for all products and workstations
-                Dictionary<string, string> I0W_String = InputData.I0W; // Ujw represents the unit production times for all products and workstations
-
-                Dictionary<string, (double, double)> Ii_String = InputData.Ii; // Ujw represents the unit production times for all products and workstations
-                Dictionary<string, (double, double)> Imax_min_String = InputData.Imax_min; // Ujw represents the unit production times for all products and workstations
-
-
-                Dictionary<int, List<int>> Pw = new Dictionary<int, List<int>>(); // P(w) is the set of end-items that can be processed on work center w.
-                Dictionary<int, List<int>> Qw = new Dictionary<int, List<int>>(); // Q(w) is the set of products that can be processed on work center w.
-                Dictionary<(int, int), double> Dit = new Dictionary<(int, int), double>(); // Dit represents the demand for product i at the end of period t.
-                Dictionary<int, List<int>> Ci = new Dictionary<int, List<int>>(); // C(i) represents the set of direct subcomponents of each component or end-item 
-                Dictionary<(int, int), double> Rij = new Dictionary<(int, int), double>(); // Rij represents the number of units of direct subcomponent i required in each unit of component or end-item j.
-                Dictionary<(int, int), double> Awt = new Dictionary<(int, int), double>(); // Awt represents the available capacity at work center w during period t.
-                Dictionary<(int, int, int), double> Miwt = new Dictionary<(int, int, int), double>(); // Mjwt represents the maximum production quantity for product j at work center w during period t
-                Dictionary<(int, int, int), double> Sijw = new Dictionary<(int, int, int), double>(); // Sijw represents the setup times for all products and workstations. 
-                Dictionary<(int, int), double> Uiw = new Dictionary<(int, int), double>(); // Ujw represents the unit production times for all products and workstations
-
-                Dictionary<int, double> Hi = new Dictionary<int, double>(); // Ujw represents the unit production times for all products and workstations
-                Dictionary<int, double> Gi = new Dictionary<int, double>(); // Ujw represents the unit production times for all products and workstations
-                Dictionary<int, int> I0W = new Dictionary<int, int>(); // Ujw represents the unit production times for all products and workstations
-
-                Dictionary<int, (double, double)> Ii = new Dictionary<int, (double, double)>();
-                Dictionary<int, (double, double)> Imax_min = new Dictionary<int, (double, double)>();
-                Dictionary<int, int> NDict = new Dictionary<int, int>();
-
-                #region from string to int 
-                // Mapping from string keys to integer indices
-                Dictionary<string, int> workCenterIndexMap = new Dictionary<string, int>();
-                Dictionary<string, int> productIndexMap = new Dictionary<string, int>();
-                Dictionary<string, int> dateIndexMap = new Dictionary<string, int>();
-
-                // Initialize integer index counters
-                int workCenterIndexCounter = 0;
-                int productIndexCounter = 0;
-
-                // Transform Pw_String to Pw
-                foreach (var kvp in Pw_String)
-                {
-                    workCenterIndexMap[kvp.Key] = workCenterIndexCounter++;
-                    Pw.Add(workCenterIndexMap[kvp.Key], new List<int>());
-
-                    foreach (var product in kvp.Value)
-                    {
-                        if (!productIndexMap.ContainsKey(product))
-                        {
-                            productIndexMap[product] = productIndexCounter++;
-                        }
-                        Pw[workCenterIndexMap[kvp.Key]].Add(productIndexMap[product]);
-                    }
-                }
-
-                // Transform Qw_String to Qw
-                foreach (var kvp in Qw_String)
-                {
-                    workCenterIndexMap[kvp.Key] = workCenterIndexCounter++;
-                    Qw.Add(workCenterIndexMap[kvp.Key], new List<int>());
-
-                    foreach (var product in kvp.Value)
-                    {
-                        if (!productIndexMap.ContainsKey(product))
-                        {
-                            productIndexMap[product] = productIndexCounter++;
-                        }
-                        Qw[workCenterIndexMap[kvp.Key]].Add(productIndexMap[product]);
-                    }
-                }
-                foreach (var kvp in I0W_String)
-                {
-                    // Assuming work center and product are represented by integer indices
-                    int workCenterIndex = workCenterIndexMap[kvp.Key];
-                    int productIndex = productIndexMap[kvp.Value];
-
-                    // Assign the product index to the work center index
-                    I0W[workCenterIndex] = productIndex;
-                }
-                #region Merge Pw into Qw
-                foreach (var kvp in Pw)
-                {
-                    int workCenter = kvp.Key;
-                    List<int> endItems = kvp.Value;
-
-                    // If the work center already exists in Qw, append the end items to its list
-                    if (Qw.ContainsKey(workCenter))
-                    {
-                        Qw[workCenter].AddRange(endItems);
-                    }
-                    // If the work center doesn't exist in Qw, add it along with its end items
-                    else
-                    {
-                        Qw[workCenter] = new List<int>(endItems);
-                    }
-                }
-                N = Qw.Count; //Number Of Seuts
-
-                #endregion
-
-                #region Calculate N
-                // Create a new dictionary to store the setup counts for each w
-
-                // Initialize the maximum count to zero
-                int maxListCount = 0;
-
-                // Iterate through each list in the Qw dictionary
-                foreach (var kvp in Qw)
-                {
-                    // Get the count of items in the current list
-                    int listCount = kvp.Value.Count;
-
-                    // Add the list count to the new dictionary
-                    NDict.Add(kvp.Key, listCount);
-
-                    // Update the maximum count if the current list count is greater
-                    if (listCount > maxListCount)
-                    {
-                        maxListCount = listCount;
-                    }
-                }
-
-                // Update the N variable to hold the maximum list count
-                N = maxListCount;
-
-
-                #endregion
-                // Now maxListCount contains the count of the maximum list
-
-                // Transform Dates string list to integer indices
-                int dateIndexCounter = 1; // Start index from 1
-
-                foreach (var date in Dates)
-                {
-                    dateIndexMap[date] = dateIndexCounter++;
-                }
-
-                // Transform Dit_String to Dit
-                foreach (var kvp in Dit_String)
-                {
-                    // Get the integer index corresponding to the string date
-                    int ItemIndex = productIndexMap[kvp.Key.Item1];
-                    int dateIndex = dateIndexMap[kvp.Key.Item2];
-
-                    Dit[(ItemIndex, dateIndex)] = kvp.Value;
-
-                }
-
-                // Transform Ci_String to Ci
-                foreach (var kvp in Ci_String)
-                {
-                    // Assuming component or end-item i is represented by integer index
-                    int enditemindex = productIndexMap[kvp.Key];
-                    if (!Ci.ContainsKey(enditemindex))
-                    {
-                        Ci[enditemindex] = new List<int>();
-                    }
-                    // Convert string indices to integers and add them to Ci
-                    foreach (var subcomponentName in kvp.Value)
-                    {
-                        int subcomponentIndex = productIndexMap[subcomponentName]; // Assuming productIndexMap is a mapping from product names to their integer indices
-                        Ci[enditemindex].Add(subcomponentIndex);
-                    }
-                }
-
-                // Transform Rij_String to Rij
-                foreach (var kvp in Rij_String)
-                {
-                    // Assuming component or end-item i and j are represented by integer indices
-                    int endItemIndex = productIndexMap[kvp.Key.Item1];
-                    int componentIndex = productIndexMap[kvp.Key.Item2];
-
-                    Rij[(endItemIndex, componentIndex)] = kvp.Value;
-                }
-
-                // Transform Awt_String to Awt
-                foreach (var kvp in Awt_String)
-                {
-                    // Assuming work center w is represented by integer index
-                    int workCenterIndex = workCenterIndexMap[kvp.Key.Item1];
-                    int dateIndex = dateIndexMap[kvp.Key.Item2];
-
-                    Awt[(workCenterIndex, dateIndex)] = kvp.Value;                   
-                    // Assuming period t is represented by integer index
-                }
-
-                // Transform Miwt_String to Miwt
-                foreach (var kvp in Miwt_String)
-                {
-                    // Assuming work center w is represented by integer index
-                    int productIndex = productIndexMap[kvp.Key.Item1];
-
-                    int workCenterIndex = workCenterIndexMap[kvp.Key.Item2];
-                    // Assuming period t is represented by integer index
-                    int dateIndex = dateIndexMap[kvp.Key.Item3];
-                    if (!Miwt.ContainsKey((productIndex,workCenterIndex, dateIndex)))
-                    {
-                        Miwt[(productIndex, workCenterIndex,dateIndex)]= kvp.Value;
-                    }
-                }
-
-                // Transform Sijw_String to Sijw
-                foreach (var kvp in Sijw_String)
-                {
-                    // Assuming fromWorkCenter, fromProduct, and toProduct are represented by integer indices
-                    int fromProductIndex = productIndexMap[kvp.Key.Item1];
-                    int toProductIndex = productIndexMap[kvp.Key.Item2];
-
-                    int workCenterIndex = workCenterIndexMap[kvp.Key.Item3];
-
-                    Sijw[(fromProductIndex, toProductIndex, workCenterIndex)] = kvp.Value;
-                }
-
-                // Transform Uiw_String to Uiw
-                foreach (var kvp in Uiw_String)
-                {
-                    // Assuming work center w is represented by integer index
-                    int productIndex = productIndexMap[kvp.Key.Item1];
-                    // Assuming product j is represented by integer index
-                    int workCenterIndex = workCenterIndexMap[kvp.Key.Item2];
-
-                    Uiw[(productIndex, workCenterIndex)] = kvp.Value;
-                }
-
-                // Transform Hi_String to Hi
-                foreach (var kvp in Hi_String)
-                {
-                    // Assuming component or end-item i is represented by integer index
-                    int productIndex = productIndexMap[kvp.Key];
-                    Hi[productIndex] = kvp.Value;
-                }
-
-                // Transform Gi_String to Gi
-                foreach (var kvp in Gi_String)
-                {
-                    // Assuming component or end-item i is represented by integer index
-                    int productIndex = productIndexMap[kvp.Key];
-                    Gi[productIndex] = kvp.Value;
-                }
-
-                // Transform Ii_String to Ii
-                    Ii = Ii_String.ToDictionary(
-                    kvp => productIndexMap[kvp.Key],
-                    kvp => kvp.Value
-                );
-
-                // Transform Imax_min_String to Imax_min
-                    Imax_min = Imax_min_String.ToDictionary(
-                    kvp => productIndexMap[kvp.Key],
-                    kvp => kvp.Value
-                );
-                #endregion
-
-                #region Print Dictionaries
-                Console.WriteLine("Pw:");
-                foreach (var kvp in Pw)
-                {
-                    Console.Write($"Work Center {kvp.Key}: ");
-                    Console.WriteLine(string.Join(", ", kvp.Value));
-                }
-
-                Console.WriteLine("\nQw:");
-                foreach (var kvp in Qw)
-                {
-                    Console.Write($"Work Center {kvp.Key}: ");
-                    Console.WriteLine(string.Join(", ", kvp.Value));
-                }
-
-                Console.WriteLine("\nDit:");
-                foreach (var kvp in Dit)
-                {
-                    Console.Write($"Period {kvp.Key}: ");
-                    Console.WriteLine(string.Join(", ", kvp.Value));
-                }
-
-                Console.WriteLine("\nCi:");
-                foreach (var kvp in Ci)
-                {
-                    Console.Write($"Component {kvp.Key}: ");
-                    Console.WriteLine(string.Join(", ", kvp.Value));
-                }
-
-                Console.WriteLine("\nRij:");
-                foreach (var kvp in Rij)
-                {
-                    Console.WriteLine($"({kvp.Key.Item1}, {kvp.Key.Item2}): {kvp.Value}");
-                }
-
-                Console.WriteLine("\nAwt:");
-                foreach (var kvp in Awt)
-                {
-                    Console.Write($"Work Center {kvp.Key}: ");
-                    Console.WriteLine(string.Join(", ", kvp.Value));
-                }
-
-                Console.WriteLine("\nMiwt:");
-                foreach (var kvp in Miwt)
-                {
-                    Console.Write($"({kvp.Key.Item1}, {kvp.Key.Item2}): ");
-                    Console.WriteLine(string.Join(", ", kvp.Value));
-                }
-
-                Console.WriteLine("\nSijw:");
-                foreach (var kvp in Sijw)
-                {
-                    Console.WriteLine($"({kvp.Key.Item1}, {kvp.Key.Item2}, {kvp.Key.Item3}): {kvp.Value}");
-                }
-
-                Console.WriteLine("\nUiw:");
-                foreach (var kvp in Uiw)
-                {
-                    Console.WriteLine($"({kvp.Key.Item1}, {kvp.Key.Item2}): {kvp.Value}");
-                }
-
-                Console.WriteLine("\nHi:");
-                foreach (var kvp in Hi)
-                {
-                    Console.WriteLine($"Component {kvp.Key}: {kvp.Value}");
-                }
-
-                Console.WriteLine("\nGi:");
-                foreach (var kvp in Gi)
-                {
-                    Console.WriteLine($"Component {kvp.Key}: {kvp.Value}");
-                }
-                #endregion
-                #endregion
-
-                #region Optimization Algorithm
-
-                #region Decision Variables 
-                // Decision variables
-                GRBVar[,,,,] Y = new GRBVar[Q,Q, W, T+1,N];
-                GRBVar[,,,] X = new GRBVar[Q, W, T + 1, N];
-                GRBVar[,] SI = new GRBVar[Q, T+1];
-                GRBVar[,] BI = new GRBVar[Q, T+1];
-
-
-                // Create decision variables Y
-                for (int i = 0; i < Q; i++)
-                {
-                    for (int j = 0; j < Q; j++)
-                    {
-                        for (int w = 0; w < W; w++)
-                        {
-                            // Check if the key w exists in NDict dictionary
-
-                                // Retrieve the count of the list associated with key w
-                                for (int t = 0; t <= T; t++)
-                                {
-                                    // Store the count to avoid multiple lookups
-
-                                    for (int n = 0; n < NDict[w]; n++)
-                                    {
-                                        // Define the variable name
-                                        string varName = $"Y{i + 1}_{j + 1}_{w + 1}_{t}_{n + 1}";
-
-                                        // Create the binary variable with a name
-                                        Y[i, j, w, t, n] = model.AddVar(0.0, 1.0, 0.0, GRB.BINARY, varName);
-                                    }
-                                }                          
-                        }
-                    }
-                }
-
-                // Create decision variables X
-                for (int i = 0; i < Q; i++)
-                {
-                    for (int w = 0; w < W; w++)
-                    {
-                        for (int t = 1; t <= T; t++)
-                        {
-                            // Check if the key w exists in NDict dictionary
-
-                                for (int n = 0; n < NDict[w]; n++)
-                                {
-                                    // Define the variable name
-                                    string varName = $"X{i + 1}_{w + 1}_{t}_{n + 1}";
-
-                                    // Create the binary variable with a name
-                                    X[i, w, t, n] = model.AddVar(0.0, GRB.INFINITY, 0.0, GRB.CONTINUOUS, varName);
-                                }                          
-                        }
-                    }
-                }
-
-
-                // Create decision variables SI
-                for (int i = 0; i < Q; i++)
-                {
-                    for (int t = 0; t <= T; t++)
-                    {
-                            string varName = $"SI{i + 1}_{t}";
-                            SI[i, t] = model.AddVar(0.0, GRB.INFINITY, 0.0, GRB.CONTINUOUS, varName);
-                    }
-                };
-                // Create decision variables BI
-                for (int i = 0; i < Q; i++)
-                {
-                    for (int t = 0; t <= T; t++)
-                    {
-                        string varName = $"BI{i + 1}_{t}";
-                        BI[i, t] = model.AddVar(0.0, GRB.INFINITY, 0.0, GRB.CONTINUOUS, varName);
-                    }
-                };
-                #endregion
-
-                #region Objective Function
-
-                GRBLinExpr MinObjective = 0;
-
-                for (int i = 0; i < Q; i++)
-                {
-                    for (int t = 1; t <= T; t++)
-                    {
-
-                        var hi =Hi[i];
-                        var gi =Gi[i];
-                        MinObjective.AddTerm(hi, SI[i, t]);
-                        MinObjective.AddTerm(gi, BI[i, t]);
-
-                    }
-                }
-                model.SetObjective(MinObjective, GRB.MINIMIZE);
-
-                #endregion
-
-                #region Constrains
-                #region 2,3,4 Constrains
-                // #2. Link inventory and production to the independent demand for the MPS end-items
-                for (int t = 1; t <= T; t++)
-                {
-                    for (int i = 0; i < P; i++)
-                    {
-                        // Define the left-hand side of the equation
-                        GRBLinExpr InvStatus = SI[i, t - 1] - BI[i, t - 1] - SI[i, t] + BI[i, t];
-
-                        // Sum over work centers where i is an end-item
-                        GRBLinExpr Sum_X = 0;
-                        foreach (int w in Pw.Where(kv => kv.Value.Contains(i)).Select(kv => kv.Key))
-                        {
-                            for (int n = 0; n < NDict[w]; n++)
-                            {
-                                Sum_X += X[i, w, t, n];
-                            }
-                        }
-
-                        // Add to the left-hand side
-                        GRBLinExpr FinalSum = InvStatus + Sum_X;
-
-                        // Retrieve the demand for product i at the end of period t from the Dit dictionary
-                        double demand = Dit[(i,t)];
-
-                        // Add the constraint
-                        model.AddConstr(FinalSum == demand, "Inv_Production_MPS_" + i+1 + "_" + t);
-                    }
-                }
-
-
-                // Constraint 3: Inventory balance equation for components
-                for (int t = 1; t <= T; t++)
-                {
-                    for (int i = P; i < Q; i++) // Loop through components
-                    {
-                        // Define the left-hand side of the equation
-                        GRBLinExpr InvStatus = SI[i, t - 1] - BI[i, t - 1]-  SI[i, t] + BI[i, t];
-
-                        // Sum over work centers where i is processed
-                        GRBLinExpr ProductionSum = 0;
-                        foreach (int w in Qw.Where(kv => kv.Value.Contains(i)).Select(kv => kv.Key))
-                        {
-                            foreach (int n in Enumerable.Range(0, NDict[w]))
-                            {
-                                ProductionSum += X[i, w, t, n];
-                            }
-                        }
-
-                        // Retrieve the demand for component i at the end of period t from the Dit dictionary
-                        double demand = Dit[(i, t)];
-
-                        // Sum over all components j where i is a subcomponent of j
-
-                        GRBLinExpr SubcomponentDemandSum = 0;
-                         foreach(int j in Ci.Where(kv => kv.Value.Contains(i)).Select(kv => kv.Key))
-                         {
-                            foreach (int w in Qw.Where(kv => kv.Value.Contains(j)).Select(kv => kv.Key))
-                            {
-
-                                GRBLinExpr XSum = 0;
-                                foreach (int n in Enumerable.Range(0, NDict[w]))
-                                {
-                                    XSum += X[j, w, t, n];
-                                }
-                                SubcomponentDemandSum += Rij[(j, i)] * XSum;
-                            }
-                         }
-
-
-                        var a = 1;
-
-                        // Add the constraint
-                        model.AddConstr(InvStatus + ProductionSum == SubcomponentDemandSum + demand, "Inv_Balance_Component_" + i + "_" + t);
-                    }
-                }
-
-
-                //#4. It prohibits backlogs of dependent demand and limits any growth in component backlogs to
-                //be solely due to independent demand.
-
-                for (int t = 1; t <= T; t++)
-                {
-                    for (int i = P; i < Q; i++)
-                    {
-                        // Define the left-hand side of the equation
-                        GRBLinExpr InvStatus = BI[i, t] - BI[i, t - 1];
-
-                        // Retrieve the demand for product i at the end of period t from the Dit dictionary
-                        double demand = Dit[(i, t)];
-
-                        // Add the constraint
-                        model.AddConstr(InvStatus <= demand, "Const4_" + i + "_" + t);
-                    }
-                }
-                #endregion
-
-                #region Io ,Imax,Imin
-                for (int t = 1; t <= T; t++)
-                {
-                    for (int i = 0; i < Q; i++)
-                    {
-
-                        // Retrieve the demand for product i at the end of period t from the Dit dictionary
-                        double InvMax = Imax_min[i].Item1;
-                        double InvMin = Imax_min[i].Item2;
-
-                        // Add the constraint
-                        model.AddConstr(SI[i, t] <= InvMax, "Imax" + i + "_" + t);
-                        model.AddConstr(SI[i, t] >= InvMin, "Imin" + i + "_" + t);
-
-                    }
-                }
-
-                for (int i = 0; i < Q; i++)
-                {
-
-                    // Retrieve the demand for product i at the end of period t from the Dit dictionary
-                    double SI0 = Ii[i].Item1;
-                    double BI0 = Ii[i].Item2;
-
-                    // Add the constraint
-                    model.AddConstr(SI[i, 0] == SI0, "SI0" + i );
-                    model.AddConstr(BI[i, 0] == BI0, "BI0" + i );
-
-                }
-
-
-                #endregion
-
-                #region 5,6,7,8,9,10 Constrains
-
-                //////#5.
-                for (int w = 0; w < W; w++)
-                {
-                    List<int> productsInW = Qw[w]; // Get the list of products in work center w
-                    foreach (int i in productsInW)
-                    {
-                        foreach (int j in productsInW)
-                        {
-                            if (i != I0W[w]) // Exclude i != i0w and i != j
-                            {
-
-                                model.AddConstr(Y[i, j, w, 1, 0] == 0, $"Constraint_5_w{i + 1}_j{j + 1}_w{w + 1}");
-
-
-                            }
-                        }
-                    }
-                }
-
-
-                ////#6.
-                for (int w = 0; w < W; w++)
-                {
-                    GRBLinExpr setupSum = 0;
-                    foreach (int j in Qw[w])
-                    {
-
-                        setupSum += Y[I0W[w], j, w, 1, 0]; //thelei diorthosh
-                    }
-                    model.AddConstr(setupSum == 1, $"Constraint_6_w{w + 1}");
-                }
-
-                ////#7. 
-                for (int w = 0; w < W; w++)
-                {
-                    foreach (int i in Qw[w])
-                    {
-                        foreach (int j in Qw[w])
-                        {
-                            for (int t = 1; t <= T; t++)
-                            {
-                                if (i != j) // Exclude i != i0w and i != j
-                                {
-                                    model.AddConstr(Y[i, j, w, t, 0] == 0, "Constrain7_" + i + "_" + j + "_" + w + "_" + t);
-
-                                }
-                            }
-                        }
-                    }
-                }
-                //#8.
-                for (int w = 0; w < W; w++)
-                {
-                    for (int t = 1; t <= T; t++)
-                    {
-                        GRBLinExpr sumY = 0;
-
-                        foreach (int i in Qw[w])
-                        {
-                            sumY += Y[i, i, w, t, 0]; //thelei diorthosh
-
-                        }
-                        model.AddConstr(sumY == 1, "Constrain8_" + w + t);
-                    }
-                }
-                //#9.
-                for (int w = 0; w < W; w++)
-                {
-                    for (int t = 1; t <= T; t++)
-                    {
-                        foreach (int j in Qw[w])
-                        {
-                            for (int n = 0; n < NDict[w] - 1; n++)
-                            {
-                                GRBLinExpr sumYi = 0;
-                                foreach (int i in Qw[w])
-                                {
-                                    sumYi += Y[i, j, w, t, n]; //thelei diorthosh
-                                }
-                                GRBLinExpr sumYk = 0;
-
-                                foreach (int k in Qw[w])
-                                {
-                                    sumYk += Y[j, k, w, t, n + 1]; //thelei diorthosh
-                                }
-                                model.AddConstr(sumYi == sumYk, "9" + w + t);
-                            }
-                        }
-                    }
-                }
-
-                //#10
-                for (int w = 0; w < W; w++)
-                {
-                    for (int t = 1; t <= T; t++)
-                    {
-                        foreach (int j in Qw[w])
-                        {
-                            GRBLinExpr sumYi = 0;
-                            foreach (int i in Qw[w])
-                            {
-                                sumYi += Y[i, j, w, t - 1, NDict[w] - 1]; //thelei diorthosh
-                            }
-                            GRBLinExpr sumYk = 0;
-
-                            foreach (int k in Qw[w])
-                            {
-                                sumYk += Y[j, k, w, t, 0]; //thelei diorthosh
-                            }
-                            model.AddConstr(sumYi == sumYk, "Constrain_10" + w + t);
-                        }
-                    }
-                }
-
-                #endregion
-                //#region 11,12 Constrains
-                ////#11 
-                //for (int w = 0; w < W; w++)
-                //{
-                //    for (int t = 1; t <= T; t++)
-                //    {
-                //        for (int n = 0; n < NDict[w]; n++)
-                //        {
-                //            foreach (int j in Qw[w])
-                //            {
-                //                GRBLinExpr sumY = 0;
-                //                foreach (int i in Qw[w])
-                //                {
-                //                    sumY += Y[i, j, w, t, n]; //thelei diorthosh
-                //                }
-                //                model.AddConstr(sumY * Miwt[(j, w, t)] >= X[j, w, t, n], "Constrain11_" + w + t);
-
-                //            }
-
-                //        }
-                //    }
-                //}
-                //////#12 
-                //for (int w = 0; w < W; w++)
-                //{
-                //    for (int t = 1; t <= T; t++)
-                //    {
-                //        GRBLinExpr sum = 0;
-
-                //        for (int n = 0; n < NDict[w]; n++)
-                //        {
-                //            foreach (int j in Qw[w])
-                //            {
-                //                foreach (int i in Qw[w])
-                //                {
-                //                    sum += Y[i, j, w, t, n] * Sijw[(i, j, w)] + Uiw[(j, w)] * X[j, w, t, n]; //thelei diorthosh
-                //                }
-
-                //            }
-
-                //        }
-                //        model.AddConstr(sum <= Awt[(w, t)], "Constrain12_" + w + t);
-                //    }
-                //}
-                //#endregion
-                #endregion
-                #region Optimization Solver
-
-
-                model.Parameters.TimeLimit = 10;
-
-                model.Update();
-                model.Optimize();
-
-                #endregion
-
-                #region Populate Records
-                // Check if optimization was successful
-                if (model.Status == GRB.Status.OPTIMAL || model.Status == GRB.Status.TIME_LIMIT)
-                {
-                    #region Print Model
-                    model.Write("outMRPmst.mst");
-                    model.Write("outMRPsol.sol");
-                    model.Write("MRPFeasable.lp");
-                    model.Write("MRPFeasableMPS.mps");
-                    #endregion
-
-
-
-                    #region Retrieve Data Original
-                    OutputData.Diagram1 = new DiagramsMRPData();
-                    OutputData.Diagram1.DataPerDayMRP = new ObservableCollection<DataPerDayMRP>();
-                    OutputData.Diagram2 = new DiagramsMRPData();
-                    // Retrieve solution for decision variables Y
-                    ObservableCollection<DecisionVariableY> YVariables = new ObservableCollection<DecisionVariableY>();
-
-                    for (int i = 0; i < Q; i++)
-                    {
-                        for (int j = 0; j < Q; j++)
-                        {
-                            for (int w = 0; w < W; w++)
-                            {
-                                for (int t = 0; t <= T; t++)
-                                {
-                                    for (int n = 0; n < NDict[w]; n++)
-                                    {
-                                        var value = Y[i, j, w, t, n].X;
-                                        DecisionVariableY YVar = new DecisionVariableY();
-
-                                        YVar.ItemCodeFrom = productIndexMap.FirstOrDefault(x => x.Value == i).Key;
-                                        YVar.ItemCodeTo = productIndexMap.FirstOrDefault(x => x.Value == j).Key;
-                                        YVar.WorkCenter = workCenterIndexMap.FirstOrDefault(x => x.Value == w).Key;
-                                        YVar.Date = dateIndexMap.FirstOrDefault(x => x.Value == t).Key;
-                                        YVar.Setup = n + 1;
-                                        YVar.Value = value;
-                                        YVariables.Add(YVar);
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-
-
-                    ObservableCollection<DecisionVariableX> XVariables = new ObservableCollection<DecisionVariableX>();
-
-                    for (int i = 0; i < Q; i++)
-                    {
-                        for (int t = 1; t <= T; t++)
-                        {
-                            DataPerDayMRP row = new DataPerDayMRP();
-                            row.ItemCode = productIndexMap.FirstOrDefault(x => x.Value == i).Key;
-                            row.Make = 0;
-                            row.Date = dateIndexMap.FirstOrDefault(x => x.Value == t).Key;
-                            for (int w = 0; w < W; w++)
-                            {
-
-                                for (int n = 0; n < NDict[w]; n++)
-                                {
-                                    DecisionVariableX XVar = new DecisionVariableX();
-                                    double value = X[i, w, t, n].X;
-
-                                    XVar.ItemCode = productIndexMap.FirstOrDefault(x => x.Value == i).Key;
-
-                                    XVar.WorkCenter = workCenterIndexMap.FirstOrDefault(x => x.Value == w).Key;
-                                    XVar.Date = dateIndexMap.FirstOrDefault(x => x.Value == t).Key;
-                                    XVar.Setup = n + 1;
-                                    XVar.Value = value;
-                                    XVariables.Add(XVar);
-                                    row.Make += value;
-                                }
-                            }
-                            OutputData.Diagram1.DataPerDayMRP.Add(row);
-                        }
-                    }
-
-                    // Retrieve solution for inventory status variables SI and BI
-                    ObservableCollection<DecisionVariablesInvStatus> InventoryStatusVariables = new ObservableCollection<DecisionVariablesInvStatus>();
-                    for (int i = 0; i < Q; i++)
-                    {
-                        for (int t = 0; t <= T; t++)
-                        {
-                            double siValue = SI[i, t].X;
-                            double biValue = BI[i, t].X;
-                            DecisionVariablesInvStatus InvVar = new DecisionVariablesInvStatus();
-
-                            InvVar.ItemCode = productIndexMap.FirstOrDefault(x => x.Value == i).Key;
-                            InvVar.Date = dateIndexMap.FirstOrDefault(x => x.Value == t).Key;
-                            InvVar.SIValue = siValue;
-                            InvVar.BIValue = biValue;
-
-                            InventoryStatusVariables.Add(InvVar);
-
-
-                            // Find the corresponding row in DataPerDay based on the item code (i) and date (t)
-                            var correspondingRow = OutputData.Diagram1.DataPerDayMRP.FirstOrDefault(row => row.ItemCode == InvVar.ItemCode && row.Date == InvVar.Date);
-
-                            // If a corresponding row is found, update its SIValue and BIValue
-                            if (correspondingRow != null)
-                            {
-                                correspondingRow.Stock = siValue;
-                                correspondingRow.Backlog = biValue;
-                            };
-                        }
-                    }
-
-                    foreach (var kvp in Dit_String)
-                    {
-                        var correspondingRow = OutputData.Diagram1.DataPerDayMRP.FirstOrDefault(row => row.ItemCode == kvp.Key.Item1 && row.Date == kvp.Key.Item2);
-                        if (correspondingRow != null)
-                        {
-                            correspondingRow.Demand = kvp.Value;
-                        };
-
-
-
-                    }
-
-
-
-
-                    OutputData.XData = XVariables;
-                    OutputData.YData = YVariables;
-                    OutputData.InvData = InventoryStatusVariables;
-
-                    OutputData.ObjValue = model.ObjVal;
-                    
-
-                    #endregion
-                }
-                else
-                {
-                    //model.Write("outMRP.mst");
-                    //model.Write("outMRP.sol");
-                    model.Write("MRPFeasable.lp");
-                    model.Write("MRPFeasableMPS.mps");
-
-                    // Model is infeasible
-
-                    // Compute an Irreducible Infeasible Subsystem (IIS) to obtain the infeasibility proof
-                    model.ComputeIIS();
-                    model.Write("MRPModel.ilp");
-
-
-                }
-
-                #endregion
-                #endregion
-                #endregion
-                return OutputData;
-
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("An error occurred: " + ex.Message);
-                return OutputData;
-            }
-        }
-        public MRPOutputData CalculateMRP2(MRPInputData InputData)
+        public MRPOutputData CalculateMRP(MRPInputData InputData)
         {
             GRBEnv env = new GRBEnv("mrplogfile.log");
             GRBModel model = new GRBModel(env);
@@ -11445,6 +10536,8 @@ Where 1=1 {0}", FilterStr);
                 Dictionary<(string, string), double> Awt_String = InputData.Awt; // Awt represents the available capacity at work center w during period t.
                 Dictionary<(string, string, string), double> Miwt_String = InputData.Miwt; // Mjwt represents the maximum production quantity for product j at work center w during period t
                 Dictionary<(string, string, string), double> Sijw_String = InputData.Sijw; // Sijw represents the setup times for all products and workstations. 
+                Dictionary<(string, string, string), double> SCijw_String = InputData.SCijw; // SCijw represents the setup costs for all products and workstations. 
+
                 Dictionary<(string, string), double> Uiw_String = InputData.Uiw; // Ujw represents the unit production times for all products and workstations
                 Dictionary<string, double> Hi_String = InputData.Hi; // Ujw represents the unit production times for all products and workstations
                 Dictionary<string, double> Gi_String = InputData.Gi; // Ujw represents the unit production times for all products and workstations
@@ -11462,6 +10555,8 @@ Where 1=1 {0}", FilterStr);
                 Dictionary<(int, int), double> Awt = new Dictionary<(int, int), double>(); // Awt represents the available capacity at work center w during period t.
                 Dictionary<(int, int, int), double> Miwt = new Dictionary<(int, int, int), double>(); // Mjwt represents the maximum production quantity for product j at work center w during period t
                 Dictionary<(int, int, int), double> Sijw = new Dictionary<(int, int, int), double>(); // Sijw represents the setup times for all products and workstations. 
+                Dictionary<(int, int, int), double> SCijw = new Dictionary<(int, int, int), double>(); // Sijw represents the setup times for all products and workstations. 
+
                 Dictionary<(int, int), double> Uiw = new Dictionary<(int, int), double>(); // Ujw represents the unit production times for all products and workstations
 
                 Dictionary<int, double> Hi = new Dictionary<int, double>(); // Ujw represents the unit production times for all products and workstations
@@ -11471,8 +10566,11 @@ Where 1=1 {0}", FilterStr);
                 Dictionary<int, (double, double)> Ii = new Dictionary<int, (double, double)>();
                 Dictionary<int, (double, double)> Imax_min = new Dictionary<int, (double, double)>();
 
+
+
+
                 #region from string to int 
-                // Mapping from string keys to integer indices
+                    // Mapping from string keys to integer indices
                 Dictionary<string, int> workCenterIndexMap = new Dictionary<string, int>();
                 Dictionary<string, int> productIndexMap = new Dictionary<string, int>();
                 Dictionary<string, int> dateIndexMap = new Dictionary<string, int>();
@@ -11655,6 +10753,16 @@ Where 1=1 {0}", FilterStr);
 
                     Sijw[(fromProductIndex, toProductIndex, workCenterIndex)] = kvp.Value;
                 }
+                foreach (var kvp in SCijw_String)
+                {
+                    // Assuming fromWorkCenter, fromProduct, and toProduct are represented by integer indices
+                    int fromProductIndex = productIndexMap[kvp.Key.Item1];
+                    int toProductIndex = productIndexMap[kvp.Key.Item2];
+
+                    int workCenterIndex = workCenterIndexMap[kvp.Key.Item3];
+
+                    SCijw[(fromProductIndex, toProductIndex, workCenterIndex)] = kvp.Value;
+                }
 
                 // Transform Uiw_String to Uiw
                 foreach (var kvp in Uiw_String)
@@ -11769,6 +10877,7 @@ Where 1=1 {0}", FilterStr);
                     Console.WriteLine($"Component {kvp.Key}: {kvp.Value}");
                 }
                 #endregion
+
                 #endregion
 
                 #region Optimization Algorithm
@@ -11826,7 +10935,7 @@ Where 1=1 {0}", FilterStr);
                                     string varName = $"X{i + 1}_{w + 1}_{t}_{n + 1}";
 
                                     // Create the binary variable with a name
-                                    X[i, w, t, n] = model.AddVar(0.0, GRB.INFINITY, 0.0, GRB.CONTINUOUS, varName);
+                                    X[i, w, t, n] = model.AddVar(0.0, GRB.INFINITY, 0.0, GRB.INTEGER, varName);
                                 }
                             }
                         }
@@ -11840,7 +10949,7 @@ Where 1=1 {0}", FilterStr);
                     for (int t = 0; t <= T; t++)
                     {
                         string varName = $"SI{i + 1}_{t}";
-                        SI[i, t] = model.AddVar(0.0, GRB.INFINITY, 0.0, GRB.CONTINUOUS, varName);
+                        SI[i, t] = model.AddVar(0.0, GRB.INFINITY, 0.0, GRB.INTEGER, varName);
                     }
                 };
                 // Create decision variables BI
@@ -11849,7 +10958,7 @@ Where 1=1 {0}", FilterStr);
                     for (int t = 0; t <= T; t++)
                     {
                         string varName = $"BI{i + 1}_{t}";
-                        BI[i, t] = model.AddVar(0.0, GRB.INFINITY, 0.0, GRB.CONTINUOUS, varName);
+                        BI[i, t] = model.AddVar(0.0, GRB.INFINITY, 0.0, GRB.INTEGER, varName);
                     }
                 };
                 #endregion
@@ -11868,6 +10977,29 @@ Where 1=1 {0}", FilterStr);
                         MinObjective.AddTerm(hi, SI[i, t]);
                         MinObjective.AddTerm(gi, BI[i, t]);
 
+                    }
+                }
+
+                for (int w = 0; w < W; w++)
+                {
+                    List<int> productsInW = Qw.TryGetValue(w, out var productList) ? productList : new List<int>();
+
+                    for (int t = 1; t <= T; t++)
+                    {
+                        GRBLinExpr sum = 0;
+
+                        foreach (int j in productsInW)
+                        {
+                            for (int n = 0; n < NDict[w]; n++)
+                            {
+                                foreach (int i in productsInW)
+                                {
+                                    MinObjective.AddTerm(Sijw[(i, j, w)] ,Y[i, j, w, t, n]);
+                                }
+
+                            }
+
+                        }
                     }
                 }
                 model.SetObjective(MinObjective, GRB.MINIMIZE);
@@ -11901,7 +11033,7 @@ Where 1=1 {0}", FilterStr);
                         double demand = Dit[(i, t)];
 
                         // Add the constraint
-                        model.AddConstr(FinalSum == demand, "Inv_Production_MPS_" + i + 1 + "_" + t);
+                        model.AddConstr(FinalSum == demand, "Con1_" + i + 1 + "_" + t);
                     }
                 }
 
@@ -12052,7 +11184,7 @@ Where 1=1 {0}", FilterStr);
                         {
                             for (int t = 1; t <= T; t++)
                             {
-                                if (i != j) // Exclude i != i0w and i != j
+                                if (i != j) //  i != j
                                 {
                                     model.AddConstr(Y[i, j, w, t, 0] == 0, "Constrain7_" + i + "_" + j + "_" + w + "_" + t);
 
@@ -12072,7 +11204,7 @@ Where 1=1 {0}", FilterStr);
 
                         foreach (int i in productsInW)
                         {
-                            sumY += Y[i, i, w, t, 0]; //thelei diorthosh
+                            sumY += Y[i, i, w, t, 0]; 
 
                         }
                         model.AddConstr(sumY == 1, "Constrain8_" + w + t);
@@ -12093,13 +11225,13 @@ Where 1=1 {0}", FilterStr);
                                 GRBLinExpr sumYi = 0;
                                 foreach (int i in productsInW)
                                 {
-                                    sumYi += Y[i, j, w, t, n]; //thelei diorthosh
+                                    sumYi += Y[i, j, w, t, n]; 
                                 }
                                 GRBLinExpr sumYk = 0;
 
                                 foreach (int k in productsInW)
                                 {
-                                    sumYk += Y[j, k, w, t, n + 1]; //thelei diorthosh
+                                    sumYk += Y[j, k, w, t, n + 1]; 
                                 }
                                 model.AddConstr(sumYi == sumYk, "Constrain_9" + w + t);
                             }
@@ -12119,13 +11251,13 @@ Where 1=1 {0}", FilterStr);
                             GRBLinExpr sumYi = 0;
                             foreach (int i in productsInW)
                             {
-                                sumYi += Y[i, j, w, t - 1, NDict[w] - 1]; //thelei diorthosh
+                                sumYi += Y[i, j, w, t - 1, NDict[w] - 1]; 
                             }
                             GRBLinExpr sumYk = 0;
 
                             foreach (int k in productsInW)
                             {
-                                sumYk += Y[j, k, w, t, 0]; //thelei diorthosh
+                                sumYk += Y[j, k, w, t, 0]; 
                             }
                             model.AddConstr(sumYi == sumYk, "Constrain_10" + w + t);
                         }
@@ -12149,9 +11281,9 @@ Where 1=1 {0}", FilterStr);
                                 GRBLinExpr sumY = 0;
                                 foreach (int i in productsInW)
                                 {
-                                    sumY += Y[i, j, w, t, n]; //thelei diorthosh
+                                    sumY += Y[i, j, w, t, n]; 
                                 }
-                                model.AddConstr(sumY * Miwt[(j, w, t)] >= X[j, w, t, n], "Constrain11_" + w + t);
+                                model.AddConstr(sumY * 10000000 >= X[j, w, t, n], "Constrain11_" + w + t);
 
                             }
 
@@ -12159,6 +11291,7 @@ Where 1=1 {0}", FilterStr);
                     }
                 }
                 ////#12 
+                
                 for (int w = 0; w < W; w++)
                 {
                     List<int> productsInW = Qw.TryGetValue(w, out var productList) ? productList : new List<int>();
@@ -12166,28 +11299,39 @@ Where 1=1 {0}", FilterStr);
                     for (int t = 1; t <= T; t++)
                     {
                         GRBLinExpr sum = 0;
+                        GRBLinExpr sumY = 0;
+                        GRBLinExpr sumX = 0;
 
-                        for (int n = 0; n < NDict[w]; n++)
+                        foreach (int j in productsInW)
                         {
-                            foreach (int j in productsInW)
+                            for (int n = 0; n < NDict[w]; n++)
                             {
+  
+                                sumX +=  Uiw[(j, w)] * X[j, w, t, n];
+
                                 foreach (int i in productsInW)
                                 {
-                                    sum += Y[i, j, w, t, n] * Sijw[(i, j, w)] + Uiw[(j, w)] * X[j, w, t, n]; //thelei diorthosh
+                                    sumY += Y[i, j, w, t, n] * Sijw[(i, j, w)] ;
+
+                                    var uiw = Uiw[(j, w)];
+                                    var sijw = Sijw[(i, j, w)];
+
                                 }
 
                             }
 
                         }
+                        sum = sumX + sumY;
                         model.AddConstr(sum <= Awt[(w, t)], "Constrain12_" + w + t);
                     }
                 }
                 #endregion
                 #endregion
+
                 #region Optimization Solver
 
 
-                model.Parameters.TimeLimit = 1;
+                model.Parameters.TimeLimit = 20;
 
                 model.Update();
                 model.Optimize();
@@ -12355,6 +11499,33 @@ Where 1=1 {0}", FilterStr);
                 #endregion
                 #endregion
 
+                #region Print CSV,TXT
+
+                #region SortDictionaries
+
+                Pw = SortDictionary(Pw);
+                Qw = SortDictionary(Qw);
+                Dit = SortDictionary(Dit);
+                var newDit = Dit.ToDictionary(kvp => (kvp.Key.Item1, kvp.Key.Item2 - 1), kvp => kvp.Value);
+                Ci = SortDictionary(Ci);
+                Rij = SortDictionary(Rij);
+                Awt = SortDictionary(Awt);
+                var newAwt = Awt.ToDictionary(kvp => (kvp.Key.Item1, kvp.Key.Item2 - 1), kvp => kvp.Value);
+
+                Miwt = SortDictionary(Miwt);
+                Sijw = SortDictionary(Sijw);
+                SCijw = SortDictionary(SCijw);
+
+                Uiw = SortDictionary(Uiw);
+                Hi = SortDictionary(Hi);
+                Gi = SortDictionary(Gi);
+                I0W = SortDictionary(I0W);
+                Ii = SortDictionary(Ii);
+                Imax_min = SortDictionary(Imax_min);
+                NDict = SortDictionary(NDict);
+
+                #endregion
+
                 #region CSV Files
 
                 // Create a message box to ask the user if they want to save the results
@@ -12363,7 +11534,7 @@ Where 1=1 {0}", FilterStr);
                 if (result == MessageBoxResult.Yes)
                 {
                     // Define the path to the directory
-                    string desktopPath = "C:\\Users\\npoly\\Source\\Repos\\Optimization\\CSVFiles";
+                    string desktopPath = "C:\\Users\\npoly\\Source\\Repos\\Optimization\\";
                     string directoryPath = Path.Combine(desktopPath, "CSVFiles");
 
                     // Create the directory if it doesn't exist
@@ -12381,49 +11552,88 @@ Where 1=1 {0}", FilterStr);
                         File.AppendAllText(codeListPath, csvGroupCode + Environment.NewLine);
                     }
 
-                    #region Sort Dictionaries
-                    // Function to sort a Dictionary by its keys
 
-                    // Sort all the dictionaries
-                    Pw = SortDictionary(Pw);
-                    Qw = SortDictionary(Qw);
-                    Dit = SortDictionary(Dit);
-                    var adjustedDit = Dit.ToDictionary(kvp => (kvp.Key.Item1, kvp.Key.Item2 - 1), kvp => kvp.Value);
-                    Ci = SortDictionary(Ci);
-                    Rij = SortDictionary(Rij);
-                    Awt = SortDictionary(Awt);
-                    Miwt = SortDictionary(Miwt);
-                    Sijw = SortDictionary(Sijw);
-                    Uiw = SortDictionary(Uiw);
-                    Hi = SortDictionary(Hi);
-                    Gi = SortDictionary(Gi);
-                    I0W = SortDictionary(I0W);
-                    Ii = SortDictionary(Ii);
-                    Imax_min = SortDictionary(Imax_min);
-                    NDict = SortDictionary(NDict);
-                    #endregion
 
                     // Append the group code to each CSV filename
-                    WriteToCsv(Path.Combine(directoryPath, $"Pw_{csvGroupCode}.csv"), Pw);
-                    WriteToCsv(Path.Combine(directoryPath, $"Qw_{csvGroupCode}.csv"), Qw);
-                    WriteToCsv(Path.Combine(directoryPath, $"Dit_{csvGroupCode}.csv"), adjustedDit);
-                    WriteToCsv(Path.Combine(directoryPath, $"Ci_{csvGroupCode}.csv"), Ci);
-                    WriteToCsv(Path.Combine(directoryPath, $"Rij_{csvGroupCode}.csv"), Rij);
-                    WriteToCsv(Path.Combine(directoryPath, $"Awt_{csvGroupCode}.csv"), Awt);
-                    WriteToCsv(Path.Combine(directoryPath, $"Miwt_{csvGroupCode}.csv"), Miwt);
-                    WriteToCsv(Path.Combine(directoryPath, $"Sijw_{csvGroupCode}.csv"), Sijw);
-                    WriteToCsv(Path.Combine(directoryPath, $"Uiw_{csvGroupCode}.csv"), Uiw);
-                    WriteToCsv(Path.Combine(directoryPath, $"Hi_{csvGroupCode}.csv"), Hi);
-                    WriteToCsv(Path.Combine(directoryPath, $"Gi_{csvGroupCode}.csv"), Gi);
-                    WriteToCsv(Path.Combine(directoryPath, $"I0W_{csvGroupCode}.csv"), I0W);
-                    WriteToCsv(Path.Combine(directoryPath, $"Ii_{csvGroupCode}.csv"), Ii);
-                    WriteToCsv(Path.Combine(directoryPath, $"Imax_min_{csvGroupCode}.csv"), Imax_min);
-                    WriteToCsv(Path.Combine(directoryPath, $"NDict_{csvGroupCode}.csv"), NDict);
+                    WriteToCsv(Path.Combine(directoryPath, $"Pw_{csvGroupCode}.csv"),InputData.Pw);
+                    WriteToCsv(Path.Combine(directoryPath, $"Qw_{csvGroupCode}.csv"), InputData.Qw);
+                    WriteToCsv(Path.Combine(directoryPath, $"Dit_{csvGroupCode}.csv"), InputData.Dit);
+                    WriteToCsv(Path.Combine(directoryPath, $"Ci_{csvGroupCode}.csv"), InputData.Ci);
+                    WriteToCsv(Path.Combine(directoryPath, $"Rij_{csvGroupCode}.csv"), InputData.Rij);
+                    WriteToCsv(Path.Combine(directoryPath, $"Awt_{csvGroupCode}.csv"), InputData.Awt);
+                    WriteToCsv(Path.Combine(directoryPath, $"Miwt_{csvGroupCode}.csv"), InputData.Miwt);
+                    WriteToCsv(Path.Combine(directoryPath, $"Sijw_{csvGroupCode}.csv"), InputData.Sijw);
+                    WriteToCsv(Path.Combine(directoryPath, $"SCijw_{csvGroupCode}.csv"), InputData.SCijw);
+                    WriteToCsv(Path.Combine(directoryPath, $"Uiw_{csvGroupCode}.csv"), InputData.Uiw);
+                    WriteToCsv(Path.Combine(directoryPath, $"Hi_{csvGroupCode}.csv"), InputData.Hi);
+                    WriteToCsv(Path.Combine(directoryPath, $"Gi_{csvGroupCode}.csv"), InputData.Gi);
+                    WriteToCsv(Path.Combine(directoryPath, $"I0W_{csvGroupCode}.csv"), InputData.I0W);
+                    WriteToCsv(Path.Combine(directoryPath, $"Ii_{csvGroupCode}.csv"), InputData.Ii);
+                    WriteToCsv(Path.Combine(directoryPath, $"Imax_min_{csvGroupCode}.csv"), InputData.Imax_min);
 
                     // Write variables T, P, Q, W, N to a separate CSV file
                     WriteVariablesToCsv(Path.Combine(directoryPath, $"Variables_{csvGroupCode}.csv"), T, P, Q, W, N);
                 }
 
+                #endregion
+
+                #region TxtFiles
+
+                MessageBoxResult result2 = MessageBox.Show("Do you want to save the results to TXT files?", "Save Results", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+                if (result2 == MessageBoxResult.Yes)
+                {
+                    // Define the path to the directory
+                    string desktopPath = "C:\\Users\\npoly\\Source\\Repos\\Optimization\\";
+                    string directoryPath = Path.Combine(desktopPath, "TxtFiles");
+
+                    // Create the directory if it doesn't exist
+                    if (!Directory.Exists(directoryPath))
+                    {
+                        Directory.CreateDirectory(directoryPath);
+                    }
+
+                    // Prompt the user to enter a unique code for the CSV group
+                    string txtGroupCode = InputData.MRPCode + "_" + "W" + W;
+                    string codeListPath = Path.Combine(directoryPath, "TXTGroupCodes.txt");
+                    // Check if the csvGroupCode already exists in the codeListPath
+                    if (!File.Exists(codeListPath) || !File.ReadLines(codeListPath).Contains(txtGroupCode))
+                    {
+                        File.AppendAllText(codeListPath, txtGroupCode + Environment.NewLine);
+                    }
+
+                    #region Fill Txt Files
+
+                    //Dit[(i, t)]
+                    //List<int> productsInW = Qw.TryGetValue(w, out var productList) ? productList : new List<int>();
+                    #endregion
+                    // Append the group code to each CSV filename
+
+
+                    WriteVariablesToTxt(Path.Combine(directoryPath, $"1_tpqw.txt"), T, P, Q, W, N);
+                    WriteToTxt(Path.Combine(directoryPath, $"2_pwqwmax.txt"), Pw, Qw, T, P, Q, W, "pwqwnax"); 
+                    WriteToTxt(Path.Combine(directoryPath, $"3_qw_data.txt"), Qw, T, P, Q, W, "Qw");
+                    WriteToTxt(Path.Combine(directoryPath, $"4_cij.txt"), Ci, T, P, Q, W, "Ci");
+                    WriteToTxt(Path.Combine(directoryPath, $"5_rij_data.txt"), Rij, T, P, Q, W, "Rij");
+                    WriteToTxt(Path.Combine(directoryPath, $"6_Pw_data.txt"), Pw, T, P, Q, W, "Pw");
+                    WriteToTxt(Path.Combine(directoryPath, $"7_Wi_data.txt"), Qw, T, P, Q, W, "Wi");
+                    WriteToTxt(Path.Combine(directoryPath, $"8_dit_data.txt"), newDit, T, P, Q, W, "Dit");
+
+                    WriteToTxt(Path.Combine(directoryPath, $"9_hgi_data.txt"), Hi, Gi, T, P, Q, W, "Hi");
+                    WriteToTxt(Path.Combine(directoryPath, $"9_hgi_data.txt"), Hi, Gi, T, P, Q, W, "Gi");
+
+                    WriteToTxt(Path.Combine(directoryPath, $"10_sc_data.txt"), SCijw, T, P, Q, W, "SCijw");
+                    WriteToTxt(Path.Combine(directoryPath, $"11_Awt_data.txt"), newAwt, T, P, Q, W, "Awt");
+                    WriteToTxt(Path.Combine(directoryPath, $"12_s_data.txt"), Sijw, T, P, Q, W, "Sijw");
+                    WriteToTxt(Path.Combine(directoryPath, $"13_uiw_data.txt"), Uiw, T, P, Q, W, "Uiw");
+                    WriteToTxt(Path.Combine(directoryPath, $"14_Inv_data.txt"), Imax_min, Ii, T, P, Q, W, "Inv_data");
+                    WriteToTxt(Path.Combine(directoryPath, $"15_i0_data.txt"), I0W, T, P, Q, W, "I0W");
+
+                    Ii = SortDictionary(Ii);
+                    Imax_min = SortDictionary(Imax_min);
+                    // Write variables T, P, Q, W, N to a separate CSV file
+                }
+                #endregion
                 #endregion
                 return OutputData;
 
@@ -12435,13 +11645,366 @@ Where 1=1 {0}", FilterStr);
             }
         }
 
+        #region Write to Txt
+        // Function to save dictionary to a text file
+
+        //Dit,Rij,Awt,Uiw
+        void WriteToTxt(string filePath, Dictionary<(int, int), double> dictionary, int T, int P, int Q, int W, string Type)
+        {
+            using (StreamWriter file = new StreamWriter(filePath))
+            {
+                if (Type == "Dit")
+                {
+                    for (int i = 0; i < Q; i++)
+                    {
+                        for (int t = 0; t < T; t++)
+                        {
+                            double value;
+                            if (!dictionary.TryGetValue((i , t ), out value))
+                            {
+                                value = 0.0;
+                            }
+                            file.Write($"{value} ");
+                        }
+                        file.WriteLine();
+                    }
+                }
+                if (Type == "Rij")
+                {
+                    for (int i = 0; i < Q; i++)
+                    {
+                        for (int j = 0; j < Q; j++)
+                        {
+                            double value;
+                            if (!dictionary.TryGetValue((i , j ), out value))
+                            {
+                                value = 0.0;
+                            }
+                            file.Write($"{value} ");
+                        }
+                        file.WriteLine();
+                    }
+                }
+                if (Type == "Awt")
+                {
+                    for (int w = 0; w < W; w++)
+                    {
+                        for (int t = 0; t < T; t++)
+                        {
+                            double value;
+                            if (!dictionary.TryGetValue((w , t ), out value))
+                            {
+                                value = 0.0;
+                            }
+                            file.Write($"{value} ");
+                        }
+                        file.WriteLine();
+                    }
+                }
+                if (Type == "Uiw")
+                {
+                    for (int i = 0; i < Q; i++)
+                    {
+                        for (int w = 0; w < W; w++)
+                        {
+                            double value;
+                            if (!dictionary.TryGetValue((i , w ), out value))
+                            {
+                                value = 0.0;
+                            }
+                            file.Write($"{value} ");
+                        }
+                        file.WriteLine();
+                    }
+                }
+            }
+        }
+
+        //Hi,Gi
+        void WriteToTxt(string filePath, Dictionary<int, double> hiDictionary, Dictionary<int, double> giDictionary, int T, int P, int Q, int W, string Type)
+        {
+            using (StreamWriter file = new StreamWriter(filePath))
+            {
+                if (Type == "Hi")
+                {
+                    for (int i = 0; i < Q; i++)
+                    {
+                        double value;
+                        if (!hiDictionary.TryGetValue(i, out value))
+                        {
+                            value = 0.0;
+                        }
+                        file.WriteLine($"{value}");
+                    }
+                }
+                else if (Type == "Gi")
+                {
+                    for (int i = 0; i < Q; i++)
+                    {
+                        double hiValue;
+                        if (!hiDictionary.TryGetValue(i, out hiValue))
+                        {
+                            hiValue = 0.0;
+                        }
+
+                        double giValue;
+                        if (!giDictionary.TryGetValue(i, out giValue))
+                        {
+                            giValue = 0.0;
+                        }
+
+                        file.WriteLine($"{hiValue} {giValue}");
+                    }
+                }
+            }
+        }
+
+        //I0W
+        void WriteToTxt(string filePath, Dictionary<int, int> dictionary, int T, int P, int Q, int W, string Type)
+        {
+            using (StreamWriter file = new StreamWriter(filePath))
+            {
+                if (Type == "I0W")
+                {
+                    for (int w = 0; w < W; w++)
+                    {
+
+                            int value;
+                            if (!dictionary.TryGetValue((w), out value))
+                            {
+                                value = 0;
+                            }
+                            file.Write($"{value} ");
+                        
+                        file.WriteLine();
+                    }
+                }
+
+            }
+        }
+
+        //Ii,Imax_min,NDict
+        void WriteToTxt(string filePath, Dictionary<int, (double, double)> ImaxMin, Dictionary<int, (double, double)> Ii, int T, int P, int Q, int W, string Type)
+        {
+            using (StreamWriter file = new StreamWriter(filePath))
+            {
+                for (int i = 0; i < Q; i++)
+                {
+                    (double, double) ImaxMin_Values; //Max,Min
+                    (double, double) Ii_Values;      //Stock,Backlog
+
+                    if (!ImaxMin.TryGetValue(i, out ImaxMin_Values))
+                    {
+                        ImaxMin_Values = (0, 0);
+                    }
+
+                    if (!Ii.TryGetValue(i, out Ii_Values))
+                    {
+                        Ii_Values = (0, 0);
+                    }
+
+
+
+                    var StartingSTOCK = Ii_Values.Item1;
+                    var StartingBACKLOG = Ii_Values.Item2;
+
+                    if (StartingSTOCK > 0)
+                    {
+                        file.Write($"{StartingSTOCK} ");
+                    }
+                    else if (StartingBACKLOG > 0 )
+                    {
+                        file.Write($"{-StartingBACKLOG} ");
+                    }
+                    else
+                    {
+                        file.Write($"{StartingSTOCK} ");
+                    }
+
+                    file.Write($"{ImaxMin_Values.Item2} "); // Min
+                    file.Write($"{ImaxMin_Values.Item1} "); // Max
+
+                    file.WriteLine();
+                }
+            }
+        }
+
+
+        //Sijw,Sc
+        void WriteToTxt(string filePath, Dictionary<(int, int, int), double> dictionary, int T, int P, int Q, int W, string Type)
+        {
+            using (StreamWriter file = new StreamWriter(filePath))
+            {
+                if (Type == "Sijw")
+                {
+                    for(int w = 0; w < W; w++)
+                    {
+                        for (int i = 0; i < Q; i++)
+                        {
+                            for (int j = 0; j < Q; j++)
+                            {
+                                double value;
+                                if (!dictionary.TryGetValue((i , j ,w), out value))
+                                {
+                                    value = 0.0;
+                                }
+                                file.Write($"{value} ");
+                            }
+                            file.WriteLine();
+                        }
+
+                    }
+
+                }
+                if (Type == "SCijw")
+                {
+                    for (int w = 0; w < W; w++)
+                    {
+                        for (int i = 0; i < Q; i++)
+                        {
+                            for (int j = 0; j < Q; j++)
+                            {
+                                double value;
+                                if (!dictionary.TryGetValue((i , j , w ), out value))
+                                {
+                                    value = 0;
+                                }
+
+                                file.Write($"{value} ");
+                            }
+                            file.WriteLine();
+                        }
+
+                    }
+
+                }
+
+            }
+        }
+
+        //Pw,Qw,Ci,Wi
+        void WriteToTxt(string filePath, Dictionary<int, List<int>> dictionary, int T, int P, int Q, int W, string Type)
+        {
+            using (StreamWriter file = new StreamWriter(filePath))
+            {
+                if (Type == "Qw")
+                {
+                    for (int w = 0; w < W; w++)
+                    {
+                        List<int> productsInW = dictionary.TryGetValue(w, out var productList) ? productList : new List<int>();
+
+                        for (int i = 0; i < Q; i++)
+                        {
+                            int value = 1;
+                            if (!productsInW.Contains(i))
+                            {
+                                value = 0;
+                            }
+                            file.Write($"{value} ");
+                        }
+                        file.WriteLine();
+                    }
+                }
+                if (Type == "Wi")
+                {
+                    for (int i = 0; i < Q; i++)
+                    {
+                        
+                        for (int w = 0; w < W; w++)
+                        {
+                            int value = 1;
+                            List<int> productsInW = dictionary.TryGetValue(w, out var productList) ? productList : new List<int>();
+                            if (!productsInW.Contains(i))
+                            {
+                                value = 0;
+                            }
+                            file.Write($"{value} ");
+                        }
+                        file.WriteLine();
+                    }
+                }
+                if (Type == "Pw")
+                {
+                    for (int w = 0; w < W; w++)
+                    {
+                        List<int> productsInW = dictionary.TryGetValue(w, out var productList) ? productList : new List<int>();
+
+                        for (int i = 0; i < P; i++)
+                        {
+                            int value = 1;
+                            if (!productsInW.Contains(i))
+                            {
+                                value = 0;
+                            }
+                            file.Write($"{value} ");
+                        }
+                        file.WriteLine();
+                    }
+                }
+                if (Type == "Ci")
+                {
+                    for (int i = 0; i < Q; i++)
+                    {
+                        List<int> bomCi = dictionary.TryGetValue(i, out var productList) ? productList : new List<int>();
+
+                        for (int j = 0; j < Q; j++)
+                        {
+                            int value = 1;
+                            if (!bomCi.Contains(j))
+                            {
+                                value = 0;
+                            }
+                            file.Write($"{value} ");
+                        }
+                        file.WriteLine();
+                    }
+                }
+            }
+        }
+        void WriteToTxt(string filePath, Dictionary<int, List<int>> Pw, Dictionary<int, List<int>> Qw, int T, int P, int Q, int W, string Type)
+        {
+            using (StreamWriter file = new StreamWriter(filePath))
+            {
+
+                    for (int w = 0; w < W; w++)
+                    {
+                      
+
+                        List<int> QproductsInW = Qw.TryGetValue(w, out var productList) ? productList : new List<int>();
+
+
+                        var EndItems = QproductsInW.Where(d => d < P).ToList();
+                        var Componets = QproductsInW.ToList();
+
+                        file.Write($"{EndItems.Count} ");
+                        file.Write($"{Componets.Count} ");
+
+                        file.WriteLine();
+                    }
+
+            }
+        }
+
+
+        // Function to save variables to a text file
+        void WriteVariablesToTxt(string filePath, int T, int P, int Q, int W, int N)
+        {
+            using (StreamWriter file = new StreamWriter(filePath))
+            {
+                file.WriteLine($"{T}");
+                file.WriteLine($"{P}");
+                file.WriteLine($"{Q-P}");
+                file.WriteLine($"{W}");
+            }
+        }
+        #endregion
         #region Write To CSV
         static Dictionary<TKey, TValue> SortDictionary<TKey, TValue>(Dictionary<TKey, TValue> dict)
         {
             return dict.OrderBy(kv => kv.Key).ToDictionary(kv => kv.Key, kv => kv.Value);
         }
 
-        static void WriteToCsv(string fileName, Dictionary<int, List<int>> dictionary)
+        static void WriteToCsv(string fileName, Dictionary<string, List<string>> dictionary)
         {
             using (var writer = new StreamWriter(fileName))
             {
@@ -12453,7 +12016,7 @@ Where 1=1 {0}", FilterStr);
             }
         }
 
-        static void WriteToCsv(string fileName, Dictionary<(int, int), double> dictionary)
+        static void WriteToCsv(string fileName, Dictionary<(string, string), double> dictionary)
         {
             using (var writer = new StreamWriter(fileName))
             {
@@ -12465,7 +12028,7 @@ Where 1=1 {0}", FilterStr);
             }
         }
 
-        static void WriteToCsv(string fileName, Dictionary<(int, int, int), double> dictionary)
+        static void WriteToCsv(string fileName, Dictionary<(string, string, string), double> dictionary)
         {
             using (var writer = new StreamWriter(fileName))
             {
@@ -12477,7 +12040,7 @@ Where 1=1 {0}", FilterStr);
             }
         }
 
-        static void WriteToCsv(string fileName, Dictionary<int, double> dictionary)
+        static void WriteToCsv(string fileName, Dictionary<string, double> dictionary)
         {
             using (var writer = new StreamWriter(fileName))
             {
@@ -12489,7 +12052,7 @@ Where 1=1 {0}", FilterStr);
             }
         }
 
-        static void WriteToCsv(string fileName, Dictionary<int, int> dictionary)
+        static void WriteToCsv(string fileName, Dictionary<string, string> dictionary)
         {
             using (var writer = new StreamWriter(fileName))
             {
@@ -12501,7 +12064,7 @@ Where 1=1 {0}", FilterStr);
             }
         }
 
-        static void WriteToCsv(string fileName, Dictionary<int, (double, double)> dictionary)
+        static void WriteToCsv(string fileName, Dictionary<string, (double, double)> dictionary)
         {
             using (var writer = new StreamWriter(fileName))
             {

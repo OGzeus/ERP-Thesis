@@ -33,6 +33,7 @@ using MahApps.Metro.Controls;
 using Syncfusion.Windows.Tools.Controls;
 using Syncfusion.Data.Extensions;
 using Erp.View.Thesis;
+using Erp.Model.Thesis;
 
 namespace Erp.View
 {
@@ -178,6 +179,7 @@ namespace Erp.View
             menuFlights2.Add(new SubItem("Countries", new CountryView()));
             menuFlights2.Add(new SubItem("Prefectures", new PrefectureView()));
             menuFlights2.Add(new SubItem("Cities", new CityView()));
+            menuFlights2.Add(new SubItem("Airports", new AirportsView()));
             menuFlights2.Add(new SubItem("Flight Routes", new FlightRoutesView()));
             menuFlights2.Add(new SubItem("Crew Scheduling", new CrewSchedulingView()));
 
@@ -192,13 +194,13 @@ namespace Erp.View
             SubItems = SubItems.Concat(menuSpCh).ToList();
             SubItems = SubItems.Concat(menuFlights).ToList();
 
-            //Menu.Children.Add(new UserControlMenuItem(BasicFiles, this));
-            //Menu.Children.Add(new UserControlMenuItem(Customers, this));
-            ////Menu.Children.Add(new UserControlMenuItem(Vendors, this));
-            //Menu.Children.Add(new UserControlMenuItem(Inventory, this));
-            //Menu.Children.Add(new UserControlMenuItem(Production, this));
-            //Menu.Children.Add(new UserControlMenuItem(SupChain, this));
-            //Menu.Children.Add(new UserControlMenuItem(DataAnalysis, this));
+            Menu.Children.Add(new UserControlMenuItem(BasicFiles, this));
+            Menu.Children.Add(new UserControlMenuItem(Customers, this));
+            //Menu.Children.Add(new UserControlMenuItem(Vendors, this));
+            Menu.Children.Add(new UserControlMenuItem(Inventory, this));
+            Menu.Children.Add(new UserControlMenuItem(Production, this));
+            Menu.Children.Add(new UserControlMenuItem(SupChain, this));
+            Menu.Children.Add(new UserControlMenuItem(DataAnalysis, this));
             Menu.Children.Add(new UserControlMenuItem(VPThesis, this));
             Menu.Children.Add(new UserControlMenuItem(CSThesis, this));
 

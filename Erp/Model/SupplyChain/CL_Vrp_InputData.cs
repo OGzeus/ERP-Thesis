@@ -23,18 +23,13 @@ namespace Erp.Model.SupplyChain
             set { _CityData = value; OnPropertyChanged("CityData"); }
         }
 
-        private ObservableCollection<Cluster_Vehicles_Data > _CL_VehicleData1;
-        public ObservableCollection<Cluster_Vehicles_Data> CL_VehicleData1
+        private ObservableCollection<Cluster_Vehicles_Data > _CL_VehicleData;
+        public ObservableCollection<Cluster_Vehicles_Data> CL_VehicleData
         {
-            get { return _CL_VehicleData1; }
-            set { _CL_VehicleData1 = value; OnPropertyChanged("CL_VehicleData1"); }
+            get { return _CL_VehicleData; }
+            set { _CL_VehicleData = value; OnPropertyChanged("CL_VehicleData1"); }
         }
-        private ObservableCollection<Cluster_Vehicles_Data> _CL_VehicleData2;
-        public ObservableCollection<Cluster_Vehicles_Data> CL_VehicleData2
-        {
-            get { return _CL_VehicleData2; }
-            set { _CL_VehicleData2 = value; OnPropertyChanged("CL_VehicleData1"); }
-        }
+
 
         private ObservableCollection<Cluster_Vehicles_Data> _CL_VehicleDataGrid;
         public ObservableCollection<Cluster_Vehicles_Data> CL_VehicleDataGrid
@@ -59,33 +54,21 @@ namespace Erp.Model.SupplyChain
             set { _CVRPTW_Flag = value; OnPropertyChanged("CVRPTW_Flag"); }
         }
 
-        private VRP_InputData _VrpInputData_1;
-        public VRP_InputData VrpInputData_1
+        private VRP_InputData _VrpInputData;
+        public VRP_InputData VrpInputData
         {
-            get { return _VrpInputData_1; }
-            set { _VrpInputData_1 = value; OnPropertyChanged("VrpInputData_1"); }
-        }
-        private VRP_InputData _VrpInputData_2;
-        public VRP_InputData VrpInputData_2
-        {
-            get { return _VrpInputData_2; }
-            set { _VrpInputData_2 = value; OnPropertyChanged("VrpInputData_2"); }
-        }
-
-        private CL_InputData _CLInputData_1;
-        public CL_InputData CLInputData_1
-        {
-            get { return _CLInputData_1; }
-            set { _CLInputData_1 = value; OnPropertyChanged("CLInputData_1"); }
+            get { return _VrpInputData; }
+            set { _VrpInputData = value; OnPropertyChanged("VrpInputData"); }
         }
 
 
-        private CL_InputData _CLInputData_2;
-        public CL_InputData CLInputData_2
+        private CL_InputData _CLInputData;
+        public CL_InputData CLInputData
         {
-            get { return _CLInputData_2; }
-            set { _CLInputData_2 = value; OnPropertyChanged("CLInputData_2"); }
+            get { return _CLInputData; }
+            set { _CLInputData = value; OnPropertyChanged("CLInputData"); }
         }
+
 
         #endregion
 

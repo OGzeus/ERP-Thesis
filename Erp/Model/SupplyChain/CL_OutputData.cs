@@ -12,70 +12,63 @@ namespace Erp.Model.SupplyChain
 {
     public class CL_OutputData : RecordBaseModel
     {
-        #region Clustering 1
+        #region Clustering 
 
-        private ObservableCollection<ClusterDatapoint> clusters1 { get; set; }
+        private ObservableCollection<ClusterDatapoint> clusters { get; set; }
 
-        public ObservableCollection<ClusterDatapoint> Clusters1
+        public ObservableCollection<ClusterDatapoint> Clusters
         {
-            get { return clusters1; }
-            set { clusters1 = value; OnPropertyChanged("Clusters1"); }
+            get { return clusters; }
+            set { clusters = value; OnPropertyChanged("Clusters"); }
         }
 
-        private ObservableCollection<MainDatapoint> _DataPoints1 { get; set; }
+        private ObservableCollection<MainDatapoint> _DataPoints { get; set; }
 
-        public ObservableCollection<MainDatapoint> DataPoints1
+        public ObservableCollection<MainDatapoint> DataPoints
         {
-            get { return _DataPoints1; }
-            set { _DataPoints1 = value; OnPropertyChanged("DataPoints1"); }
+            get { return _DataPoints; }
+            set { _DataPoints = value; OnPropertyChanged("DataPoints"); }
         }
 
         #endregion
 
-        #region Clustering 2
-
-
-        private ObservableCollection<ClusterDatapoint> clusters2 { get; set; }
-
-        public ObservableCollection<ClusterDatapoint> Clusters2
+        #region Clustering Techniques
+        private KmeansOutputData _Kmeansoutputdata;
+        public KmeansOutputData Kmeansoutputdata
         {
-            get { return clusters2; }
-            set { clusters2 = value; OnPropertyChanged("Clusters2"); }
-        }
+            get { return _Kmeansoutputdata; }
+            set
+            {
+                _Kmeansoutputdata = value;
+                INotifyPropertyChanged(nameof(Kmeansoutputdata));
 
 
-        private ObservableCollection<MainDatapoint> _DataPoints2 { get; set; }
-
-        public ObservableCollection<MainDatapoint> DataPoints2
-        {
-            get { return _DataPoints2; }
-            set { _DataPoints2 = value; OnPropertyChanged("DataPoints2"); }
+            }
         }
 
         #endregion
 
         #region Diagram Data
 
-        private DiagramsMRPData _Diagram1;
-        public DiagramsMRPData Diagram1
+        private DiagramClusteringData _Clustering_Diagram;
+        public DiagramClusteringData Clustering_Diagram
         {
-            get { return _Diagram1; }
+            get { return _Clustering_Diagram; }
             set
             {
-                _Diagram1 = value;
-                OnPropertyChanged(nameof(Diagram1));
+                _Clustering_Diagram = value;
+                OnPropertyChanged(nameof(Clustering_Diagram));
             }
         }
 
-
-        private DiagramsMRPData _Diagram2;
-        public DiagramsMRPData Diagram2
+        private DiagramsMRPData _ElbowMethod_Diagram;
+        public DiagramsMRPData ElbowMethod_Diagram
         {
-            get { return _Diagram2; }
+            get { return _ElbowMethod_Diagram; }
             set
             {
-                _Diagram2 = value;
-                OnPropertyChanged(nameof(Diagram2));
+                _ElbowMethod_Diagram = value;
+                OnPropertyChanged(nameof(ElbowMethod_Diagram));
             }
         }
         #endregion

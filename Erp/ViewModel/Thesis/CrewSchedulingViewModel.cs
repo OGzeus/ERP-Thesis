@@ -600,7 +600,7 @@ namespace Erp.ViewModel.Thesis
             #endregion
 
             OutputData = new CSOutputData();
-            //OutputData = CplexFunctions.CalculateCrewScheduling_Cplex(InputData);
+            OutputData = CplexFunctions.CalculateCrewScheduling_Cplex(InputData);
 
             if (OutputData != null) // Assuming IsValid is a property indicating success
             {

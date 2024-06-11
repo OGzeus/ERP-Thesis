@@ -166,6 +166,7 @@ namespace Erp.Model.Manufacture.MRP
         public Dictionary<(string, string), double> Rij { get; set; } //Rij represents the number of units of direct subcomponent i required in each unit of component or end-item j.
         public Dictionary<(string, string), double> Awt { get; set; } //Awt represents the available capacity at work center w during period t.
         public Dictionary<(string, string,string), double> Sijw { get; set; } // Sijw represents the setup times for all products and workstations.
+        public Dictionary<(string, string, string), double> SCijw { get; set; } // SCijw represents the setup cost for all products and workstations.
         public Dictionary<(string, string,string), double> Miwt { get; set; }  //Mjwt represents the maximum production quantity for product j at work center w during period t
         public Dictionary<(string, string), double> Uiw { get; set; } //	Uiw represents the unit production times for all products and workstations
         public Dictionary<string, double> Hi { get; set; } //	Hi
