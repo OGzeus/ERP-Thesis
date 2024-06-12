@@ -6,121 +6,178 @@
              xmlns:syncfusion="http://schemas.syncfusion.com/wpf"
              xmlns:viewModel="clr-namespace:Erp.ViewModel.Thesis"
              xmlns:local="clr-namespace:Erp.View.Thesis"
-             xmlns:converter="clr-namespace:Erp.Converters"
+             xmlns:converters="clr-namespace:Erp.Converters" 
 
+             xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"             
+             xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
+             d:DesignHeight="450" d:DesignWidth="800" FontSize="18">
     <UserControl.DataContext>
         <viewModel:FlightRoutesViewModel/>
     </UserControl.DataContext>
     <UserControl.Resources>
-        <converter:CultureFormatConverter x:Key="CultureFormatConverter" />
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
     </UserControl.Resources>
-
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="900"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
+            <RowDefinition Height="5"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="800"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
 
-        <StackPanel Grid.Row="0" Grid.Column="0" HorizontalAlignment="Left" Orientation="Horizontal" >
 
-            <Button x:Name="RefreshButton"  Width="100" Margin="2" HorizontalAlignment="Left" Command="{Binding RefreshCommand}">
-                <TextBlock Text="Refresh"/>
-            </Button>
-
-            <Button x:Name="SaveButton" Width="100"  Margin="2" HorizontalAlignment="Right"  Command="{Binding SaveCommand}">
-                <TextBlock Text="Save"/>
-            </Button>
-            <ToggleButton x:Name = "tb" Content = "Show Deleted"  
-         IsChecked="{Binding ShowDeleted, Mode=TwoWay}"  Margin = "2" Background="Beige" BorderBrush="Black" 
-         Width = "108" HorizontalAlignment = "Center" >
-            </ToggleButton>
+        <TextBlock Text="Flight Route Code : " FontWeight="Bold"   Grid.Row="1" Grid.Column="0" Margin="2" />
+        <StackPanel Grid.Row="1" Grid.Column="1" HorizontalAlignment="Left"  Orientation="Horizontal" Margin="2" >
+            <TextBox Text="{Binding FlatData.Code}" HorizontalAlignment="left" Width="115"   />
+            <Button Content="f" Width="20"                    Command="{Binding ShowFlightRoutesGridCommand}"/>
         </StackPanel>
-        <syncfusion:SfDataGrid x:Name="dataGrid"
-                               Grid.Row="1"
-                               Grid.Column="0"
-                               Grid.ColumnSpan="3"
-                               Background="White"
-                               AutoGenerateColumns="False"
-                               AllowSorting="True"
-                               ShowSortNumbers="True"
-                               AllowFiltering="True"
-                               AllowEditing="True"
-                               AllowDeleting="True"
-                               AddNewRowPosition="FixedTop"
-                               ColumnSizer="Star"
-                               LiveDataUpdateMode="AllowDataShaping"
-                               ItemsSource="{Binding Data , Mode=TwoWay , UpdateSourceTrigger=PropertyChanged}"
-                               ShowRowHeader="True" 
-                               FilterRowPosition="FixedTop"
-                               ScrollViewer.VerticalScrollBarVisibility="Visible"
-                               ScrollViewer.HorizontalScrollBarVisibility="Visible"
-                               ShowToolTip="True"
-                               AllowGrouping="True"
-                               ShowGroupDropArea="True" >
 
-            <syncfusion:SfDataGrid.Columns>
+        <TextBlock Text="Flight Route Descr : " FontWeight="Bold"  Grid.Row="1" Grid.Column="2" Margin="2" />
+        <StackPanel Grid.Row="1" Grid.Column="3" HorizontalAlignment="Stretch"  Orientation="Horizontal" Margin="2" >
+            <TextBox Text="{Binding FlatData.Descr}" HorizontalAlignment="Stretch" Width="135" />
+        </StackPanel>
+        <StackPanel Grid.Row="1" Grid.Column="4"  HorizontalAlignment="Left" Orientation="Horizontal" Margin="1" >
+            <Button x:Name="AddPriceList"  Width="170" Margin = "1" HorizontalAlignment="Left" Command="{Binding AddDataCommand}">
+                <TextBlock Text="Add New Route"/>
+            </Button>
 
-                <syncfusion:GridMultiColumnDropDownList MappingName="CityCodeFrom"
-                                                              HeaderText="City From"
-                                                              DisplayMember="CityCode"
-                                                              ValueMember="CityCode"
-                                                              Columns="{Binding CityGridColumns, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                              ItemsSource="{Binding CityList  , Mode=TwoWay , UpdateSourceTrigger=PropertyChanged}"
-                                                              ItemsSourceSelector="{Binding CityList.Count}" 
+            <ToggleButton x:Name = "tb" Content = "Show Deleted"  
+         IsChecked="{Binding ShowDeleted, Mode=TwoWay}"  Margin = "1" Background="Beige" BorderBrush="Black" 
+         Width = "120" HorizontalAlignment = "Center" >
+            </ToggleButton>
+            <TextBlock Text="Delete : " FontWeight="Bold"   Margin="1"/>
+            <CheckBox IsChecked="{Binding FlatData.IsDeleted, Mode=TwoWay}"  Margin="1" VerticalAlignment="Center"  />
 
-                                                              AutoGenerateColumns="false"
-                                                              >
+        </StackPanel>
+        <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="8"  converters:MainStackPanelReadonly.IsEnabledBasedOnProperty="{Binding FlatData.Code}" >
+            <TabControl >
+                <TabItem Header="General Information">
+                    <StackPanel>
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
 
-                </syncfusion:GridMultiColumnDropDownList>
-                
-                <syncfusion:GridTextColumn MappingName="CountryCodeFrom" HeaderText="Country From " AllowEditing="False"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
 
-                <syncfusion:GridMultiColumnDropDownList MappingName="CityCodeTo"
-                                                              HeaderText="City To"
-                                                              DisplayMember="CityCode"
-                                                              ValueMember="CityCode"
-                                                              Columns="{Binding CityGridColumns, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                              ItemsSource="{Binding CityList  , Mode=TwoWay , UpdateSourceTrigger=PropertyChanged}"
-                                                              ItemsSourceSelector="{Binding CityList.Count}" 
+                            <TextBlock Text="Start Date : "    Grid.Row="1" Grid.Column="0" Margin="2" />
+                            <TextBlock Text="End Date : "    Grid.Row="1" Grid.Column="2" Margin="2" />
+                            
+                            <TextBlock Text="Complement Captain : "    Grid.Row="2" Grid.Column="0" Margin="2" />
+                            <TextBlock Text="Complement FO : "    Grid.Row="2" Grid.Column="2" Margin="2" />
+                            <TextBlock Text="Complement Cabin Manager : "    Grid.Row="3" Grid.Column="0" Margin="2" />
+                            <TextBlock Text="Complement Flight_Attendant : "    Grid.Row="3" Grid.Column="2" Margin="2" />
 
-                                                              AutoGenerateColumns="False"
-                                                              >
+                            <TextBlock Text="Airport Code : "   Grid.Row="4" Grid.Column="0" Margin="2" />
+                            <TextBlock Text="Total Time : "   Grid.Row="4" Grid.Column="2" Margin="2" />
+                            <TextBlock Text="Flight Time : "   Grid.Row="5" Grid.Column="0" Margin="2" />
+                            <TextBlock Text="Ground Time : "   Grid.Row="5" Grid.Column="2" Margin="2" />
 
-                </syncfusion:GridMultiColumnDropDownList>
-                
-                <syncfusion:GridTextColumn MappingName="CountryCodeTo" HeaderText="Country To" AllowEditing="False" />
+                            <TextBox Text="{Binding FlatData.Complement_Captain , Mode=TwoWay}" Grid.Row="2" Grid.Column="1" HorizontalAlignment="left" Width="155" Margin="2"  />
+                            <TextBox Text="{Binding FlatData.Complement_FO , Mode=TwoWay}" Grid.Row="2" Grid.Column="3" HorizontalAlignment="left" Width="155"  Margin="2" />
+                            <TextBox Text="{Binding FlatData.Complement_Cabin_Manager , Mode=TwoWay}" Grid.Row="3" Grid.Column="1" HorizontalAlignment="left" Width="155" Margin="2"  />
+                            <TextBox Text="{Binding FlatData.Complement_Flight_Attendant , Mode=TwoWay}" Grid.Row="3" Grid.Column="3" HorizontalAlignment="left" Width="155"  Margin="2" />
+
+                            <TextBox Text="{Binding FlatData.TotalTime , Mode=TwoWay}" Grid.Row="4" Grid.Column="3" HorizontalAlignment="left" Width="155"  Margin="2" />
+                            <TextBox Text="{Binding FlatData.FlightTime , Mode=TwoWay}" Grid.Row="5" Grid.Column="1" HorizontalAlignment="left" Width="155"  Margin="2" />
+                            <TextBox Text="{Binding FlatData.GroundTime , Mode=TwoWay}" Grid.Row="5" Grid.Column="3" HorizontalAlignment="left" Width="155"  Margin="2" />
+
+                            <xctk:DateTimePicker Value="{Binding FlatData.StartDate, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" 
+                             Format="Custom" 
+                             TimeFormat = "Custom"
+                             TimeFormatString="HH:MM"
+                             FormatString="dd/MM/yyyy HH:mm" 
+                             Grid.Row="1" Grid.Column="1" Margin="2" HorizontalAlignment="Left" />
+
+                            <xctk:DateTimePicker Value="{Binding FlatData.EndDate, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" 
+                             Format="Custom" 
+                             TimeFormat = "Custom"
+                             TimeFormatString="HH:MM"
+                             FormatString="dd/MM/yyyy HH:mm" 
+                             Grid.Row="1" Grid.Column="3" Margin="2" HorizontalAlignment="Left" />
+
+                            <StackPanel Grid.Row="4" Grid.Column="1" HorizontalAlignment="Left"  Orientation="Horizontal" Margin="2" >
+                                <TextBox Text="{Binding FlatData.Airport.Code , Mode=TwoWay}" HorizontalAlignment="left" Width="155"   />
+                                <Button Content="f" Width="20" Command="{Binding ShowAirportsGridCommand}"/>
+                            </StackPanel>
+                        </Grid>
+                        <StackPanel  HorizontalAlignment="Left" Orientation="Horizontal">
+                            <Button x:Name="ClearButton"  Width="100" Margin="2" HorizontalAlignment="Left" Command="{Binding ClearCommand}">
+                                <TextBlock Text="Clear"/>
+                            </Button>
+
+                            <Button x:Name="RefreshButton"  Width="100" Margin="2" HorizontalAlignment="Left" Command="{Binding RefreshCommand}">
+                                <TextBlock Text="Refresh"/>
+                            </Button>
+
+                            <Button x:Name="SaveButton"  Width="100" Margin="2" HorizontalAlignment="Left"  Command="{Binding SaveCommand}">
+                                <TextBlock Text="Save"/>
+                            </Button>
+
+                        </StackPanel>
+
+                        <syncfusion:SfDataGrid x:Name="sfGrid"
+                                                    Background="White"
+                                                    AllowSorting="True"
+                                                    ShowSortNumbers="True"
+                                                    AllowFiltering="True"
+                                                    AutoGenerateColumns="False"
+                                                    SelectedItem="{Binding SelectedItem, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                    Columns="{Binding SfGridColumns, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                    ItemsSource="{Binding CollectionView , Mode=TwoWay , UpdateSourceTrigger=PropertyChanged}"
+                                                    ShowRowHeader="True" 
+                                                    FilterRowPosition="FixedTop"
+                                                    ScrollViewer.VerticalScrollBarVisibility="Visible"
+                                                    ScrollViewer.HorizontalScrollBarVisibility="Visible"
+                                                    ShowToolTip="True"
+                                                    AllowGrouping="True"
+                                                    AutoExpandGroups="True"
+                                                    ShowGroupDropArea="True" >
+
+                            <i:Interaction.Triggers>
+                                <i:EventTrigger EventName="MouseDoubleClick">
+                                    <i:InvokeCommandAction Command="{Binding Path=DataContext.RowDataCommand,ElementName=sfGrid}" CommandParameter="{Binding}"/>
+                                </i:EventTrigger>
+                            </i:Interaction.Triggers>
+                        </syncfusion:SfDataGrid>
 
 
-                <syncfusion:GridTextColumn MappingName="Code" HeaderText="Flight Code"/>
-                
-                <syncfusion:GridDateTimeColumn MappingName="StartDate" 
-                                               HeaderText="Start Date"
-                                               CustomPattern="dd/MM/yyyy HH:mm"
-                                               Pattern="CustomPattern"
-                                               AllowEditing="True"/>
-
-                <syncfusion:GridDateTimeColumn MappingName="EndDate" 
-                                               HeaderText="End Date"
-                                               CustomPattern="dd/MM/yyyy HH:mm"
-                                               Pattern="CustomPattern"                                             
-                                               AllowEditing="True"/>
-                
-                <syncfusion:GridTextColumn MappingName="FlightTime" HeaderText="Flight Time" AllowEditing="False"/>
-
-                <syncfusion:GridCheckBoxColumn MappingName="IsDeleted" HeaderText="Deleted"/>
-
-            </syncfusion:SfDataGrid.Columns>
-        </syncfusion:SfDataGrid>
 
 
 
+
+                    </StackPanel>
+                </TabItem>
+                <TabItem Header="Flight Legs">
+                    
+                </TabItem>
+            </TabControl>
+        </StackPanel>
 
     </Grid>
 </UserControl>

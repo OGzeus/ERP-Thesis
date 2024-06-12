@@ -5,17 +5,19 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Erp.DataBase.Τhesis;
 
-namespace Erp.DataBase
+namespace Erp.DataBase.Τhesis
 {
-    public class FlightRoutesDataEntity
+    public class FlightLegsDataEntity
     {
         [Key]
-        public int FlightRouteId { get; set; }
+        public int FlightLegId { get; set; }
 
-        [Column(TypeName = "varchar(30)")]
+        [Column(TypeName = "varchar(40)")]
         public string Code { get; set; }
+
+        [Column(TypeName = "varchar(40)")]
+        public string Descr { get; set; }
 
         [Column(TypeName = "datetime")]
         public DateTime? StartDate { get; set; }
@@ -23,22 +25,19 @@ namespace Erp.DataBase
         [Column(TypeName = "datetime")]
         public DateTime? EndDate { get; set; }
 
-
         [Column(TypeName = "float")]
         public float? FlightTime { get; set; }
 
         [Column(TypeName = "bit")]
         public bool? IsDeleted { get; set; }
-        public int CityFrom { get; set; }
-        public int CityTo { get; set; }
+        public int AirportFrom { get; set; }
+        public int AirportTo { get; set; }
 
+        [ForeignKey("AirportFrom")]
+        public virtual AirportsDataEntity Airport1 { get; set; }
 
-        [ForeignKey("CityFrom")]
-        public virtual CityDataEntity City1 { get; set; }
-
-
-        [ForeignKey("CityTo")]
-        public virtual CityDataEntity City2 { get; set; }
+        [ForeignKey("AirportTo")]
+        public virtual AirportsDataEntity Airport2 { get; set; }
 
     }
 }

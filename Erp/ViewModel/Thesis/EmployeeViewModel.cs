@@ -157,15 +157,17 @@ namespace Erp.ViewModel.Thesis
             FlatData.LeaveBidsInfoStatic = new LeaveBidsDataStatic();
 
             FlatData.LeaveBidInfo.PriorityLevel = 1;
-            FlatData.LeaveBidInfo.DateFrom = DateTime.Now;
-            FlatData.LeaveBidInfo.DateTo = DateTime.Now.AddDays(10);
-            FlatData.LeaveBidInfo.NumberOfDays = 10;
-            FlatData.LeaveBidInfo.NumberOfDaysMin = 8;
-            FlatData.LeaveBidInfo.NumberOfDaysMax = 10;
+
 
             FlatData.MainSchedule = new ReqScheduleInfoData();
 
             FlatData.MainSchedule = CommonFunctions.GetMainScheduleInfoData();
+
+            FlatData.LeaveBidInfo.DateFrom = FlatData.MainSchedule.DateFrom;
+            FlatData.LeaveBidInfo.DateTo = FlatData.MainSchedule.DateFrom.AddDays(10);
+            FlatData.LeaveBidInfo.NumberOfDays = 10;
+            FlatData.LeaveBidInfo.NumberOfDaysMin = 8;
+            FlatData.LeaveBidInfo.NumberOfDaysMax = 10;
             EMPLanguageData = new ObservableCollection<EMPLanguageData>();
         }
         public void ResetLeaveBidInfoData(EmployeeData Data)
@@ -178,8 +180,8 @@ namespace Erp.ViewModel.Thesis
             Data.LeaveBidsInfoStatic = new LeaveBidsDataStatic();
 
             Data.LeaveBidInfo.PriorityLevel = 1;
-            Data.LeaveBidInfo.DateFrom = DateTime.Now;
-            Data.LeaveBidInfo.DateTo = DateTime.Now.AddDays(10);
+            Data.LeaveBidInfo.DateFrom = FlatData.MainSchedule.DateFrom;
+            Data.LeaveBidInfo.DateTo = FlatData.MainSchedule.DateFrom.AddDays(10);
             Data.LeaveBidInfo.NumberOfDays = 10;
             Data.LeaveBidInfo.NumberOfDaysMin = 8;
             Data.LeaveBidInfo.NumberOfDaysMax = 10;
@@ -378,7 +380,7 @@ namespace Erp.ViewModel.Thesis
 
         #region Commands Crud
 
-        #region 1st Tab
+        #region 1st Tab General Info 
         #region Clear
 
         private ViewModelCommand clearCommand;
@@ -513,7 +515,7 @@ namespace Erp.ViewModel.Thesis
 
         #endregion
 
-        #region 2nd Tab
+        #region 3d Tab Language
         #region Save
         private ViewModelCommand saveCommand2;
         public ICommand SaveCommand2
@@ -608,7 +610,7 @@ namespace Erp.ViewModel.Thesis
         #endregion
         #endregion
 
-        #region 3d Tab Leave Bids
+        #region 2d Tab Leave Bids
         #region Save
         private ViewModelCommand saveCommand3;
         public ICommand SaveCommand3
@@ -697,8 +699,8 @@ namespace Erp.ViewModel.Thesis
             FlatData.LeaveBidDataGridStatic = CommonFunctions.GetLeaveBids(FlatData.Code, FlatData.MainSchedule.ReqCode);
             #region Reset Values
             FlatData.LeaveBidInfo.BidCode = null;
-            FlatData.LeaveBidInfo.DateFrom = DateTime.Now;
-            FlatData.LeaveBidInfo.DateTo = DateTime.Now.AddDays(10);
+            FlatData.LeaveBidInfo.DateFrom = FlatData.MainSchedule.DateFrom;
+            FlatData.LeaveBidInfo.DateTo = FlatData.MainSchedule.DateFrom.AddDays(10);
             FlatData.LeaveBidInfo.NumberOfDays = 10;
             FlatData.LeaveBidInfo.NumberOfDaysMin = 8;
             FlatData.LeaveBidInfo.NumberOfDaysMax = 10;
@@ -740,8 +742,8 @@ namespace Erp.ViewModel.Thesis
 
             #region Reset Values
             FlatData.LeaveBidInfo.BidCode = null;
-            FlatData.LeaveBidInfo.DateFrom = DateTime.Now;
-            FlatData.LeaveBidInfo.DateTo = DateTime.Now.AddDays(10);
+            FlatData.LeaveBidInfo.DateFrom = FlatData.MainSchedule.DateFrom;
+            FlatData.LeaveBidInfo.DateTo = FlatData.MainSchedule.DateFrom.AddDays(10);
             FlatData.LeaveBidInfo.NumberOfDays = 10;
             FlatData.LeaveBidInfo.NumberOfDaysMin = 8;
             FlatData.LeaveBidInfo.NumberOfDaysMax = 10;
@@ -967,10 +969,20 @@ namespace Erp.ViewModel.Thesis
 
             FlatData.LeaveBidsInfoStatic = new LeaveBidsDataStatic();
 
+
+            #region Set Proper Priority Levels
+            var i = 1;
+            foreach(var row in FlatData.LeaveBidDataGridStatic)
+            {
+                row.PriorityLevel = i;
+                i++;
+
+            }
+            #endregion
             #region Reset Values
             FlatData.LeaveBidInfo.BidCode = null;
-            FlatData.LeaveBidInfo.DateFrom = DateTime.Now;
-            FlatData.LeaveBidInfo.DateTo = DateTime.Now.AddDays(10);
+            FlatData.LeaveBidInfo.DateFrom = FlatData.MainSchedule.DateFrom;
+            FlatData.LeaveBidInfo.DateTo = FlatData.MainSchedule.DateFrom.AddDays(10);
             FlatData.LeaveBidInfo.NumberOfDays = 10;
             FlatData.LeaveBidInfo.NumberOfDaysMin = 8;
             FlatData.LeaveBidInfo.NumberOfDaysMax = 10;
@@ -978,6 +990,8 @@ namespace Erp.ViewModel.Thesis
 
             #endregion
             #endregion
+
+
         }
 
 
@@ -1018,8 +1032,8 @@ namespace Erp.ViewModel.Thesis
                     ExecuteRefreshCommand3(FlatData);
                     #region Reset Values
                     FlatData.LeaveBidInfo.BidCode = null;
-                    FlatData.LeaveBidInfo.DateFrom = DateTime.Now;
-                    FlatData.LeaveBidInfo.DateTo = DateTime.Now.AddDays(10);
+                    FlatData.LeaveBidInfo.DateFrom = FlatData.MainSchedule.DateFrom;
+                    FlatData.LeaveBidInfo.DateTo = FlatData.MainSchedule.DateFrom.AddDays(10);
                     FlatData.LeaveBidInfo.NumberOfDays = 10;
                     FlatData.LeaveBidInfo.NumberOfDaysMin = 8;
                     FlatData.LeaveBidInfo.NumberOfDaysMax = 10;
@@ -1031,8 +1045,8 @@ namespace Erp.ViewModel.Thesis
                     MessageBox.Show($"The Leave Bid with Code '{FlatData.LeaveBidInfo.BidCode}' was not saved in the database in the First Place. However, it has been successfully removed from the user interface.");
                     #region Reset Values
                     FlatData.LeaveBidInfo.BidCode = null;
-                    FlatData.LeaveBidInfo.DateFrom = DateTime.Now;
-                    FlatData.LeaveBidInfo.DateTo = DateTime.Now.AddDays(10);
+                    FlatData.LeaveBidInfo.DateFrom = FlatData.MainSchedule.DateFrom;
+                    FlatData.LeaveBidInfo.DateTo = FlatData.MainSchedule.DateFrom.AddDays(10);
                     FlatData.LeaveBidInfo.NumberOfDays = 10;
                     FlatData.LeaveBidInfo.NumberOfDaysMin = 8;
                     FlatData.LeaveBidInfo.NumberOfDaysMax = 10;
@@ -1057,7 +1071,7 @@ namespace Erp.ViewModel.Thesis
         #endregion
         #endregion
 
-        #region 3d Tab Leave Status
+        #region 2d Tab Leave Status
 
         #region Save Leave Status
 

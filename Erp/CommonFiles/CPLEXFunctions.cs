@@ -31,6 +31,9 @@ namespace Erp.CommonFiles
             Cplex model = new Cplex();
             Cplex FeasableModel = new Cplex();
 
+            string relativePath = Path.Combine("OptimizationResults", "CPLEX", "Thesis", "Vacation_Planning");
+            Directory.CreateDirectory(relativePath);
+
             //// Set the log file for the environment
             //model.SetOut(new System.IO.StreamWriter("vplogfile_CPLEX.log"));
 
@@ -547,9 +550,9 @@ namespace Erp.CommonFiles
 
                                     #region Print Results
 
-                                    FeasableModel.ExportModel("VPFeasable_CPLEX.lp");
-                                    FeasableModel.ExportModel("VPFeasableMPS_CPLEX.mps");
-                                    FeasableModel.WriteSolution("outVP_CPLEX.sol");
+                                    FeasableModel.ExportModel(Path.Combine(relativePath, "VP.lp"));
+                                    FeasableModel.ExportModel(Path.Combine(relativePath, "VP.mps"));
+                                    FeasableModel.WriteSolution(Path.Combine(relativePath, "VP.sol"));
 
                                     #endregion
 
@@ -889,6 +892,59 @@ namespace Erp.CommonFiles
                 return Data;
             }
         }
+
+        public int GetNextId(int aId, bool accept, int N, int[] NextBid, int[] NrOfBids, int FinishedEmpIds, BasicEnums.VPLogicType VPLogicType)
+        {
+            try
+            {
+                int RId = 0;
+                var logic = VPLogicType;
+                if (FinishedEmpIds == N)
+                    return 0;
+
+                if (logic == BasicEnums.VPLogicType.Strict_Seniority)
+                {
+                    RId = aId;
+                }
+                else if (logic == BasicEnums.VPLogicType.Fair_Assignment)
+                {
+                    if (accept == true)
+                    {
+                        RId = aId + 1;
+                    }
+                    else
+                    {
+                        RId = aId;
+                    }
+                }
+                else if (logic == BasicEnums.VPLogicType.Bid_By_Bid)
+                {
+                    RId = aId + 1;
+                }
+
+                if (RId == N)
+                {
+                    RId = 0;
+                }
+
+                while (NextBid[RId] == NrOfBids[RId])
+                {
+                    RId++;
+                    if (RId == N)
+                    {
+                        RId = 0;
+                    }
+                }
+
+                return RId;
+            }
+            catch (System.Exception ex)
+            {
+                Console.WriteLine("An error occurred: " + ex.Message);
+                return -1;
+            }
+        }
+
         public bool SaveVpVijResultData(VacationPlanningOutputData Data, int ReplicationNumber, int VPID)
         {
             try
@@ -940,58 +996,6 @@ namespace Erp.CommonFiles
             {
                 LogError(ex, "SaveVpVijResultData", "Notes");
                 return false;
-            }
-        }
-
-        public int GetNextId(int aId, bool accept, int N, int[] NextBid, int[] NrOfBids, int FinishedEmpIds, BasicEnums.VPLogicType VPLogicType)
-        {
-            try
-            {
-                int RId = 0;
-                var logic = VPLogicType;
-                if (FinishedEmpIds == N)
-                    return 0;
-
-                if (logic == BasicEnums.VPLogicType.Strict_Seniority)
-                {
-                    RId = aId;
-                }
-                else if (logic == BasicEnums.VPLogicType.Fair_Assignment)
-                {
-                    if (accept == true)
-                    {
-                        RId = aId + 1;
-                    }
-                    else
-                    {
-                        RId = aId;
-                    }
-                }
-                else if (logic == BasicEnums.VPLogicType.Bid_By_Bid)
-                {
-                    RId = aId + 1;
-                }
-
-                if (RId == N)
-                {
-                    RId = 0;
-                }
-
-                while (NextBid[RId] == NrOfBids[RId])
-                {
-                    RId++;
-                    if (RId == N)
-                    {
-                        RId = 0;
-                    }
-                }
-
-                return RId;
-            }
-            catch (System.Exception ex)
-            {
-                Console.WriteLine("An error occurred: " + ex.Message);
-                return -1;
             }
         }
 
@@ -1134,7 +1138,8 @@ namespace Erp.CommonFiles
         public VPCGOutputData CalculateVPColumnGeneration(VPCGInputData InputData)
         {
             VPCGOutputData Data = new VPCGOutputData();
-
+            string relativePath = Path.Combine("OptimizationResults", "CPLEX", "Thesis", "VP_Column_Generation");
+            Directory.CreateDirectory(relativePath);
             try
             {
                 // Initialize CPLEX environment and model
@@ -1213,11 +1218,11 @@ namespace Erp.CommonFiles
                     Data.ObjValue = model.ObjValue;
 
                     // Export model to files
-                    model.ExportModel("VPCGFeasable_CPLEX.lp");
-                    model.ExportModel("VPCGFeasableMPS_CPLEX.mps");
+                    model.ExportModel(Path.Combine(relativePath, "VP_CG.lp"));
+                    model.ExportModel(Path.Combine(relativePath, "VP_CG.mps"));
+                    model.WriteSolution(Path.Combine(relativePath, "VP_CG.sol"));
 
-                    // Optionally save the solution in a .sol file
-                    model.WriteSolution("outCG_CPLEX.sol");
+
 
                     // Saving the model state, equivalent to .mst in Gurobi
                 }
@@ -1243,6 +1248,11 @@ namespace Erp.CommonFiles
         public CSOutputData CalculateCrewScheduling_Cplex(CSInputData InputData)
         {
             CSOutputData Data = new CSOutputData();
+
+            string relativePath = Path.Combine("OptimizationResults", "CPLEX", "Thesis", "Crew_Scheduling");
+            Directory.CreateDirectory(relativePath);
+            // Save the files
+
 
             try
             {

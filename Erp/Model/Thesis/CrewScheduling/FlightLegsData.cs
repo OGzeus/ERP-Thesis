@@ -2,27 +2,24 @@
 using Erp.Model.Interfaces;
 using Erp.ViewModel.Thesis;
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Erp.Model.Thesis.CrewScheduling
 {
-    public class FlightRoutesData : RecordBaseModel
+    public class FlightLegsData : RecordBaseModel
     {
-        private int _FlightRouteId;
+        private int _FlightLegId;
         private string _Code;
         private string _Descr;
-        private AirportData _Airport;
 
+        private AirportData _AirportDataFrom;
+        private AirportData _AirportDataTo;
+        private float _FlightTime;
         private DateTime _StartDate;
         private DateTime _EndDate;
-        private float _FlightTime;
-        private float _GroundTime;
-        private float _TotalTime;
-
-        private int _Complement_Captain;
-        private int _Complement_FO;
-        private int _Complement_Cabin_Manager;
-        private int _Complement_Flight_Attendant;
 
         private string _StartDate_String;
         private string _EndDate_String;
@@ -34,10 +31,10 @@ namespace Erp.Model.Thesis.CrewScheduling
             set { _Selected = value; INotifyPropertyChanged("Selected"); }
         }
 
-        public int FlightRouteId
+        public int FlightLegId
         {
-            get { return _FlightRouteId; }
-            set { _FlightRouteId = value; INotifyPropertyChanged(nameof(FlightRouteId)); }
+            get { return _FlightLegId; }
+            set { _FlightLegId = value; INotifyPropertyChanged(nameof(FlightLegId)); }
         }
 
         public string Code
@@ -50,11 +47,6 @@ namespace Erp.Model.Thesis.CrewScheduling
             get { return _Descr; }
             set { _Descr = value; INotifyPropertyChanged(nameof(Descr)); }
         }
-        public AirportData Airport
-        {
-            get { return _Airport; }
-            set { _Airport = value; INotifyPropertyChanged(nameof(Airport)); }
-        }
 
         public string StartDate_String
         {
@@ -65,6 +57,32 @@ namespace Erp.Model.Thesis.CrewScheduling
         {
             get { return _EndDate_String; }
             set { _EndDate_String = value; INotifyPropertyChanged(nameof(EndDate_String)); }
+        }
+        public AirportData AirportDataFrom
+        {
+            get { return _AirportDataFrom; }
+            set { _AirportDataFrom = value; INotifyPropertyChanged(nameof(AirportDataFrom)); }
+        }
+
+        public AirportData AirportDataTo
+        {
+            get { return _AirportDataTo; }
+            set { _AirportDataTo = value; INotifyPropertyChanged(nameof(AirportDataTo)); }
+        }
+
+
+        public float FlightTime
+        {
+            get { return _FlightTime; }
+            set
+            {
+                if (_FlightTime != value)
+                {
+                    // Round the value to two decimal places
+                    _FlightTime = (float)Math.Round(value, 2);
+                    INotifyPropertyChanged(nameof(FlightTime));
+                }
+            }
         }
 
         public DateTime StartDate
@@ -83,6 +101,7 @@ namespace Erp.Model.Thesis.CrewScheduling
                 }
             }
         }
+
         public DateTime EndDate
         {
             get
@@ -99,50 +118,6 @@ namespace Erp.Model.Thesis.CrewScheduling
                 }
             }
         }
-        public float FlightTime
-        {
-            get { return _FlightTime; }
-            set
-            {
-                if (_FlightTime != value)
-                {
-                    // Round the value to two decimal places
-                    _FlightTime = (float)Math.Round(value, 2);
-                    INotifyPropertyChanged(nameof(FlightTime));
-                }
-            }
-        }
 
-        public float GroundTime
-        {
-            get { return _GroundTime; }
-            set { _GroundTime = value; INotifyPropertyChanged(nameof(GroundTime)); }
-        }
-        public float TotalTime
-        {
-            get { return _TotalTime; }
-            set { _TotalTime = value; INotifyPropertyChanged(nameof(TotalTime)); }
-        }
-
-        public int Complement_Captain
-        {
-            get { return _Complement_Captain; }
-            set { _Complement_Captain = value; INotifyPropertyChanged(nameof(Complement_Captain)); }
-        }
-        public int Complement_FO
-        {
-            get { return _Complement_FO; }
-            set { _Complement_FO = value; INotifyPropertyChanged(nameof(Complement_FO)); }
-        }
-        public int Complement_Cabin_Manager
-        {
-            get { return _Complement_Cabin_Manager; }
-            set { _Complement_Cabin_Manager = value; INotifyPropertyChanged(nameof(Complement_Cabin_Manager)); }
-        }
-        public int Complement_Flight_Attendant
-        {
-            get { return _Complement_Flight_Attendant; }
-            set { _Complement_Flight_Attendant = value; INotifyPropertyChanged(nameof(Complement_Flight_Attendant)); }
-        }
     }
 }

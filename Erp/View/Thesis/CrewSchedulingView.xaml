@@ -116,7 +116,7 @@
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Text="Date From : " Grid.Row="1" Grid.Column="0" Margin="2"/>
-                                        <TextBlock Text="DateTo : " Grid.Row="1" Grid.Column="2" Margin="2"/>
+                                        <TextBlock Text="Date To : " Grid.Row="1" Grid.Column="2" Margin="2"/>
                                         
                                         <TextBlock Text="Penalty Routes " Grid.Row="2" Grid.Column="0" Margin="2"/>
                                         <TextBlock Text="Penalty Employee  : " Grid.Row="2" Grid.Column="2" Margin="2"/>

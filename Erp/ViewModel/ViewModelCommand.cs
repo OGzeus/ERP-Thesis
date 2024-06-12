@@ -34,7 +34,7 @@ namespace Erp.ViewModel
 
         //Methods
         public bool CanExecute(Object parameter)
-         {
+        {
              return _canExecuteAction == null ? true: _canExecuteAction(parameter);
         }
 

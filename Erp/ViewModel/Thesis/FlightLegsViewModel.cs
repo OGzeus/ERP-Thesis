@@ -1,18 +1,23 @@
-﻿using Erp.Helper;
-using Erp.Model.BasicFiles;
-using Erp.Model.Thesis;
+﻿using Erp.Model.BasicFiles;
 using Erp.Model.Thesis.CrewScheduling;
 using Syncfusion.UI.Xaml.Grid;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Windows;
+using System.Text;
+using System.Threading.Tasks;
 using System.Windows.Input;
+using System.Windows;
+using Erp.Model.Thesis;
+using Erp.Helper;
 
 namespace Erp.ViewModel.Thesis
 {
-    public class FlightRoutesViewModel : ViewModelBase
+    public class FlightLegsViewModel : ViewModelBase
     {
+
+
         #region DataProperties
 
         private Columns sfGridColumns;
@@ -27,8 +32,8 @@ namespace Erp.ViewModel.Thesis
         }
 
 
-        private FlightRoutesData flatData;
-        public FlightRoutesData FlatData
+        private FlightLegsData flatData;
+        public FlightLegsData FlatData
         {
             get { return flatData; }
             set
@@ -42,7 +47,7 @@ namespace Erp.ViewModel.Thesis
 
 
 
-        public FlightRoutesViewModel()
+        public FlightLegsViewModel()
         {
 
 
@@ -50,9 +55,10 @@ namespace Erp.ViewModel.Thesis
 
 
             this.sfGridColumns = new Columns();
-            ShowFlightRoutesGridCommand = new RelayCommand2(ExecuteShowFlightRoutesGridCommand);
+            ShowFlightLegsGridCommand = new RelayCommand2(ExecuteShowFlightLegsGridCommand);
 
-            ShowAirportsGridCommand = new RelayCommand2(ExecuteShowAirportsGridCommand);
+            ShowAirportsFromGridCommand = new RelayCommand2(ExecuteShowAirportsFromGridCommand);
+            ShowAirportsToGridCommand = new RelayCommand2(ExecuteShowAirportsToGridCommand);
 
             AddDataCommand = new RelayCommand2(ExecuteAddDataCommand);
 
@@ -63,23 +69,41 @@ namespace Erp.ViewModel.Thesis
 
         public void ResetViewmodelData()
         {
-            FlatData = new FlightRoutesData();
-            FlatData.Airport = new AirportData();
+            FlatData = new FlightLegsData();
+            FlatData.AirportDataFrom = new AirportData();
+            FlatData.AirportDataTo = new AirportData();
 
         }
 
         #region F7
 
-        public ICommand ShowFlightRoutesGridCommand { get; }
-        public ICommand ShowAirportsGridCommand { get; }
+        public ICommand ShowFlightLegsGridCommand { get; }
+        public ICommand ShowAirportsFromGridCommand { get; }
+        public ICommand ShowAirportsToGridCommand { get; }
 
-        private void ExecuteShowFlightRoutesGridCommand(object obj)
+
+
+        private void ExecuteShowAirportsFromGridCommand(object obj)
         {
-
             ClearColumns();
 
-            var F7input = F7Common.F7FlightRoutes(false);
-            F7key = F7input.F7key;
+            var F7input = F7Common.F7FL_Airports(ShowDeleted,FlatData.AirportDataTo);
+            F7key = "AirportFrom";
+
+            CollectionView = F7input.CollectionView;
+            var a = F7input.SfGridColumns;
+            foreach (var item in a)
+            {
+                this.sfGridColumns.Add(item);
+            }
+
+        }
+        private void ExecuteShowAirportsToGridCommand(object obj)
+        {
+            ClearColumns();
+
+            var F7input = F7Common.F7FL_Airports(ShowDeleted,FlatData.AirportDataFrom);
+            F7key = "AirportTo";
             CollectionView = F7input.CollectionView;
             var a = F7input.SfGridColumns;
             foreach (var item in a)
@@ -89,11 +113,12 @@ namespace Erp.ViewModel.Thesis
 
         }
 
-        private void ExecuteShowAirportsGridCommand(object obj)
+        private void ExecuteShowFlightLegsGridCommand(object obj)
         {
+
             ClearColumns();
 
-            var F7input = F7Common.F7Airports(ShowDeleted);
+            var F7input = F7Common.F7FlightLegs (false);
             F7key = F7input.F7key;
             CollectionView = F7input.CollectionView;
             var a = F7input.SfGridColumns;
@@ -103,25 +128,28 @@ namespace Erp.ViewModel.Thesis
             }
 
         }
-
-
-
         public void ChangeCanExecute(object obj)
         {
 
-            if (F7key == "FlightRoute")
+            if (F7key == "FlightLeg")
             {
-                FlatData = new FlightRoutesData();
-                FlatData.Airport = new AirportData();
-                FlatData = (SelectedItem as FlightRoutesData);
+                FlatData = new FlightLegsData();
+                FlatData = (SelectedItem as FlightLegsData);
             }
 
-            if (F7key == "Airport")
+            if (F7key == "AirportFrom")
             {
-                FlatData.Airport = new AirportData();
-                FlatData.Airport.City = new CityData();
-                FlatData.Airport = (SelectedItem as AirportData);
+                FlatData.AirportDataFrom = new AirportData();
+                FlatData.AirportDataFrom.City = new CityData();
+                FlatData.AirportDataFrom = (SelectedItem as AirportData);
             }
+            if (F7key == "AirportTo")
+            {
+                FlatData.AirportDataTo = new AirportData();
+                FlatData.AirportDataTo.City = new CityData();
+                FlatData.AirportDataTo = (SelectedItem as AirportData);
+            }
+
 
         }
 
@@ -200,12 +228,12 @@ namespace Erp.ViewModel.Thesis
 
         private void ExecuteSaveCommand(object obj)
         {
-            int Flag = CommonFunctions.SaveFlightRoutesData(FlatData);
+            int Flag = CommonFunctions.SaveFlightLegsData(FlatData);
 
             if (Flag == 1)
             {
-                MessageBox.Show($"Η Αποθήκευση/Ανανέωση Ολοκληρώθηκε για το Flight Route με Κωδικό : {FlatData.Code}");
-                ExecuteShowFlightRoutesGridCommand(obj);
+                MessageBox.Show($"Η Αποθήκευση/Ανανέωση Ολοκληρώθηκε για το Flight Leg με Κωδικό : {FlatData.Code}");
+                ExecuteShowFlightLegsGridCommand(obj);
                 ExecuteRefreshCommand(obj);
 
             }
@@ -235,7 +263,7 @@ namespace Erp.ViewModel.Thesis
 
         private void ExecuteRefreshCommand(object commandParameter)
         {
-            FlatData = CommonFunctions.GetFlightRoutesChooserData(FlatData.FlightRouteId, FlatData.Code);
+            FlatData = CommonFunctions.GetFlightLegsChooserData(FlatData.FlightLegId, FlatData.Code);
 
         }
 
@@ -253,19 +281,19 @@ namespace Erp.ViewModel.Thesis
 
             else
             {
-                int Flag = CommonFunctions.AddFlightRoutesData(FlatData);
+                int Flag = CommonFunctions.AddFlightLegsData(FlatData);
                 if (Flag == 0)
 
                 {
-                    MessageBox.Show($"Ο Αποθηκεύτηκε νέο Flight Route με Κωδικό : {FlatData.Code}");
-                    ExecuteShowFlightRoutesGridCommand(obj);
-                    FlatData.FlightRouteId = 0;
+                    MessageBox.Show($"Ο Αποθηκεύτηκε νέο Flight Leg με Κωδικό : {FlatData.Code}");
+                    ExecuteShowFlightLegsGridCommand(obj);
+                    FlatData.FlightLegId = 0;
                     ExecuteRefreshCommand(obj);
 
                 }
                 else if (Flag == 1)
                 {
-                    MessageBox.Show($"The Flight Route with Code : {FlatData.Code} already exists");
+                    MessageBox.Show($"The Flight Leg with Code : {FlatData.Code} already exists");
 
                 }
                 else if (Flag == 2)

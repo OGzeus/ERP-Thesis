@@ -17,6 +17,21 @@
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
     <TargetFrameworkProfile />
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>x64</PlatformTarget>
@@ -126,7 +141,6 @@
     <Compile Include="DataBase\DemandForecastEntity.cs" />
     <Compile Include="DataBase\ErpDbContext.cs" />
     <Compile Include="DataBase\FactoryDataEntity.cs" />
-    <Compile Include="DataBase\FlightRoutesDataEntity.cs" />
     <Compile Include="DataBase\ForecastInfoDataEntity.cs" />
     <Compile Include="DataBase\InventoryDataEntity.cs" />
     <Compile Include="DataBase\ItemDataEntity.cs" />
@@ -146,6 +160,8 @@
     <Compile Include="DataBase\Τhesis\CSInputDataEntity.cs" />
     <Compile Include="DataBase\Τhesis\EMPLanguagesDataEntity.cs" />
     <Compile Include="DataBase\Τhesis\EmployeeDataEntity.cs" />
+    <Compile Include="DataBase\Τhesis\FlightLegsDataEntity.cs" />
+    <Compile Include="DataBase\Τhesis\FlightRoutesDataEntity.cs" />
     <Compile Include="DataBase\Τhesis\LanguageDataEntity.cs" />
     <Compile Include="DataBase\Τhesis\LeaveBidRowsDataEntity.cs" />
     <Compile Include="DataBase\Τhesis\LeaveBidsDataEntity.cs" />
@@ -255,6 +271,7 @@
     <Compile Include="Model\Thesis\CrewScheduling\CSInputData.cs" />
     <Compile Include="Model\Thesis\CrewScheduling\CSOutputData.cs" />
     <Compile Include="Model\Thesis\CrewScheduling\EmployeeCR_Settings.cs" />
+    <Compile Include="Model\Thesis\CrewScheduling\FlightLegsData.cs" />
     <Compile Include="Model\Thesis\CrewScheduling\FlightRoutesData.cs" />
     <Compile Include="Model\Thesis\EMPLanguageData.cs" />
     <Compile Include="Model\Thesis\EmployeeData.cs" />
@@ -326,6 +343,7 @@
     <Compile Include="ViewModel\Thesis\AirportsViewmodel.cs" />
     <Compile Include="ViewModel\Thesis\CrewSchedulingViewModel.cs" />
     <Compile Include="ViewModel\Thesis\EmployeeViewModel.cs" />
+    <Compile Include="ViewModel\Thesis\FlightLegsViewModel.cs" />
     <Compile Include="ViewModel\Thesis\FlightRoutesViewModel.cs" />
     <Compile Include="ViewModel\Thesis\LanguageViewModel.cs" />
     <Compile Include="ViewModel\Thesis\RequirementsScheduleViewModel.cs" />
@@ -467,6 +485,9 @@
     </Compile>
     <Compile Include="View\Thesis\EmployeeView.xaml.cs">
       <DependentUpon>EmployeeView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\Thesis\FlightLegsView.xaml.cs">
+      <DependentUpon>FlightLegsView.xaml</DependentUpon>
     </Compile>
     <Compile Include="View\Thesis\FlightRoutesView.xaml.cs">
       <DependentUpon>FlightRoutesView.xaml</DependentUpon>
@@ -687,6 +708,10 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="View\Thesis\FlightLegsView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="View\Thesis\FlightRoutesView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -729,6 +754,20 @@
     <None Include="bin\Debug\cslogfile.log" />
     <None Include="bin\Debug\cslogfile_final.log" />
     <None Include="bin\Debug\MRPFeasable.lp" />
+    <None Include="bin\Debug\OptimizationResults\CPLEX\Thesis\Vacation_Planning\VP.lp" />
+    <None Include="bin\Debug\OptimizationResults\CPLEX\Thesis\Vacation_Planning\VP.mps" />
+    <None Include="bin\Debug\OptimizationResults\CPLEX\Thesis\Vacation_Planning\VP.sol" />
+    <None Include="bin\Debug\OptimizationResults\CPLEX\Thesis\VP_Column_Generation\VP_CG.lp" />
+    <None Include="bin\Debug\OptimizationResults\CPLEX\Thesis\VP_Column_Generation\VP_CG.mps" />
+    <None Include="bin\Debug\OptimizationResults\CPLEX\Thesis\VP_Column_Generation\VP_CG.sol" />
+    <None Include="bin\Debug\OptimizationResults\Gurobi\Thesis\Vacation_Planning\VP.lp" />
+    <None Include="bin\Debug\OptimizationResults\Gurobi\Thesis\Vacation_Planning\VP.mps" />
+    <None Include="bin\Debug\OptimizationResults\Gurobi\Thesis\Vacation_Planning\VP.mst" />
+    <None Include="bin\Debug\OptimizationResults\Gurobi\Thesis\Vacation_Planning\VP.sol" />
+    <None Include="bin\Debug\OptimizationResults\Gurobi\Thesis\VP_Column_Generation\VP_CG.lp" />
+    <None Include="bin\Debug\OptimizationResults\Gurobi\Thesis\VP_Column_Generation\VP_CG.mps" />
+    <None Include="bin\Debug\OptimizationResults\Gurobi\Thesis\VP_Column_Generation\VP_CG.mst" />
+    <None Include="bin\Debug\OptimizationResults\Gurobi\Thesis\VP_Column_Generation\VP_CG.sol" />
     <None Include="bin\Debug\outCG_CPLEX.sol" />
     <None Include="bin\Debug\outCS.mst" />
     <None Include="bin\Debug\outCS.sol" />
@@ -865,5 +904,17 @@
   </ItemGroup>
   <ItemGroup>
     <WCFMetadata Include="Connected Services\" />
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include=".NETFramework,Version=v4.8">
+      <Visible>False</Visible>
+      <ProductName>Microsoft .NET Framework 4.8 %28x86 and x64%29</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
   </ItemGroup>
 </Project>

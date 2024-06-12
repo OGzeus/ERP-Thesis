@@ -9,10 +9,10 @@ namespace Erp.DataBase.Τhesis
         [Key]
         public int AirportID { get; set; }
 
-        [Column(TypeName = "varchar(20)")]
+        [Column(TypeName = "varchar(50)")]
         public string AirportCode { get; set; }
 
-        [Column(TypeName = "varchar(20)")]
+        [Column(TypeName = "varchar(50)")]
         public string AirportDescr { get; set; }
 
         [Column(TypeName = "bool")]

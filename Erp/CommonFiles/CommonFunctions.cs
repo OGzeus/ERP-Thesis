@@ -49,151 +49,234 @@ namespace Erp.CommonFiles
 
         #region Thesis
 
-        #region FlightRoutes
-
-        public bool SaveFlightRoutesData(ObservableCollection<FlightRoutesData> Data, List<CityData> CityList)
+        #region FlightLegs
+        public int SaveFlightLegsData(FlightLegsData flatData)
         {
-            var Cities = CityList;
             try
             {
                 using (var dbContext = new ErpDbContext(options))
                 {
+                    // Separate query from execution
+                    int Id = flatData.FlightLegId;
+                    var existingQuery = dbContext.FlightLegs.Where(c => c.FlightLegId == Id);
+                    var existing = existingQuery.SingleOrDefault();
+                    // Execute the query and get the result
+                    var AirportFromQuery = dbContext.Airports.Where(c => c.AirportID == flatData.AirportDataFrom.Id);
+                    var AirportToQuery = dbContext.Airports.Where(c => c.AirportID == flatData.AirportDataTo.Id);
 
+                    var AirportFrom = AirportFromQuery.SingleOrDefault();
+                    var AirportTo = AirportToQuery.SingleOrDefault();
 
-                    bool hasChanges = false;
-                    foreach (var row in Data)
+                    if (existing != null)
                     {
-                        var existingrow = dbContext.FlightRoutes.SingleOrDefault(b => b.FlightRouteId == row.FlightRouteId);
-
-                        if (existingrow == null)
-                        {
-                            FlightRoutesDataEntity newrow = new FlightRoutesDataEntity();
 
 
-                            newrow.CityFrom = Cities.Where(d => d.CityCode == row.CityCodeFrom).FirstOrDefault().CityId;
-                            newrow.CityTo = Cities.Where(d => d.CityCode == row.CityCodeTo).FirstOrDefault().CityId;
+                        // Update existing customer
+                        existing.Code = flatData.Code;
+                        existing.Descr = flatData.Descr;
 
-                            newrow.FlightTime = row.FlightTime;
-                            newrow.Code = row.Code;
-                            newrow.StartDate = row.StartDate;
-                            newrow.EndDate = row.EndDate;
-                            newrow.IsDeleted = false;
+                        existing.AirportFrom = AirportFrom.AirportID;
+                        existing.AirportTo = AirportTo.AirportID;
+                        existing.StartDate = flatData.StartDate;
+                        existing.EndDate = flatData.EndDate;
+                        existing.FlightTime = flatData.FlightTime;
+                        existing.IsDeleted = flatData.IsDeleted;
 
-                            dbContext.FlightRoutes.Add(newrow);
-                            hasChanges = true;
-                        }
-                        else if (existingrow != null)
-                        {
-
-                            existingrow.CityFrom = Cities.Where(d => d.CityCode == row.CityCodeFrom).FirstOrDefault().CityId;
-                            existingrow.CityTo = Cities.Where(d => d.CityCode == row.CityCodeTo).FirstOrDefault().CityId;
-
-                            existingrow.FlightTime = row.FlightTime;
-                            existingrow.Code = row.Code;
-                            existingrow.StartDate = row.StartDate;
-                            existingrow.EndDate = row.EndDate;
-                            existingrow.IsDeleted = row.IsDeleted;
-
-                            hasChanges = true;
-
-
-
-                        }
-
-
-                    }
-
-                    if (hasChanges)
-                    {
                         dbContext.SaveChanges();
+                        return 1;
                     }
-
-                    return true;
+                    else
+                    {
+                        return -1;
+                    }
                 }
             }
             catch (Exception ex)
             {
-                LogError(ex, "SaveFlightRoutesData", "Notes");
-                return false;
+                LogError(ex, "SaveFlightLegsData", "Notes");
+                return -1;
             }
         }
 
-        public ObservableCollection<FlightRoutesData> GetFlightRoutesData(bool ShowDeleted)
+        public int AddFlightLegsData(FlightLegsData flatData)
         {
-            ObservableCollection<FlightRoutesData> DataList = new ObservableCollection<FlightRoutesData>();
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
+                    // Separate query from execution
+                    var existingQuery = dbContext.FlightLegs.Where(r => r.Code == flatData.Code);
+                    var existing= existingQuery.SingleOrDefault();
+                    // Execute the query and get the result
+
+
+                    if (existing == null)
+                    {
+                        var newItem = new FlightLegsDataEntity();
+                        // Insert new item
+                        newItem.Code = flatData.Code;
+                        newItem.Descr = flatData.Descr;
+
+                        newItem.AirportFrom = dbContext.Airports.FirstOrDefault().AirportID;
+                        newItem.AirportTo = dbContext.Airports.Skip(1).FirstOrDefault().AirportID;
+                        newItem.StartDate = DateTime.Now;
+                        newItem.EndDate = DateTime.Now.AddDays(1);
+                        newItem.FlightTime =(float)(newItem.EndDate - newItem.StartDate).Value.TotalHours;
+                        newItem.IsDeleted = flatData.IsDeleted;
+                        newItem.IsDeleted = false;
+
+                        dbContext.FlightLegs.Add(newItem);
+
+                        dbContext.SaveChanges();
+                        return 0;
+                    }
+                    else
+                    {
+                        // Else Print messages
+                        return 1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "AddFlightLegsData", "Notes");
+                return 2;
+
+            }
+        }
+
+        public FlightLegsData GetFlightLegsChooserData(int Id, string Code)
+        {
+            FlightLegsData data = new FlightLegsData();
             string FilterStr = "";
+            try
+            {
+                using (var connection = GetConnection())
+                using (var command = new SqlCommand())
+                {
+                    connection.Open();
+                    command.Connection = connection;
+
+                    if (Id > 0)
+                    {
+                        command.Parameters.AddWithValue("@ID", Id);
+                        FilterStr = String.Format(@" and F.FlightLegId =@ID");
+
+                    }
+
+                    else if (!string.IsNullOrWhiteSpace(Code))
+                    {
+                        command.Parameters.AddWithValue("@Code", Code);
+                        FilterStr = String.Format(@" and F.Code =@Code");
+
+                    }
+                    command.CommandText = string.Format(@"select F.FlightLegId,F.Code,F.Descr,F.StartDate,F.EndDate,F.FlightTime,F.IsDeleted,
+AFrom.AirportID as AFId,AFrom.AirportCode as AFCode,AFrom.AirportDescr as AFDescr,
+ATo.AirportID as ATId,ATo.AirportCode as ATCode,ATo.AirportDescr  as ATDescr
+From FlightLegs as F
+Inner Join Airports as AFrom on AFrom.AirportID = F.AirportFrom
+Inner Join Airports as ATo on ATo.AirportID = F.AirportTo
+                                              Where 1=1 {0}", FilterStr);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            data.AirportDataFrom = new AirportData();
+                            data.AirportDataTo = new AirportData();
+
+
+                            data.FlightLegId = int.Parse(reader["FlightLegId"].ToString());
+                            data.Code = reader["Code"].ToString();
+                            data.Descr = reader["Descr"].ToString();
+                            data.StartDate = DateTime.Parse(reader["StartDate"].ToString());
+                            data.EndDate = DateTime.Parse(reader["EndDate"].ToString());
+
+                            data.StartDate_String = data.StartDate.ToString("dd/MM/yyyy HH:mm");
+                            data.EndDate_String = data.EndDate.ToString("dd/MM/yyyy HH:mm");
+
+                            data.FlightTime = float.Parse(reader["FlightTime"].ToString());
+
+                            data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
+
+
+                            data.AirportDataFrom.Id = int.Parse(reader["AFId"].ToString());
+                            data.AirportDataFrom.Code = reader["AFCode"].ToString();
+                            data.AirportDataFrom.Descr = reader["AFDescr"].ToString();
+
+                            data.AirportDataTo.Id = int.Parse(reader["ATId"].ToString());
+                            data.AirportDataTo.Code = reader["ATCode"].ToString();
+                            data.AirportDataTo.Descr = reader["ATDescr"].ToString();
+                        }
+                    }
+
+                    connection.Close();
+                }
+
+                return data;
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "GetFlightLegsChooserData", "Notes");
+                return data;
+            }
+        }
+        public ObservableCollection<FlightLegsData> GetFlightLegsData(bool ShowDeleted)
+        {
+            ObservableCollection<FlightLegsData> DataList = new ObservableCollection<FlightLegsData>();
+
+            string FilterStr = "";
+
             using (var connection = GetConnection())
             using (var command = new SqlCommand())
             {
                 connection.Open();
                 command.Connection = connection;
 
-
                 if (ShowDeleted == false)
                 {
                     command.Parameters.AddWithValue("@ShowDeleted", ShowDeleted);
                     FilterStr = String.Format(@" and F.IsDeleted =@ShowDeleted");
                 }
+                command.CommandText = string.Format(@"select F.FlightLegId,F.Code,F.Descr,F.StartDate,F.EndDate,F.FlightTime,F.IsDeleted,
+AFrom.AirportID as AFId,AFrom.AirportCode as AFCode,AFrom.AirportDescr as AFDescr,
+ATo.AirportID as ATId,ATo.AirportCode as ATCode,ATo.AirportDescr  as ATDescr
+From FlightLegs as F
+Inner Join Airports as AFrom on AFrom.AirportID = F.AirportFrom
+Inner Join Airports as ATo on ATo.AirportID = F.AirportTo
+                                              Where 1=1 {0}", FilterStr);
 
-                command.CommandText = string.Format(@"select F.FlightRouteId,F.Code,F.IsDeleted,F.StartDate, F.EndDate,F.FlightTime,
-CityFrom.CityId as CityFromId,CityFrom.CityCode as CityFromCode, CityFrom.CityDescr as CityFromDescr, PrefFrom.PrefCode as PrefFromCode, PrefFrom.PrefDescr as PrefFromDescr, CountryFrom.CountryCode as CountryFromCode, CountryFrom.CountryDescr as CountryFromDescr, CityFrom.Longitude as CityFromLongitude, CityFrom.Latitude as CityFromLatitude, 
-                                               CityTo.CityId as CityToId,CityTo.CityCode as CityToCode, CityTo.CityDescr as CityToDescr, PrefTo.PrefCode as PrefToCode, PrefTo.PrefDescr as PrefToDescr, CountryTo.CountryCode as CountryToCode, CountryTo.CountryDescr as CountryToDescr, CityTo.Longitude as CityToLongitude, CityTo.Latitude as CityToLatitude
-                                               
-                                               from FlightRoutes as F
-                                               inner join City as CityFrom on F.CityFrom = CityFrom.CityId
-                                               inner join Prefecture as PrefFrom on CityFrom.PrefId = PrefFrom.PrefId
-                                               inner join Country as CountryFrom on PrefFrom.CountryId = CountryFrom.CountryId
-                                               inner join City as CityTo on F.CityTo = CityTo.CityId
-                                               inner join Prefecture as PrefTo on CityTo.PrefId = PrefTo.PrefId
-                                               inner join Country as CountryTo on PrefTo.CountryId = CountryTo.CountryId
-Where 1=1 {0}", FilterStr);
+
 
                 using (var reader = command.ExecuteReader())
                 {
                     while (reader.Read())
                     {
-                        FlightRoutesData data = new FlightRoutesData();
-                        data.FlightRouteId = int.Parse(reader["FlightRouteId"].ToString());
+                        FlightLegsData data = new FlightLegsData();
+                        data.AirportDataFrom = new AirportData();
+                        data.AirportDataTo = new AirportData();
+
+
+                        data.FlightLegId = int.Parse(reader["FlightLegId"].ToString());
                         data.Code = reader["Code"].ToString();
+                        data.Descr = reader["Descr"].ToString();
                         data.StartDate = DateTime.Parse(reader["StartDate"].ToString());
                         data.EndDate = DateTime.Parse(reader["EndDate"].ToString());
 
                         data.StartDate_String = data.StartDate.ToString("dd/MM/yyyy HH:mm");
                         data.EndDate_String = data.EndDate.ToString("dd/MM/yyyy HH:mm");
 
-
                         data.FlightTime = float.Parse(reader["FlightTime"].ToString());
+
                         data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
 
-                        CityData cityFrom = new CityData();
-                        cityFrom.CityId = int.Parse(reader["CityFromId"].ToString());
-                        cityFrom.CityCode = reader["CityFromCode"].ToString();
-                        cityFrom.CityDescr = reader["CityFromDescr"].ToString();
-                        cityFrom.PrefCode = reader["PrefFromCode"].ToString();
-                        cityFrom.PrefDescr = reader["PrefFromDescr"].ToString();
-                        cityFrom.CountryCode = reader["CountryFromCode"].ToString();
-                        cityFrom.CountryDescr = reader["CountryFromDescr"].ToString();
-                        cityFrom.Longitude = float.Parse(reader["CityFromLongitude"].ToString());
-                        cityFrom.Latitude = float.Parse(reader["CityFromLatitude"].ToString());
 
-                        data.CityDataFrom = cityFrom;
-                        data.CityCodeFrom = cityFrom.CityCode;
-                        data.CountryCodeFrom = cityFrom.CountryCode;
+                        data.AirportDataFrom.Id = int.Parse(reader["AFId"].ToString());
+                        data.AirportDataFrom.Code = reader["AFCode"].ToString();
+                        data.AirportDataFrom.Descr = reader["AFDescr"].ToString();
 
-                        CityData cityTo = new CityData();
-                        cityTo.CityId = int.Parse(reader["CityToId"].ToString());
-                        cityTo.CityCode = reader["CityToCode"].ToString();
-                        cityTo.CityDescr = reader["CityToDescr"].ToString();
-                        cityTo.PrefCode = reader["PrefToCode"].ToString();
-                        cityTo.PrefDescr = reader["PrefToDescr"].ToString();
-                        cityTo.CountryCode = reader["CountryToCode"].ToString();
-                        cityTo.CountryDescr = reader["CountryToDescr"].ToString();
-                        cityTo.Longitude = float.Parse(reader["CityToLongitude"].ToString());
-                        cityTo.Latitude = float.Parse(reader["CityToLatitude"].ToString());
-
-                        data.CityDataTo = cityTo;
-                        data.CityCodeTo = cityTo.CityCode;
-                        data.CountryCodeTo = cityTo.CountryCode;
+                        data.AirportDataTo.Id = int.Parse(reader["ATId"].ToString());
+                        data.AirportDataTo.Code = reader["ATCode"].ToString();
+                        data.AirportDataTo.Descr = reader["ATDescr"].ToString();
 
 
 
@@ -206,92 +289,248 @@ Where 1=1 {0}", FilterStr);
 
             return DataList;
         }
-        public ObservableCollection<FlightRoutesData> GetCSFlightRoutesData(bool ShowDeleted, CSInputData InputData)
+        #endregion
+
+        #region FlightRoutes
+        public int SaveFlightRoutesData(FlightRoutesData flatData)
+        {
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
+                    // Separate query from execution
+                    int Id = flatData.FlightRouteId;
+                    var existingQuery = dbContext.FlightRoutes.Where(c => c.FlightRouteId == Id);
+                    var existing = existingQuery.SingleOrDefault();
+                    // Execute the query and get the result
+                    var AirportQuery = dbContext.Airports.Where(c => c.AirportID == flatData.Airport.Id);
+
+                    var Airport = AirportQuery.SingleOrDefault();
+
+                    if (existing != null)
+                    {
+
+
+                        // Update existing customer
+                        existing.Code = flatData.Code;
+                        existing.Descr = flatData.Descr;
+
+                        existing.AirportId = Airport.AirportID;
+                        existing.StartDate = flatData.StartDate;
+                        existing.EndDate = flatData.EndDate;
+                        existing.FlightTime = (float)Math.Round(flatData.FlightTime, 2);
+                        existing.GroundTime = (float)Math.Round(flatData.GroundTime,2);
+                        existing.TotalTime = (float)Math.Round(flatData.TotalTime, 2);
+                        existing.Complement_Captain = flatData.Complement_Captain;
+                        existing.Complement_FO = flatData.Complement_FO;
+                        existing.Complement_Cabin_Manager = flatData.Complement_Cabin_Manager;
+                        existing.Complement_Flight_Attendant = flatData.Complement_Flight_Attendant;
+                        existing.FlightTime = flatData.FlightTime;
+                        existing.IsDeleted = flatData.IsDeleted;
+
+                        dbContext.SaveChanges();
+                        return 1;
+                    }
+                    else
+                    {
+                        return -1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "SaveFlightRoutesData", "Notes");
+                return -1;
+            }
+        }
+
+        public int AddFlightRoutesData(FlightRoutesData flatData)
+        {
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
+                    // Separate query from execution
+                    var existingQuery = dbContext.FlightRoutes.Where(r => r.Code == flatData.Code);
+                    var existing = existingQuery.SingleOrDefault();
+                    // Execute the query and get the result
+
+
+                    if (existing == null)
+                    {
+                        var newItem = new FlightRoutesDataEntity();
+                        newItem.Code = flatData.Code;
+                        newItem.Descr = flatData.Descr;
+
+                        newItem.AirportId = dbContext.Airports.FirstOrDefault().AirportID;
+                        newItem.StartDate = DateTime.Now;
+                        newItem.EndDate = DateTime.Now.AddDays(2);
+                        newItem.TotalTime = (float)Math.Round((newItem.EndDate - newItem.StartDate).Value.TotalHours, 2);
+                        var TotalTime = (float)newItem.TotalTime;
+                        newItem.FlightTime = (float)Math.Round(TotalTime * 0.7, 2);
+                        newItem.GroundTime = newItem.TotalTime - newItem.FlightTime;
+                        newItem.Complement_Captain = 1;
+                        newItem.Complement_FO = 1;
+                        newItem.Complement_Cabin_Manager = 1;
+                        newItem.Complement_Flight_Attendant = 3;
+                        newItem.IsDeleted = false;
+
+
+                        dbContext.FlightRoutes.Add(newItem);
+
+                        dbContext.SaveChanges();
+                        return 0;
+                    }
+                    else
+                    {
+                        // Else Print messages
+                        return 1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "AddFlightLegsData", "Notes");
+                return 2;
+
+            }
+        }
+
+        public FlightRoutesData GetFlightRoutesChooserData(int Id, string Code)
+        {
+            FlightRoutesData data = new FlightRoutesData();
+            string FilterStr = "";
+            try
+            {
+                using (var connection = GetConnection())
+                using (var command = new SqlCommand())
+                {
+                    connection.Open();
+                    command.Connection = connection;
+
+                    if (Id > 0)
+                    {
+                        command.Parameters.AddWithValue("@ID", Id);
+                        FilterStr = String.Format(@" and F.FlightRouteId =@ID");
+
+                    }
+
+                    else if (!string.IsNullOrWhiteSpace(Code))
+                    {
+                        command.Parameters.AddWithValue("@Code", Code);
+                        FilterStr = String.Format(@" and F.Code =@Code");
+
+                    }
+                    command.CommandText = string.Format(@"select F.FlightRouteId,F.Code,F.Descr,F.StartDate,F.EndDate,F.FlightTime,F.GroundTime,F.TotalTime,F.IsDeleted,
+F.Complement_Captain AS CCA,F.Complement_FO AS CFO, F.Complement_Flight_Attendant AS CFA, F.Complement_Cabin_Manager AS CCM, 
+A.AirportID ,A.AirportCode,A.AirportDescr
+From FlightRoutes as F
+Inner Join Airports as A on A.AirportID = F.AirportId
+                                              Where 1=1 {0}", FilterStr);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            data.Airport = new AirportData();
+
+
+                            data.FlightRouteId = int.Parse(reader["FlightRouteId"].ToString());
+                            data.Code = reader["Code"].ToString();
+                            data.Descr = reader["Descr"].ToString();
+                            data.StartDate = DateTime.Parse(reader["StartDate"].ToString());
+                            data.EndDate = DateTime.Parse(reader["EndDate"].ToString());
+
+                            data.StartDate_String = data.StartDate.ToString("dd/MM/yyyy HH:mm");
+                            data.EndDate_String = data.EndDate.ToString("dd/MM/yyyy HH:mm");
+
+                            data.TotalTime = float.Parse(reader["TotalTime"].ToString());
+                            data.FlightTime = float.Parse(reader["FlightTime"].ToString());
+                            data.GroundTime = float.Parse(reader["GroundTime"].ToString());
+
+                            data.Complement_Captain = int.Parse(reader["CCA"].ToString());
+                            data.Complement_FO = int.Parse(reader["CFO"].ToString());
+                            data.Complement_Flight_Attendant = int.Parse(reader["CFA"].ToString());
+                            data.Complement_Cabin_Manager = int.Parse(reader["CCM"].ToString());
+
+                            data.Airport.Id = int.Parse(reader["AirportID"].ToString());
+                            data.Airport.Code = reader["AirportCode"].ToString();
+                            data.Airport.Descr = reader["AirportDescr"].ToString();
+
+                            data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
+
+
+                        }
+                    }
+
+                    connection.Close();
+                }
+
+                return data;
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "GetFlightRoutesChooserData", "Notes");
+                return data;
+            }
+        }
+        public ObservableCollection<FlightRoutesData> GetFlightRoutesData(bool ShowDeleted)
         {
             ObservableCollection<FlightRoutesData> DataList = new ObservableCollection<FlightRoutesData>();
+
             string FilterStr = "";
+
             using (var connection = GetConnection())
             using (var command = new SqlCommand())
             {
                 connection.Open();
                 command.Connection = connection;
 
-
                 if (ShowDeleted == false)
                 {
                     command.Parameters.AddWithValue("@ShowDeleted", ShowDeleted);
                     FilterStr = String.Format(@" and F.IsDeleted =@ShowDeleted");
-
-
-
                 }
-                command.Parameters.AddWithValue("@StartDate", InputData.DateFrom);
-                command.Parameters.AddWithValue("@EndDate", InputData.DateTo);
+                command.CommandText = string.Format(@"select F.FlightRouteId,F.Code,F.Descr,F.StartDate,F.EndDate,F.FlightTime,F.GroundTime,F.TotalTime,F.IsDeleted,
+F.Complement_Captain AS CCA,F.Complement_FO AS CFO, F.Complement_Flight_Attendant AS CFA, F.Complement_Cabin_Manager AS CCM, 
+A.AirportID ,A.AirportCode,A.AirportDescr
+From FlightRoutes as F
+Inner Join Airports as A on A.AirportID = F.AirportId
+                                              Where 1=1 {0}", FilterStr);
 
-                FilterStr += " AND F.StartDate >= @StartDate";
-                FilterStr += " AND F.EndDate <= @EndDate";
 
-
-                command.CommandText = string.Format(@"select F.FlightRouteId,F.Code,F.IsDeleted,F.StartDate, F.EndDate,F.FlightTime,
-CityFrom.CityId as CityFromId,CityFrom.CityCode as CityFromCode, CityFrom.CityDescr as CityFromDescr, PrefFrom.PrefCode as PrefFromCode, PrefFrom.PrefDescr as PrefFromDescr, CountryFrom.CountryCode as CountryFromCode, CountryFrom.CountryDescr as CountryFromDescr, CityFrom.Longitude as CityFromLongitude, CityFrom.Latitude as CityFromLatitude, 
-                                               CityTo.CityId as CityToId,CityTo.CityCode as CityToCode, CityTo.CityDescr as CityToDescr, PrefTo.PrefCode as PrefToCode, PrefTo.PrefDescr as PrefToDescr, CountryTo.CountryCode as CountryToCode, CountryTo.CountryDescr as CountryToDescr, CityTo.Longitude as CityToLongitude, CityTo.Latitude as CityToLatitude
-                                               
-                                               from FlightRoutes as F
-                                               inner join City as CityFrom on F.CityFrom = CityFrom.CityId
-                                               inner join Prefecture as PrefFrom on CityFrom.PrefId = PrefFrom.PrefId
-                                               inner join Country as CountryFrom on PrefFrom.CountryId = CountryFrom.CountryId
-                                               inner join City as CityTo on F.CityTo = CityTo.CityId
-                                               inner join Prefecture as PrefTo on CityTo.PrefId = PrefTo.PrefId
-                                               inner join Country as CountryTo on PrefTo.CountryId = CountryTo.CountryId
-Where 1=1 {0}", FilterStr);
 
                 using (var reader = command.ExecuteReader())
                 {
                     while (reader.Read())
                     {
                         FlightRoutesData data = new FlightRoutesData();
+                        data.Airport = new AirportData();
+
+
                         data.FlightRouteId = int.Parse(reader["FlightRouteId"].ToString());
                         data.Code = reader["Code"].ToString();
+                        data.Descr = reader["Descr"].ToString();
                         data.StartDate = DateTime.Parse(reader["StartDate"].ToString());
                         data.EndDate = DateTime.Parse(reader["EndDate"].ToString());
 
                         data.StartDate_String = data.StartDate.ToString("dd/MM/yyyy HH:mm");
                         data.EndDate_String = data.EndDate.ToString("dd/MM/yyyy HH:mm");
 
-
+                        data.TotalTime = float.Parse(reader["TotalTime"].ToString());
                         data.FlightTime = float.Parse(reader["FlightTime"].ToString());
+                        data.GroundTime = float.Parse(reader["GroundTime"].ToString());
+
+                        data.Complement_Captain = int.Parse(reader["CCA"].ToString());
+                        data.Complement_FO = int.Parse(reader["CFO"].ToString());
+                        data.Complement_Flight_Attendant = int.Parse(reader["CFA"].ToString());
+                        data.Complement_Cabin_Manager = int.Parse(reader["CCM"].ToString());
+
+                        data.Airport.Id = int.Parse(reader["AirportID"].ToString());
+                        data.Airport.Code = reader["AirportCode"].ToString();
+                        data.Airport.Descr = reader["AirportDescr"].ToString();
+
                         data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
 
-                        CityData cityFrom = new CityData();
-                        cityFrom.CityId = int.Parse(reader["CityFromId"].ToString());
-                        cityFrom.CityCode = reader["CityFromCode"].ToString();
-                        cityFrom.CityDescr = reader["CityFromDescr"].ToString();
-                        cityFrom.PrefCode = reader["PrefFromCode"].ToString();
-                        cityFrom.PrefDescr = reader["PrefFromDescr"].ToString();
-                        cityFrom.CountryCode = reader["CountryFromCode"].ToString();
-                        cityFrom.CountryDescr = reader["CountryFromDescr"].ToString();
-                        cityFrom.Longitude = float.Parse(reader["CityFromLongitude"].ToString());
-                        cityFrom.Latitude = float.Parse(reader["CityFromLatitude"].ToString());
-
-                        data.CityDataFrom = cityFrom;
-                        data.CityCodeFrom = cityFrom.CityCode;
-                        data.CountryCodeFrom = cityFrom.CountryCode;
-
-                        CityData cityTo = new CityData();
-                        cityTo.CityId = int.Parse(reader["CityToId"].ToString());
-                        cityTo.CityCode = reader["CityToCode"].ToString();
-                        cityTo.CityDescr = reader["CityToDescr"].ToString();
-                        cityTo.PrefCode = reader["PrefToCode"].ToString();
-                        cityTo.PrefDescr = reader["PrefToDescr"].ToString();
-                        cityTo.CountryCode = reader["CountryToCode"].ToString();
-                        cityTo.CountryDescr = reader["CountryToDescr"].ToString();
-                        cityTo.Longitude = float.Parse(reader["CityToLongitude"].ToString());
-                        cityTo.Latitude = float.Parse(reader["CityToLatitude"].ToString());
-
-                        data.CityDataTo = cityTo;
-                        data.CityCodeTo = cityTo.CityCode;
-                        data.CountryCodeTo = cityTo.CountryCode;
-                        data.Selected = true;
 
 
                         DataList.Add(data);
@@ -3294,6 +3533,9 @@ Where 1=1 {0}", FilterStr);
             GRBEnv env = new GRBEnv("vplogfile.log");
             GRBModel model = new GRBModel(env);
             GRBEnv finalenv = new GRBEnv("vplogfilefinal.log");
+            string relativePath = Path.Combine("OptimizationResults", "Gurobi", "Thesis", "Vacation_Planning");
+            Directory.CreateDirectory(relativePath);
+
             VacationPlanningOutputData Data = new VacationPlanningOutputData();
             Data.VPYijResultsDataGrid = new ObservableCollection<VPYijResultsData>();
             Data.VPYijzResultsDataGrid = new ObservableCollection<VPYijResultsData>();
@@ -3835,11 +4077,14 @@ Where 1=1 {0}", FilterStr);
                     {
                         Data.ObjValue = model.ObjVal;
                         model.Update();
-                        model.Write("out.mst");
-                        model.Write("out.sol");
-                        model.Write("VPFeasable.lp");
-                        model.Write("VPFeasableMPS.mps");
 
+
+
+                        // Save the files
+                        model.Write(Path.Combine(relativePath, "VP.mst"));
+                        model.Write(Path.Combine(relativePath, "VP.sol"));
+                        model.Write(Path.Combine(relativePath, "VP.lp"));
+                        model.Write(Path.Combine(relativePath, "VP.mps"));
 
                     }
                     if (FinishedBidIds == N)
@@ -3877,7 +4122,7 @@ Where 1=1 {0}", FilterStr);
                             {
 
                                 // Read the model from the files
-                                using (GRBModel modelFromFiles = new GRBModel(finalenv, "VPFeasableMPS.mps"))
+                                using (GRBModel modelFromFiles = new GRBModel(finalenv, Path.Combine(relativePath, "VP.mps")))
                                 {
                                     modelFromFiles.Optimize();
                                     modelFromFiles.Update();
@@ -4573,10 +4818,14 @@ Where 1=1 {0}", FilterStr);
                 {
                     Data.ObjValue = model.ObjVal;
                     model.Update();
-                    model.Write("outCG.mst");
-                    model.Write("outCG.sol");
-                    model.Write("VPCGFeasable.lp");
-                    model.Write("VPCGFeasableMPS.mps");
+                    string relativePath = Path.Combine("OptimizationResults", "Gurobi", "Thesis","VP_Column_Generation");
+                    Directory.CreateDirectory(relativePath);
+
+                    // Save the files
+                    model.Write(Path.Combine(relativePath, "VP_CG.mst"));
+                    model.Write(Path.Combine(relativePath, "VP_CG.sol"));
+                    model.Write(Path.Combine(relativePath, "VP_CG.lp"));
+                    model.Write(Path.Combine(relativePath, "VP_CG.mps"));
 
 
                 }
@@ -4802,11 +5051,84 @@ Where 1=1 {0}", FilterStr);
 
             return Data;
         }
+
+        public ObservableCollection<FlightRoutesData> GetCSFlightRoutesData(bool ShowDeleted, CSInputData inputData)
+        {
+            ObservableCollection<FlightRoutesData> DataList = new ObservableCollection<FlightRoutesData>();
+
+            string FilterStr = "";
+
+            using (var connection = GetConnection())
+            using (var command = new SqlCommand())
+            {
+                connection.Open();
+                command.Connection = connection;
+
+                if (ShowDeleted == false)
+                {
+                    command.Parameters.AddWithValue("@ShowDeleted", ShowDeleted);
+                    FilterStr = String.Format(@" and F.IsDeleted =@ShowDeleted");
+                }
+                command.CommandText = string.Format(@"select F.FlightLegId,F.Code,F.Descr,F.StartDate,F.EndDate,F.FlightTime,F.IsDeleted,
+AFrom.AirportID as AFId,AFrom.AirportCode as AFCode,AFrom.AirportDescr as AFDescr,
+ATo.AirportID as ATId,ATo.AirportCode as ATCode,ATo.AirportDescr  as ATDescr
+From FlightLegs as F
+Inner Join Airports as AFrom on AFrom.AirportID = F.AirportFrom
+Inner Join Airports as ATo on ATo.AirportID = F.AirportTo
+                                              Where 1=1 {0}", FilterStr);
+
+
+
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        FlightRoutesData data = new FlightRoutesData();
+                        //data.AirportDataFrom = new AirportData();
+                        //data.AirportDataTo = new AirportData();
+
+
+                        //data.FlightLegId = int.Parse(reader["FlightLegId"].ToString());
+                        //data.Code = reader["Code"].ToString();
+                        //data.Descr = reader["Descr"].ToString();
+                        //data.StartDate = DateTime.Parse(reader["StartDate"].ToString());
+                        //data.EndDate = DateTime.Parse(reader["EndDate"].ToString());
+
+                        //data.StartDate_String = data.StartDate.ToString("dd/MM/yyyy HH:mm");
+                        //data.EndDate_String = data.EndDate.ToString("dd/MM/yyyy HH:mm");
+
+                        //data.FlightTime = float.Parse(reader["FlightTime"].ToString());
+
+                        //data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
+
+
+                        //data.AirportDataFrom.Id = int.Parse(reader["AFId"].ToString());
+                        //data.AirportDataFrom.Code = reader["AFCode"].ToString();
+                        //data.AirportDataFrom.Descr = reader["AFDescr"].ToString();
+
+                        //data.AirportDataTo.Id = int.Parse(reader["ATId"].ToString());
+                        //data.AirportDataTo.Code = reader["ATCode"].ToString();
+                        //data.AirportDataTo.Descr = reader["ATDescr"].ToString();
+
+
+
+                        DataList.Add(data);
+                    }
+                }
+
+                connection.Close();
+            }
+
+            return DataList;
+        }
+
         #endregion
         #region Optimisation
         public CSOutputData CalculateCrewScheduling_GB(CSInputData InputData)
         {
             GRBEnv env = new GRBEnv("cslogfile.log");
+            string relativePath = Path.Combine("OptimizationResults", "Gurobi", "Thesis", "Crew_Scheduling");
+            Directory.CreateDirectory(relativePath);
             GRBModel model = new GRBModel(env);
             GRBEnv finalenv = new GRBEnv("cslogfile_final.log");
             CSOutputData Data = new CSOutputData();
@@ -4902,10 +5224,14 @@ Where 1=1 {0}", FilterStr);
                 {
                     Data.ObjValue = model.ObjVal;
                     model.Update();
-                    model.Write("outCS.mst");
-                    model.Write("outCS.sol");
-                    model.Write("CSFeasable.lp");
-                    model.Write("CSFeasableMPS.mps");
+
+
+
+                    // Save the files
+                    model.Write(Path.Combine(relativePath, "CS.mst"));
+                    model.Write(Path.Combine(relativePath, "CS.sol"));
+                    model.Write(Path.Combine(relativePath, "CS.lp"));
+                    model.Write(Path.Combine(relativePath, "CS.mps"));
 
 
                 }

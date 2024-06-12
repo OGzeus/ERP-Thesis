@@ -65,6 +65,8 @@ namespace Erp.DataBase
         public DbSet<AirportsDataEntity> Airports { get; set; }
         public DbSet<AircraftDataEntity> Aircrafts { get; set; }
         public DbSet<FlightRoutesDataEntity> FlightRoutes { get; set; }
+        public DbSet<FlightLegsDataEntity> FlightLegs { get; set; }
+
         public DbSet<CSInputDataEntity> CSInput { get; set; }
 
 

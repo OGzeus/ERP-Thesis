@@ -180,6 +180,7 @@ namespace Erp.View
             menuFlights2.Add(new SubItem("Prefectures", new PrefectureView()));
             menuFlights2.Add(new SubItem("Cities", new CityView()));
             menuFlights2.Add(new SubItem("Airports", new AirportsView()));
+            menuFlights2.Add(new SubItem("Flight Legs", new FlightLegsView()));
             menuFlights2.Add(new SubItem("Flight Routes", new FlightRoutesView()));
             menuFlights2.Add(new SubItem("Crew Scheduling", new CrewSchedulingView()));
 
