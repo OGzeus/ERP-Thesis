@@ -386,10 +386,6 @@
                                         </Grid>
                                         <Grid Grid.Row="2">
                                             <StackPanel Margin="1"  HorizontalAlignment="Left" Orientation="Horizontal"  Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="5">
-                                                <Button Margin="4" x:Name="ClearBidsCommand"  Width="100" HorizontalAlignment="Left" Command="{Binding ClearCommand3}">
-                                                    <TextBlock Text="Clear"/>
-                                                </Button>
-
                                                 <Button Margin="4" x:Name="RefreshBidsCommand"  Width="100" HorizontalAlignment="Left" Command="{Binding RefreshCommand3}">
                                                     <TextBlock Text="Refresh"/>
                                                 </Button>

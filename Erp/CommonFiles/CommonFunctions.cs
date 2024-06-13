@@ -4104,7 +4104,7 @@ Where 1=1 {0}", FilterStr);
                 #region Save,Show Results
                 var Upgrade = new bool();
                 var flag = new bool();
-                var customMessageBox = new CustomMessageBox("Do you want to Save the Results or Search for a better Solution?");
+                var customMessageBox = new CustomMessageBox("Do you want to Save the Results ");
                 if (customMessageBox.ShowDialog() == true)
                 {
                     // User clicked Save Only or Save and Upgrade
@@ -4112,10 +4112,10 @@ Where 1=1 {0}", FilterStr);
                     {
                         // User clicked Save Only or Save and Upgrade
                         //var result = customMessageBox.Message.Contains("Save and Upgrade") ? "Save and Upgrade" : "Save Only";
-                        var result = "Save Only";
+                        var result = "Save";
                         Console.WriteLine($"User clicked {result}");
 
-                        if (result == "Save and Upgrade" || result == "Save Only")
+                        if (result == "Save" )
                         {
                             #region OutputResults
                             if (Data.ObjValue > 0)
@@ -4420,7 +4420,7 @@ Where 1=1 {0}", FilterStr);
                                 }
                                 #endregion
                             }
-                        if (result == "Save and Upgrade")
+                        if (result == "Dont Save")
                         {
                             // Handle Save and Upgrade scenario
                             Console.WriteLine("Saving and upgrading...");

@@ -747,13 +747,8 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
     </EmbeddedResource>
-    <None Include="bin\Debug\CSFeasable.lp" />
-    <None Include="bin\Debug\CSFeasableMPS.mps" />
-    <None Include="bin\Debug\CSFeasableMPS_Cplex.mps" />
-    <None Include="bin\Debug\CSFeasable_Cplex.lp" />
     <None Include="bin\Debug\cslogfile.log" />
     <None Include="bin\Debug\cslogfile_final.log" />
-    <None Include="bin\Debug\MRPFeasable.lp" />
     <None Include="bin\Debug\OptimizationResults\CPLEX\Thesis\Vacation_Planning\VP.lp" />
     <None Include="bin\Debug\OptimizationResults\CPLEX\Thesis\Vacation_Planning\VP.mps" />
     <None Include="bin\Debug\OptimizationResults\CPLEX\Thesis\Vacation_Planning\VP.sol" />
@@ -768,19 +763,6 @@
     <None Include="bin\Debug\OptimizationResults\Gurobi\Thesis\VP_Column_Generation\VP_CG.mps" />
     <None Include="bin\Debug\OptimizationResults\Gurobi\Thesis\VP_Column_Generation\VP_CG.mst" />
     <None Include="bin\Debug\OptimizationResults\Gurobi\Thesis\VP_Column_Generation\VP_CG.sol" />
-    <None Include="bin\Debug\outCG_CPLEX.sol" />
-    <None Include="bin\Debug\outCS.mst" />
-    <None Include="bin\Debug\outCS.sol" />
-    <None Include="bin\Debug\outVP_CPLEX.sol" />
-    <None Include="bin\Debug\VPCGFeasable.lp" />
-    <None Include="bin\Debug\VPCGFeasableMPS.mps" />
-    <None Include="bin\Debug\VPCGFeasableMPS_CPLEX.mps" />
-    <None Include="bin\Debug\VPCGFeasable_CPLEX.lp" />
-    <None Include="bin\Debug\VPFeasable.lp" />
-    <None Include="bin\Debug\VPFeasableMPS.mps" />
-    <None Include="bin\Debug\VPFeasableMPS_CPLEX.mps" />
-    <None Include="bin\Debug\VPFeasablePRE_CPLEX.sav" />
-    <None Include="bin\Debug\VPFeasable_CPLEX.lp" />
     <None Include="bin\Debug\vplogfilefinal_CPLEX.log" />
     <None Include="bin\Debug\vplogfile_CPLEX.log" />
     <None Include="Properties\Settings.settings">

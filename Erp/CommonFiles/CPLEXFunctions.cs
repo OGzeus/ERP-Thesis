@@ -526,7 +526,7 @@ namespace Erp.CommonFiles
                 #region Save,Show Results
                 var Upgrade = new bool();
                 var flag = new bool();
-                var customMessageBox = new CustomMessageBox("Do you want to Save the Results or Search for a better Solution?");
+                var customMessageBox = new CustomMessageBox("Do you want to Save the Results?");
                 if (customMessageBox.ShowDialog() == true)
                 {
                     // User clicked Save Only or Save and Upgrade
@@ -534,10 +534,10 @@ namespace Erp.CommonFiles
                     {
                         // User clicked Save Only or Save and Upgrade
                         //var result = customMessageBox.Message.Contains("Save and Upgrade") ? "Save and Upgrade" : "Save Only";
-                        var result = "Save Only";
+                        var result = "Save";
                         Console.WriteLine($"User clicked {result}");
 
-                        if (result == "Save and Upgrade" || result == "Save Only")
+                        if (result == "Save" )
                         {
                             #region OutputResults
                             if (Data.ObjValue > 0)
@@ -839,10 +839,10 @@ namespace Erp.CommonFiles
                                 }
                                 #endregion
                             }
-                            if (result == "Save and Upgrade")
+                            if (result == "Dont Save")
                             {
                                 // Handle Save and Upgrade scenario
-                                Console.WriteLine("Saving and upgrading...");
+                                Console.WriteLine("Dont Save...");
                                 //flag = SaveVpVijResultData(Data, 1, InputData.VPId);
                                 //Console.WriteLine(flag);
                                 Upgrade = true;
@@ -850,7 +850,7 @@ namespace Erp.CommonFiles
                             else
                             {
                                 // Handle Save Only scenario
-                                Console.WriteLine("Saving only...");
+                                Console.WriteLine("...");
                                 //flag = SaveVpVijResultData(Data, 1, InputData.VPId);
                                 //Console.WriteLine(flag);
                                 Upgrade = false;
@@ -1144,7 +1144,7 @@ namespace Erp.CommonFiles
             {
                 // Initialize CPLEX environment and model
                 Cplex model = new Cplex();
-                model.SetOut(new System.IO.StreamWriter("vpcglogfile.log"));
+                model.SetOut(new System.IO.StreamWriter("vpcglogfile_Cplex.log"));
 
                 #region Optimization parameters
 
