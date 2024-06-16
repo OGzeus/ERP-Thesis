@@ -35,6 +35,12 @@ namespace Erp.Model.SupplyChain
             set { _KmeansInputData = value; OnPropertyChanged("KmeansInputData"); }
         }
 
+        private DBSCAN_InputData _DBSCAN_InputData;
+        public DBSCAN_InputData DBSCAN_InputData
+        {
+            get { return _DBSCAN_InputData; }
+            set { _DBSCAN_InputData = value; OnPropertyChanged("DBSCAN_InputData"); }
+        }
 
         private HierarchicalInputData _HierInputData;
         public HierarchicalInputData HierInputData
@@ -48,7 +54,7 @@ namespace Erp.Model.SupplyChain
         {
             K_means,
             Hierarchical,
-            Optimization
+            DBSCAN
 
         }
 
@@ -76,9 +82,9 @@ namespace Erp.Model.SupplyChain
                 CurrentActivePanel_CL = (Clustering_Techniques)CL_ActivePanel.Hierarchical;
 
             }
-            else if (CL_Enum == BasicEnums.Clustering_Techniques.Optimization)
+            else if (CL_Enum == BasicEnums.Clustering_Techniques.DBSCAN)
             {
-                CurrentActivePanel_CL = (Clustering_Techniques)CL_ActivePanel.Optimization;
+                CurrentActivePanel_CL = (Clustering_Techniques)CL_ActivePanel.DBSCAN;
             }
 
         }

@@ -413,11 +413,11 @@
                                         <syncfusion:GroupColumnDescription ColumnName="Employee.Code" />
                                     </syncfusion:SfDataGrid.GroupColumnDescriptions>
                                     <syncfusion:SfDataGrid.Columns>
-                                        <syncfusion:GridTextColumn MappingName="Employee.Code" HeaderText="Emp Code" AllowEditing="False"/>
+                                        <syncfusion:GridTextColumn MappingName="Employee.Code" HeaderText="Employee Code" AllowEditing="False"/>
                                         <syncfusion:GridTextColumn MappingName="Employee.Seniority" HeaderText="Seniority" AllowEditing="False"/>
                                         <syncfusion:GridTextColumn Width="110"  MappingName="Date" HeaderText="Date" AllowEditing="False"/>
                                         <syncfusion:GridTextColumn MappingName="Xij" HeaderText="Xij" AllowEditing="False"/>
-                                        <syncfusion:GridCheckBoxColumn MappingName="XijFlag" HeaderText="Confirmed " AllowEditing="False"/>
+                                        <syncfusion:GridCheckBoxColumn MappingName="XijFlag" HeaderText="Granted" AllowEditing="False"/>
 
                                     </syncfusion:SfDataGrid.Columns>
                                     <!--<i:Interaction.Triggers>

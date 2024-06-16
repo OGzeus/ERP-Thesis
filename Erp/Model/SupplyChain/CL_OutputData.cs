@@ -45,6 +45,18 @@ namespace Erp.Model.SupplyChain
 
             }
         }
+        private DBSCAN_OutputData _DBSCANoutputdata;
+        public DBSCAN_OutputData DBSCANoutputdata
+        {
+            get { return _DBSCANoutputdata; }
+            set
+            {
+                _DBSCANoutputdata = value;
+                INotifyPropertyChanged(nameof(DBSCANoutputdata));
+
+
+            }
+        }
 
         #endregion
 

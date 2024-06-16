@@ -3,6 +3,7 @@ using Erp.Model;
 using Erp.Model.BasicFiles;
 using Erp.Model.Inventory.InvControl_TimeVaryingDemand;
 using Erp.Model.Manufacture.MPS;
+using Erp.Model.SupplyChain.Clusters;
 using Erp.Model.Thesis;
 using Erp.Model.Thesis.CrewScheduling;
 using Syncfusion.Data.Extensions;
@@ -280,6 +281,22 @@ namespace Erp.CommonFiles
 
         #endregion
 
+
+        public F7Data F7SelectedClusters()
+        {
+            F7Data GridData = new F7Data();
+            GridData.SfGridColumns = new Columns();
+            var Data = new ObservableCollection<ClusterDatapoint>();
+
+            GridData.CollectionView = CollectionViewSource.GetDefaultView(Data);
+
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "ClusterCode", HeaderText = "Cluster Code" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "NumberOfPoints", HeaderText = "Number Of Points" });
+            GridData.SfGridColumns.Add(new GridCheckBoxColumn() { MappingName = "IsSelected", HeaderText = "Selected" });
+
+            GridData.F7key = "SelectedCluster";
+            return GridData;
+        }
         public F7Data F7RoutesCity(bool ShowDeleted)
         {
             F7Data GridData = new F7Data();

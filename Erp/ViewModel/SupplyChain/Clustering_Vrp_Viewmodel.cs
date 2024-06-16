@@ -26,6 +26,10 @@ using LiveCharts.Defaults;
 using LiveCharts;
 using LiveCharts.Wpf;
 using System.Windows.Ink;
+using Accord.MachineLearning;
+using Erp.Model.SupplyChain.TSP;
+using System.Windows.Data;
+using System.Diagnostics.Metrics;
 
 namespace Erp.ViewModel.SupplyChain
 {
@@ -48,34 +52,7 @@ namespace Erp.ViewModel.SupplyChain
                 }
             }
         }
-        private ICollectionView collectionviewD;
 
-        public ICollectionView CollectionViewD
-        {
-            get
-            {
-                return collectionviewD;
-            }
-            set
-            {
-                collectionviewD = value;
-                INotifyPropertyChanged("CollectionViewD");
-            }
-        }
-        private ICollectionView collectionViewRepair;
-
-        public ICollectionView CollectionViewRepair
-        {
-            get
-            {
-                return collectionViewRepair;
-            }
-            set
-            {
-                collectionViewRepair = value;
-                INotifyPropertyChanged("CollectionViewRepair");
-            }
-        }
 
         private CL_Vrp_InputData inputdata;
         public CL_Vrp_InputData InputData
@@ -112,6 +89,19 @@ namespace Erp.ViewModel.SupplyChain
             {
                 _ClResultsdata = value;
                 INotifyPropertyChanged(nameof(ClResultsdata));
+
+
+            }
+        }
+
+        private TSP_OutputData _TSP_ResultsData;
+        public TSP_OutputData TSP_ResultsData
+        {
+            get { return _TSP_ResultsData; }
+            set
+            {
+                _TSP_ResultsData = value;
+                INotifyPropertyChanged(nameof(TSP_ResultsData));
 
 
             }
@@ -159,6 +149,16 @@ namespace Erp.ViewModel.SupplyChain
                 INotifyPropertyChanged("SfGridColumnsRepair");
             }
         }
+        private Columns _SfGridColumnsTSPD;
+        public Columns SfGridColumnsTSPD
+        {
+            get { return _SfGridColumnsTSPD; }
+            set
+            {
+                this._SfGridColumnsTSPD = value;
+                INotifyPropertyChanged("SfGridColumnsTSPD");
+            }
+        }
 
 
         #endregion
@@ -174,21 +174,11 @@ namespace Erp.ViewModel.SupplyChain
             get { return (BasicEnums.VRP_Techniques[])Enum.GetValues(typeof(BasicEnums.VRP_Techniques)); }
         }
 
+        public BasicEnums.TSP_Techniques[] TSP_Enums
+        {
+            get { return (BasicEnums.TSP_Techniques[])Enum.GetValues(typeof(BasicEnums.TSP_Techniques)); }
+        }
         #endregion
-        #region Diagrams
-        //private PlotModel plotModel;
-        //public PlotModel PlotModel
-        //{
-        //    get => plotModel;
-        //    set
-        //    {
-        //        plotModel = value;
-        //        INotifyPropertyChanged(nameof(PlotModel));
-        //    }
-        //}
-
-        #endregion
-
 
         public Clustering_Vrp_Viewmodel()
         {
@@ -197,17 +187,52 @@ namespace Erp.ViewModel.SupplyChain
 
             InputData = new CL_Vrp_InputData();
             InputData.CityData = new ObservableCollection<CityData>();
-            InputData.CL_VehicleData = new ObservableCollection<Cluster_Vehicles_Data>();
             InputData.CL_VehicleDataGrid = new ObservableCollection<Cluster_Vehicles_Data>();
 
-            InputData.VrpInputData = new VRP_InputData();
+            #region Clustering
+
             InputData.CLInputData = new CL_InputData();
 
             InputData.CLInputData.KmeansInputData = new KmeansInputData();
             InputData.CLInputData.KmeansInputData.MaxIterations = 1000000;
             InputData.CLInputData.KmeansInputData.NumberOfClusters = 5;
-            InputData.CLInputData.HierInputData = new HierarchicalInputData();
 
+            InputData.CLInputData.DBSCAN_InputData = new DBSCAN_InputData();
+            InputData.CLInputData.DBSCAN_InputData.Epsilon = 50;
+            InputData.CLInputData.DBSCAN_InputData.MinPoints = 3;
+
+
+            InputData.CLInputData.HierInputData = new HierarchicalInputData();
+            ClResultsdata = new CL_OutputData();
+            ClResultsdata.Clusters = new ObservableCollection<ClusterDatapoint>();
+            ClResultsdata.DataPoints = new ObservableCollection<MainDatapoint>();
+            ClResultsdata.Clustering_Diagram = new DiagramClusteringData();
+
+            #endregion
+            #region TSP
+            InputData.TSPInputData = new TSP_InputData();
+            InputData.TSPInputData.AntColony_InputData = new AntColony_TSP_InputData();
+            InputData.TSPInputData.AntColony_InputData.Alpha = 1;
+            InputData.TSPInputData.AntColony_InputData.Beta = 5;
+            InputData.TSPInputData.AntColony_InputData.EvaporationRate = 0.1;
+            InputData.TSPInputData.AntColony_InputData.InitialPheromoneLevel = 1;
+            InputData.TSPInputData.AntColony_InputData.NumberOfAnts = 10;
+            InputData.TSPInputData.AntColony_InputData.NumberOfIterations = 1000;
+
+            TSP_ResultsData = new TSP_OutputData();
+            TSP_ResultsData.TSP_DiagramData = new DiagramData();
+            TSP_ResultsData.SelectedCluster = new ClusterDatapoint();
+            TSP_ResultsData.AntColony_Outputdata = new AntColony_TSP_OutputData();
+            TSP_ResultsData.CityTSPResults = new ObservableCollection<City_Tsp_OutputData>(); 
+
+            this.SfGridColumnsTSPD = new Columns();
+
+
+            #endregion
+            #region Vrp 
+
+            InputData.VrpInputData = new VRP_InputData();
+            InputData.CL_VehicleData = new ObservableCollection<Cluster_Vehicles_Data>();
 
             InputData.VrpInputData.SimAnnealing_InputData = new SimAnnealing_InputData();
             InputData.VrpInputData.SimAnnealing_InputData.InitialTemp = 1000;
@@ -216,13 +241,10 @@ namespace Erp.ViewModel.SupplyChain
             InputData.VrpInputData.SimAnnealing_InputData.NumberOfDepots = 1;
             InputData.VrpInputData.SimAnnealing_InputData.MaxIterations = 3000;
 
+            #endregion
 
 
             InputData.StackPanelEnabled = false;
-            ClResultsdata = new CL_OutputData();
-            ClResultsdata.Clusters = new ObservableCollection<ClusterDatapoint>();
-            ClResultsdata.DataPoints = new ObservableCollection<MainDatapoint>();
-            ClResultsdata.Clustering_Diagram = new DiagramClusteringData();
 
             GridResultsData = new MrpResultData();
 
@@ -236,8 +258,13 @@ namespace Erp.ViewModel.SupplyChain
 
             CalculateClustering = new RelayCommand2(ExecuteCalculateClustering);
             CalculateVRP = new RelayCommand2(ExecuteCalculateVRP);
+            CalculateTSP = new RelayCommand2(ExecuteCalculateTSP);
             ShowCitiesGridCommand = new RelayCommand2(ExecuteShowCitiesGridCommand);
             ShowVehiclesGridCommand = new RelayCommand2(ExecuteShowVehiclesGridCommand);
+            ShowSelectedClustersGridCommand = new RelayCommand2(ExecuteShowSelectedClustersGridCommand);
+            CreateTSPDiagramCommand = new RelayCommand2(ExecuteCreateTSPDiagramCommand);
+
+
             #endregion
 
             #region Diagrams
@@ -251,7 +278,7 @@ namespace Erp.ViewModel.SupplyChain
             ShowWorkcenterGridCommand = new RelayCommand2(ExecuteShowWorkcenterGridCommand);
 
 
-            rowDataCommandD = new RelayCommand2(ChangeCanExecuteD);
+            rowDataCommand = new RelayCommand2(ChangeCanExecute);
 
 
 
@@ -288,6 +315,7 @@ namespace Erp.ViewModel.SupplyChain
         public ICommand ShowCitiesGridCommand { get; }
 
 
+
         public void ExecuteShowVehiclesGridCommand(object obj)
         {
             InputData.CL_VehicleDataGrid = new ObservableCollection<Cluster_Vehicles_Data>();
@@ -295,7 +323,7 @@ namespace Erp.ViewModel.SupplyChain
             InputData.CL_VehicleData = new ObservableCollection<Cluster_Vehicles_Data>();
             foreach (var item in ClResultsdata.Clusters)
             {
-                foreach(var Veh in InputData.HardCodedVehicles)
+                foreach (var Veh in InputData.HardCodedVehicles)
                 {
                     var row = new Cluster_Vehicles_Data();
                     row.Cluster = item;
@@ -304,11 +332,10 @@ namespace Erp.ViewModel.SupplyChain
                 }
             };
 
-
-
             InputData.CL_VehicleDataGrid = InputData.CL_VehicleData;
 
         }
+
 
         public void ExecuteShowCitiesGridCommand(object obj)
         {
@@ -325,6 +352,7 @@ namespace Erp.ViewModel.SupplyChain
 
         #endregion
 
+        #region Clustering
 
         #region Calculate Clustering
         public ICommand CalculateClustering { get; }
@@ -342,6 +370,7 @@ namespace Erp.ViewModel.SupplyChain
             int i = 1;
             foreach (var city in InputData.CityData)
             {
+                
                 InputData.CLInputData.DataPoints.Add(city.CityCode, (city.Latitude, city.Longitude));
                 InputData.CLInputData.DataPoints_Int.Add(i, (city.Latitude, city.Longitude));
                 InputData.CLInputData.City_Index.Add(city.CityCode,i);
@@ -355,9 +384,13 @@ namespace Erp.ViewModel.SupplyChain
             if (Cl_Enum == BasicEnums.Clustering_Techniques.K_means)
             {
                ClResultsdata.Kmeansoutputdata = ML_AiFunctions.Calculate_Kmeans_Clustering(InputData.CLInputData.City_Index,InputData.CLInputData.KmeansInputData, Dict);
-
-                foreach(var cl in ClResultsdata.Kmeansoutputdata.Clusters)
+                
+                ClResultsdata.DataPoints = new ObservableCollection<MainDatapoint>();
+                ClResultsdata.Clusters = new ObservableCollection<ClusterDatapoint>();
+                foreach (var cl in ClResultsdata.Kmeansoutputdata.Clusters)
                 {
+
+
                     var clusterpoint = new ClusterDatapoint();
 
                     clusterpoint.ClusterCode = cl.CentroidCode;
@@ -382,16 +415,41 @@ namespace Erp.ViewModel.SupplyChain
             {
 
             }
-            else if (Cl_Enum == BasicEnums.Clustering_Techniques.Optimization)
+            else if (Cl_Enum == BasicEnums.Clustering_Techniques.DBSCAN)
             {
+                ClResultsdata.DBSCANoutputdata = ML_AiFunctions.CalculateDBSCANClustering(InputData.CLInputData, InputData.CLInputData.DBSCAN_InputData);
 
+                ClResultsdata.DataPoints = new ObservableCollection<MainDatapoint>();
+                ClResultsdata.Clusters = new ObservableCollection<ClusterDatapoint>();
+
+                foreach (var cl in ClResultsdata.DBSCANoutputdata.Clusters)
+                {
+                    var clusterpoint = new ClusterDatapoint();
+
+                    clusterpoint.ClusterCode = cl.CentroidCode;
+                    clusterpoint.Longitude = cl.CentroidLongitude;
+                    clusterpoint.Latitude = cl.CentroidLatitude;
+
+
+                    var NumOfPoints = 0;
+                    foreach (var point in cl.DataPoints)
+                    {
+                        point.Demand = InputData.CityData.Where(d => d.CityCode == point.Code).FirstOrDefault().Demand;
+                        ClResultsdata.DataPoints.Add(point);
+                        NumOfPoints = NumOfPoints + 1;
+                    }
+
+                    clusterpoint.NumberOfPoints = NumOfPoints;
+                    ClResultsdata.Clusters.Add(clusterpoint);
+
+                }
             }
-
+            ClResultsdata.Clusters.OrderByDescending(cluster => cluster.NumberOfPoints).Where(cluster => cluster.ClusterCode != "Noise").FirstOrDefault().IsSelected = true;
             ExecuteCreateClusteringDiagramCommand(ClResultsdata);
             SelectedTabIndex = 1;
         }
 
-
+        #endregion
 
         #region Clustering Diagrams
         private void ExecuteCreateClusteringDiagramCommand(object obj)
@@ -408,33 +466,39 @@ namespace Erp.ViewModel.SupplyChain
                 var clList = ClResultsdata.Clusters.OrderBy(d => d.ClusterCode).ToList();
                 ClustersData = clList.ToObservableCollection();
 
-                DataPointsData = ClResultsdata.DataPoints; 
+                DataPointsData = ClResultsdata.DataPoints;
 
                 ClResultsdata.Clustering_Diagram.SeriesCollection = new SeriesCollection();
 
                 foreach (var Cluster in ClustersData)
-                { 
+                {
                     var ClCode = Cluster.ClusterCode;
 
-                    var DataPointSeries = new ScatterSeries();
-                    DataPointSeries.Title = ClCode;
-                    DataPointSeries.Values = new ChartValues<ObservablePoint>();
-                    DataPointSeries.PointGeometry = DefaultGeometries.Circle;
+                    var DataPointSeries = new ScatterSeries
+                    {
+                        Title = ClCode,
+                        Values = new ChartValues<ObservablePoint>(),
+                        PointGeometry = DefaultGeometries.Circle,
+                        Fill = ClCode == "Noise" ? System.Windows.Media.Brushes.Black : null,
+                        Stroke = ClCode == "Noise" ? System.Windows.Media.Brushes.Black : null
+                    };
+
                     foreach (var Point in DataPointsData)
                     {
-                        if(Point.ClusterCode == ClCode)
+                        if (Point.ClusterCode == ClCode)
                         {
-                            var Obs_Point = new ObservablePoint();
-                            Obs_Point.X = Point.Longitude;
-                            Obs_Point.Y = Point.Latitude;
+                            var Obs_Point = new ObservablePoint
+                            {
+                                X = Math.Round(Point.Longitude,4),
+                                Y = Math.Round(Point.Latitude, 4)
+                            };
                             DataPointSeries.Values.Add(Obs_Point);
                         }
                     }
 
                     ClResultsdata.Clustering_Diagram.SeriesCollection.Add(DataPointSeries);
-
                 }
-                
+
                 ClResultsdata.Clustering_Diagram.YFormatter = value => value.ToString("N0");
 
                 #endregion
@@ -442,16 +506,14 @@ namespace Erp.ViewModel.SupplyChain
             catch
             {
                 Console.WriteLine("An error occurred");
-
             }
-
         }
 
         public class ColorConverter
         {
-            public List<Color> GenerateColors(int numberOfColors)
+            public List<System.Windows.Media.Color> GenerateColors(int numberOfColors)
             {
-                List<Color> colors = new List<Color>();
+                List<System.Windows.Media.Color> colors = new List<System.Windows.Media.Color>();
                 Random random = new Random();
 
                 for (int i = 0; i < numberOfColors; i++)
@@ -459,16 +521,275 @@ namespace Erp.ViewModel.SupplyChain
                     byte r = (byte)random.Next(256);
                     byte g = (byte)random.Next(256);
                     byte b = (byte)random.Next(256);
-                    colors.Add(Color.FromRgb(r, g, b));
+                    colors.Add(System.Windows.Media.Color.FromRgb(r, g, b));
                 }
 
                 return colors;
             }
         }
 
+
+        #endregion
+
+
+        #endregion
+        #region TSP
+
+        #region Calculate TSP
+        public ICommand CalculateTSP { get; }
+        private void ExecuteCalculateTSP(object obj)
+        {
+            #region Αρχικοποιηση
+
+            TSP_ResultsData = new TSP_OutputData();
+            TSP_ResultsData.TSP_DiagramData = new DiagramData();
+            TSP_ResultsData.SelectedCluster = new ClusterDatapoint();
+            TSP_ResultsData.AntColony_Outputdata = new AntColony_TSP_OutputData();
+            TSP_ResultsData.CityTSPResults = new ObservableCollection<City_Tsp_OutputData>();
+
+
+            InputData.TSPInputData.City_IndexMap = new Dictionary<string, int>();
+            InputData.TSPInputData.Coords = new Dictionary<int, (double, double)>();
+
+            var City_IndexMap = new Dictionary<string, int>();
+            var Coords = new Dictionary<int, (double, double)>();
+
+
+            #endregion
+
+            var SelectedClusters = ClResultsdata.Clusters.Where(cluster => cluster.IsSelected).OrderByDescending(cluster => cluster.NumberOfPoints);
+            var SelectedCluster = "";
+             
+            foreach (var Cluster in SelectedClusters)
+            {
+                #region Αρχικοποιηση Dictionaries
+
+                City_IndexMap = new Dictionary<string, int>();
+                Coords = new Dictionary<int, (double, double)>();
+                #endregion
+                 SelectedCluster = Cluster.ClusterCode;
+
+                var CL_Points = new ObservableCollection<MainDatapoint>(
+                    ClResultsdata.DataPoints.Where(cl => cl.ClusterCode == SelectedCluster)
+                );
+
+                int PointCounter = 0;
+
+                foreach (var Point in CL_Points)
+                {
+                    City_IndexMap.Add(Point.Code, PointCounter);
+                    Coords.Add(PointCounter, (Point.Latitude, Point.Longitude));
+
+                    PointCounter++;
+                }
+
+
+                InputData.TSPInputData.City_IndexMap = City_IndexMap;
+                InputData.TSPInputData.Coords = Coords;
+
+                var TSP_Enum = InputData.TSPInputData.TSP_Enum;
+                if (TSP_Enum == BasicEnums.TSP_Techniques.Simulation_Annealing)
+                {
+
+
+                }
+                else if (TSP_Enum == BasicEnums.TSP_Techniques.Ant_Colony_Optimization)
+                {
+                    var AntColony_OutputData = ML_AiFunctions.Calculate_AntColony_TSP(InputData.TSPInputData);
+
+                    TSP_ResultsData.AntColony_Outputdata = AntColony_OutputData;
+
+
+                    int NumberVisited = 1;
+
+                    var CurrentCluster = ClResultsdata.Clusters.Where(cluster => cluster.ClusterCode == SelectedCluster).FirstOrDefault();
+
+                    foreach (var CityIndex in AntColony_OutputData.BestTour)
+                    {
+                        var Row = new City_Tsp_OutputData();
+                        Row.City = new CityData();
+                        Row.City.CityCode = City_IndexMap.FirstOrDefault(x => x.Value == CityIndex).Key;
+                        Row.City = InputData.CityData.Where(x => x.CityCode == Row.City.CityCode).FirstOrDefault();
+                        Row.Number_Visited = NumberVisited;
+                        Row.BestTourLength = AntColony_OutputData.BestTourLength;
+                        Row.Cluster = CurrentCluster;
+                        NumberVisited++;
+                        TSP_ResultsData.CityTSPResults.Add(Row);
+                    }
+
+                }
+            }
+
+            TSP_ResultsData.TSP_DiagramData = new DiagramData();
+            TSP_ResultsData.SelectedCluster = new ClusterDatapoint();
+        }
+
+        #endregion
+
+        #region TSP F7 Diagrams
+
+        #region F7
+        public ICommand ShowSelectedClustersGridCommand { get; }
+
+        private void ExecuteShowSelectedClustersGridCommand(object obj)
+        {
+
+
+            ClearColumns();
+
+            var F7input = F7Common.F7SelectedClusters();
+            F7key = F7input.F7key;
+
+            var SelecteDClusters = ClResultsdata.Clusters.Where(cl => cl.IsSelected == true);
+
+            F7input.CollectionView = CollectionViewSource.GetDefaultView(SelecteDClusters);
+
+            CollectionView= F7input.CollectionView;
+            var a = F7input.SfGridColumns;
+
+
+            foreach (var item in a)
+            {
+                this.SfGridColumns.Add(item);
+            }
+
+
+        }
+
+        #endregion
+
+        #region TSP Diagrams
+
+        public ICommand CreateTSPDiagramCommand { get; }
+
+        private void ExecuteCreateTSPDiagramCommand(object obj)
+        {
+            try
+            {
+                var XData = new ObservableCollection<DecisionVariableX>();
+
+                #region Κατασκευη linechart με 3 γραμμές
+
+                var Data = TSP_ResultsData.CityTSPResults
+                            .Where(city => city.Cluster.ClusterCode == TSP_ResultsData.SelectedCluster.ClusterCode)
+                            .OrderBy(d => d.Number_Visited)
+                            .ToList();
+
+                TSP_ResultsData.TSP_DiagramData.SeriesCollection = new SeriesCollection();
+
+                var ClCode = TSP_ResultsData.SelectedCluster.ClusterCode;
+
+                // ScatterSeries for displaying the points
+                var DataPointSeries = new ScatterSeries
+                {
+                    Title = ClCode,
+                    Values = new ChartValues<ObservablePoint>(),
+                    PointGeometry = DefaultGeometries.Circle,
+                    DataLabels = true,
+                    MinPointShapeDiameter = 35,
+                    FontSize = 20, 
+                    LabelPoint = point =>
+                    {
+                        // Find the corresponding city by matching the coordinates
+                        var matchingCity = Data.FirstOrDefault(city =>
+                            Math.Round(city.City.Longitude, 4) == point.X &&
+                            Math.Round(city.City.Latitude, 4) == point.Y);
+
+                        // Return the Number_Visited as the label if a matching city is found
+                        return matchingCity != null ? matchingCity.Number_Visited.ToString() : string.Empty;
+                    },
+                    
+                };
+
+                // LineSeries for connecting the points
+                var LineSeries = new LineSeries
+                {
+                    Title = ClCode + " Path",
+                    Values = new ChartValues<ObservablePoint>(),
+                    PointGeometry = null, // No points, just lines
+                    Stroke = System.Windows.Media.Brushes.Black, // Set line color to black
+                    StrokeThickness = 2
+                };
+
+                for (int i = 0; i < Data.Count; i++)
+                {
+                    var row = Data[i];
+
+                    var Obs_Point = new ObservablePoint
+                    {
+                        X = Math.Round(row.City.Longitude, 4),
+                        Y = Math.Round(row.City.Latitude, 4) // Corrected to Latitude
+                    };
+
+                    DataPointSeries.Values.Add(Obs_Point);
+                    LineSeries.Values.Add(Obs_Point);
+                }
+
+                // To connect the last city back to the first city (completing the TSP cycle)
+                if (Data.Count > 0)
+                {
+                    var firstRow = Data[0];
+                    var firstPoint = new ObservablePoint
+                    {
+                        X = Math.Round(firstRow.City.Longitude, 4),
+                        Y = Math.Round(firstRow.City.Latitude, 4) // Corrected to Latitude
+                    };
+                    LineSeries.Values.Add(firstPoint);
+                }
+
+                TSP_ResultsData.TSP_DiagramData.SeriesCollection.Add(LineSeries);
+                TSP_ResultsData.TSP_DiagramData.SeriesCollection.Add(DataPointSeries);
+
+                TSP_ResultsData.TSP_DiagramData.YFormatter = value => value.ToString("N0");
+
+                #endregion
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred: {ex.Message}");
+            }
+        }
+
+
+
+        public class ColorConverter2
+        {
+            public List<System.Windows.Media.Color> GenerateColors(int numberOfColors)
+            {
+                List<System.Windows.Media.Color> colors = new List<System.Windows.Media.Color>();
+                Random random = new Random();
+
+                for (int i = 0; i < numberOfColors; i++)
+                {
+                    byte r = (byte)random.Next(256);
+                    byte g = (byte)random.Next(256);
+                    byte b = (byte)random.Next(256);
+                    colors.Add(System.Windows.Media.Color.FromRgb(r, g, b));
+                }
+
+                return colors;
+            }
+        }
+
+
+        #endregion
+
+        public void ChangeCanExecute(object obj)
+        {
+
+            if (F7key == "SelectedCluster")
+            {
+                TSP_ResultsData.SelectedCluster = (SelectedItem as ClusterDatapoint);
+            }
+
+
+        }
+
         #endregion
 
         #endregion
+
+        #region VRP
 
         #region Calculate VRP
 
@@ -476,10 +797,10 @@ namespace Erp.ViewModel.SupplyChain
 
         private void ExecuteCalculateVRP(object obj)
         {
-            var a = new ObservableCollection<ClusterDatapoint>();
-            a.Add(ClResultsdata.Clusters.FirstOrDefault());
+            var clusters = new ObservableCollection<ClusterDatapoint>();
+            clusters.Add(ClResultsdata.Clusters.FirstOrDefault());
 
-            foreach (var Cluster in a)
+            foreach (var Cluster in clusters)
             {
 
                 #region VRP Dictionaries
@@ -601,7 +922,7 @@ namespace Erp.ViewModel.SupplyChain
 
         #endregion
 
-        #region Diagrams
+        #region VRP Diagrams
 
         #region F7
         public ICommand ShowWorkcenterGridCommand { get; }
@@ -623,19 +944,7 @@ namespace Erp.ViewModel.SupplyChain
 
 
         }
-        public void ChangeCanExecuteD(object obj)
-        {
 
-            //if (F7key == "ItemCode")
-            //{
-            //    ClResultsdata.Diagram.Item = (SelectedItem2 as ItemData);
-            //}
-            //if (F7key == "Workcenter")
-            //{
-            //    ClResultsdata.Diagram.Workcenter = (SelectedItem2 as WorkcenterData);
-            //}
-
-        }
 
 
         private ICommand rowDataCommandD { get; set; }
@@ -665,10 +974,9 @@ namespace Erp.ViewModel.SupplyChain
         }
         #endregion
 
-
-
         #endregion
 
+        #endregion
         private ICommand rowDataCommand { get; set; }
         public ICommand RowDataCommand
         {

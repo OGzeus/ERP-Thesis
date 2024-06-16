@@ -36,5 +36,13 @@ namespace Erp.Model.SupplyChain.Clusters
             get { return _NumberOfPoints; }
             set { _NumberOfPoints = value; OnPropertyChanged("NumberOfPoints"); }
         }
+
+        private bool _IsSelected{ get; set; }
+
+        public bool IsSelected
+        {
+            get { return _IsSelected; }
+            set { _IsSelected = value; INotifyPropertyChanged("IsSelected"); }
+        }
     }
 }

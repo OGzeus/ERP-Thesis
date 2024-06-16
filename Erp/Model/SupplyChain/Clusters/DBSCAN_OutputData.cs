@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Erp.Model.SupplyChain.Clusters
 {
-    public class KmeansOutputData
+    public class DBSCAN_OutputData
     {
         public class ClusterData
         {
@@ -18,17 +18,15 @@ namespace Erp.Model.SupplyChain.Clusters
             public ObservableCollection<MainDatapoint> DataPoints { get; set; }
 
         }
-
         public List<ClusterData> Clusters { get; set; }
         public double SilhouetteScore { get; set; }
-        public double Inertia { get; set; }
+        public double DaviesBouldinIndex { get; set; }
+        public double NoiseRatio { get; set; }
 
-
-        public KmeansOutputData()
+        public DBSCAN_OutputData()
         {
             Clusters = new List<ClusterData>();
         }
+
     }
-
 }
-

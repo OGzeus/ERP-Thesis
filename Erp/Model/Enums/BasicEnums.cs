@@ -59,7 +59,8 @@ namespace Erp.Model.Enums
         {
             K_means,
             Hierarchical,
-            Optimization
+            DBSCAN
+
         }
         public enum VRP_Techniques
         {
@@ -67,6 +68,11 @@ namespace Erp.Model.Enums
             Optimization,
             Tabu_Search,
             Ant_Colony
+        }
+        public enum TSP_Techniques
+        {
+            Simulation_Annealing,
+            Ant_Colony_Optimization
         }
         #endregion
         #region Inventory Control

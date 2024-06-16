@@ -39,7 +39,7 @@ namespace Erp.Model.SupplyChain
         }
         #endregion
 
-        #region CL_VRP
+        #region CL_VRP_TSP
 
         private bool _CVRP_Flag;
         public bool CVRP_Flag
@@ -69,7 +69,12 @@ namespace Erp.Model.SupplyChain
             set { _CLInputData = value; OnPropertyChanged("CLInputData"); }
         }
 
-
+        private TSP_InputData _TSPInputData;
+        public TSP_InputData TSPInputData
+        {
+            get { return _TSPInputData; }
+            set { _TSPInputData = value; OnPropertyChanged("TSPInputData"); }
+        }
         #endregion
 
         private List<VehicleData> _HardCodedVehicles;
