@@ -57,16 +57,15 @@ namespace Erp.CommonFiles
 
             // Assuming GridData is an instance of SfDataGrid
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Code", HeaderText = "Route Code", AllowEditing = false });
-            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "CityCodeFrom", HeaderText = "City  From", AllowEditing = false });
-            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "CountryCodeFrom", HeaderText = "Country From ", AllowEditing = false });
-            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "CityCodeTo", HeaderText = "City  To", AllowEditing = false });
-            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "CountryCodeTo", HeaderText = "Country To ", AllowEditing = false });
-
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Descr", HeaderText = "Route Descr", AllowEditing = false });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Airport.Code", HeaderText = "Airport Code", AllowEditing = false });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Airport.City.CityDescr", HeaderText = "City Descr", AllowEditing = false });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Airport.City.PrefDescr", HeaderText = "Pref Descr", AllowEditing = false });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Airport.City.CountryDescr", HeaderText = "Country Descr", AllowEditing = false });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "StartDate_String", HeaderText = "Start Date", AllowEditing = false });
-            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "EndDate_String", HeaderText = "End Date", AllowEditing = false });
-
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "EndDate_String", HeaderText = "End Date ", AllowEditing = false });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "TotalTime", HeaderText = "Total Time", AllowEditing = false });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "FlightTime", HeaderText = "Flight Time ", AllowEditing = false });
-            //GridData.SfGridColumns.Add(new GridCheckBoxColumn() { MappingName = "Selected", HeaderText = "Selected ", AllowEditing = true });
 
 
 

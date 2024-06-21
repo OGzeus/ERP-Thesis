@@ -161,8 +161,8 @@ namespace Erp.ViewModel.Thesis
             InputData = new CSInputData();
             InputData.Code = " ";
             InputData.Position = BasicEnums.EmployeeType.Captain;
-            InputData.DateFrom = new DateTime(2024, 5, 1);
-            InputData.DateTo = new DateTime(2024, 5, 31);
+            InputData.DateFrom = new DateTime(2024, 6, 1);
+            InputData.DateTo = new DateTime(2024, 6, 30);
             InputData.RoutesPenalty = 1000000;
             InputData.BoundsPenalty = 100;
 
@@ -439,8 +439,8 @@ namespace Erp.ViewModel.Thesis
             #region Input Data
 
             InputData.T = new int(); // DATES
-            InputData.N = new int(); // EMPLOYEES
-            InputData.R = new int(); // ROUTES
+            InputData.I = new int(); // EMPLOYEES
+            InputData.F = new int(); // ROUTES
 
             InputData.DatesIndexMap = new Dictionary<int, DateTime>();
             InputData.EmployeesIndexMap = new Dictionary<int, string>();
@@ -449,18 +449,20 @@ namespace Erp.ViewModel.Thesis
             InputData.RoutesDates_Dict = new Dictionary<int, (DateTime, DateTime)>();
             InputData.RoutesDay_Dict = new Dictionary<int, (int, int)>();
             InputData.RoutesTime_Dict = new Dictionary<int, (int, int)>();
-
             InputData.EmpBounds_Dict = new Dictionary<int, (double, double)>();
+
+            InputData.Ri = new Dictionary<int, List<int>>(); //Dictionary<Employee, List<Routes>> 
+            InputData.Cij_Hours = new Dictionary<(int, int), double>(); //Dictionary<(Emp, Route),Cost> 
             #endregion  
 
-            #region Fill Data to Dictionaries
+            #region Fill Data to Dictionaries 1
 
             #region Dates
 
 
             InputData.T = (int)Math.Ceiling((InputData.DateTo - InputData.DateFrom).TotalDays);
 
-                int dateCounter = 1;
+                int dateCounter = 0;
                 for (var date = InputData.DateFrom; date <= InputData.DateTo; date = date.AddDays(1))
                 {
                     InputData.DatesIndexMap.Add(dateCounter, date.Date);
@@ -469,45 +471,66 @@ namespace Erp.ViewModel.Thesis
 
             #endregion
 
-            #region Routes
-            InputData.R = InputData.FlightRoutesData.Count;
-            int RoutCounter = 1;
-            foreach(var Route in InputData.FlightRoutesData)
-            {
-                InputData.RoutesDates_Dict.Add(RoutCounter, (Route.StartDate, Route.EndDate));
+            #region Routes,Employyes
+            InputData.F = InputData.FlightRoutesData.Count;
+            InputData.I = InputData.Employees.Count;
 
-                int StartDayIndex = InputData.DatesIndexMap.FirstOrDefault(x => x.Value.Date.Date == Route.StartDate.Date).Key;
-                int EndDayIndex = InputData.DatesIndexMap.FirstOrDefault(x => x.Value.Date.Date == Route.EndDate.Date).Key;
+            int RouteCounter = 0;
+            int EmployeeCounter = 0;
 
-                int StartTime = Route.StartDate.Minute >= 30 ? Route.StartDate.Hour + 1 : Route.StartDate.Hour;
-
-                int EndTime = Route.EndDate.Minute >= 30 ? Route.EndDate.Hour + 1 : Route.EndDate.Hour;
-
-                InputData.RoutesDay_Dict.Add(RoutCounter, (StartDayIndex, EndDayIndex));
-
-                InputData.RoutesTime_Dict.Add(RoutCounter, (StartTime, EndTime));
-
-                RoutCounter ++;
-
-            }
-            #endregion
-
-            #region Employees
-            InputData.N = InputData.Employees.Count;
-            int EmployeeCounter = 1;
-            foreach(var emp in InputData.Employees)
+            foreach (var emp in InputData.Employees)
             {
                 InputData.EmployeesIndexMap.Add(EmployeeCounter, emp.Code);
                 InputData.EmpBounds_Dict.Add(EmployeeCounter, (emp.EmpCrSettings.LowerBound, emp.EmpCrSettings.UpperBound));
+                List<int> RoutesForEmployee = new List<int>();
+
+                foreach (var Route in InputData.FlightRoutesData)
+                {
+                    InputData.RoutesDates_Dict.Add(RouteCounter, (Route.StartDate, Route.EndDate));
+
+                    int StartDayIndex = InputData.DatesIndexMap.FirstOrDefault(x => x.Value.Date.Date == Route.StartDate.Date).Key;
+                    int EndDayIndex = InputData.DatesIndexMap.FirstOrDefault(x => x.Value.Date.Date == Route.EndDate.Date).Key;
+
+                    int StartTime = Route.StartDate.Minute >= 30 ? Route.StartDate.Hour + 1 : Route.StartDate.Hour;
+
+                    int EndTime = Route.EndDate.Minute >= 30 ? Route.EndDate.Hour + 1 : Route.EndDate.Hour;
+
+                    InputData.RoutesDay_Dict.Add(RouteCounter, (StartDayIndex, EndDayIndex));
+
+                    InputData.RoutesTime_Dict.Add(RouteCounter, (StartTime, EndTime));
+
+
+
+                    if (emp.BaseAirport.Code == Route.Airport.Code)
+                    {
+                        RoutesForEmployee.Add(RouteCounter);
+                        double Cij_Hours = CalculateCijCost(emp, Route);
+                        InputData.Cij_Hours.Add((EmployeeCounter, RouteCounter), Cij_Hours);
+
+                    }
+
+                    RouteCounter++;
+                }
+                InputData.Ri.Add(EmployeeCounter, RoutesForEmployee);
+
                 EmployeeCounter++;
 
             }
-            #endregion
+
 
             #endregion
+
+
+
+            #endregion
+
+
 
             OutputData = new CSOutputData();
-            OutputData = CommonFunctions.CalculateCrewScheduling_GB(InputData);
+
+            var a = CommonFunctions.CalculateCrewScheduling_SetPartition_GB(InputData);
+            var b = CommonFunctions.CalculateCrewScheduling_SetCover_GB(InputData);
+            var c = CommonFunctions.CalculateCrewScheduling_Init_GB(InputData);
 
             if (OutputData != null ) // Assuming IsValid is a property indicating success
             {
@@ -532,8 +555,8 @@ namespace Erp.ViewModel.Thesis
             #region Input Data
 
             InputData.T = new int(); // DATES
-            InputData.N = new int(); // EMPLOYEES
-            InputData.R = new int(); // ROUTES
+            InputData.I = new int(); // EMPLOYEES
+            InputData.F = new int(); // ROUTES
 
             InputData.DatesIndexMap = new Dictionary<int, DateTime>();
             InputData.EmployeesIndexMap = new Dictionary<int, string>();
@@ -563,7 +586,7 @@ namespace Erp.ViewModel.Thesis
             #endregion
 
             #region Routes
-            InputData.R = InputData.FlightRoutesData.Count;
+            InputData.F = InputData.FlightRoutesData.Count;
             int RoutCounter = 1;
             foreach (var Route in InputData.FlightRoutesData)
             {
@@ -586,7 +609,7 @@ namespace Erp.ViewModel.Thesis
             #endregion
 
             #region Employees
-            InputData.N = InputData.Employees.Count;
+            InputData.I = InputData.Employees.Count;
             int EmployeeCounter = 1;
             foreach (var emp in InputData.Employees)
             {
@@ -600,7 +623,7 @@ namespace Erp.ViewModel.Thesis
             #endregion
 
             OutputData = new CSOutputData();
-            OutputData = CplexFunctions.CalculateCrewScheduling_Cplex(InputData);
+            OutputData = CplexFunctions.Calculate_InitMaster_Cplex(InputData);
 
             if (OutputData != null) // Assuming IsValid is a property indicating success
             {
@@ -615,9 +638,37 @@ namespace Erp.ViewModel.Thesis
 
         }
 
+
+        private double CalculateCijCost(EmployeeData emp, FlightRoutesData route)
+        {
+            var LowerBound = emp.EmpCrSettings.LowerBound;
+            var UpperBound = emp.EmpCrSettings.UpperBound;
+
+            double targetFlightHours = (LowerBound +UpperBound)/2; // Example target value from the image
+
+
+            // Calculate actual flight hours for the route
+            double actualFlightHours = (route.EndDate - route.StartDate).TotalHours;
+
+            // Calculate variance
+            double variance = Math.Abs(actualFlightHours - targetFlightHours);
+
+            // Calculate penalty deviation
+            double penaltyDeviation = 0;
+            if (actualFlightHours > UpperBound)
+            {
+                penaltyDeviation = actualFlightHours - UpperBound;
+            }
+            else if (actualFlightHours < LowerBound)
+            {
+                penaltyDeviation = LowerBound - actualFlightHours;
+            }
+
+            // Calculate Cij_Cost
+            double Cij_Hours = penaltyDeviation;
+            return Cij_Hours;
+        }
         #endregion
-
-
 
         private ICommand rowDataCommand { get; set; }
         public ICommand RowDataCommand
@@ -631,7 +682,6 @@ namespace Erp.ViewModel.Thesis
                 rowDataCommand = value;
             }
         }
-
 
         protected void ClearColumns()
         {

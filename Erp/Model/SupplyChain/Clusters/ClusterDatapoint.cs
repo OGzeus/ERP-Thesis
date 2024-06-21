@@ -44,5 +44,12 @@ namespace Erp.Model.SupplyChain.Clusters
             get { return _IsSelected; }
             set { _IsSelected = value; INotifyPropertyChanged("IsSelected"); }
         }
+
+        private double _DaviesBouldinIndex { get; set; }
+        public double DaviesBouldinIndex
+        {
+            get { return _DaviesBouldinIndex; }
+            set { _DaviesBouldinIndex = value; INotifyPropertyChanged("DaviesBouldinIndex"); }
+        }
     }
 }

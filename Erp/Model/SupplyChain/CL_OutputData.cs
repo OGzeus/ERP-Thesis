@@ -1,6 +1,7 @@
 ﻿using Erp.Model.Interfaces;
 using Erp.Model.Manufacture.MRP;
 using Erp.Model.SupplyChain.Clusters;
+using Erp.Model.SupplyChain.TSP;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -73,15 +74,33 @@ namespace Erp.Model.SupplyChain
             }
         }
 
-        private DiagramsMRPData _ElbowMethod_Diagram;
-        public DiagramsMRPData ElbowMethod_Diagram
+        private DiagramData _SilhouetteScores_Diagram;
+        public DiagramData SilhouetteScores_Diagram
         {
-            get { return _ElbowMethod_Diagram; }
+            get { return _SilhouetteScores_Diagram; }
             set
             {
-                _ElbowMethod_Diagram = value;
-                OnPropertyChanged(nameof(ElbowMethod_Diagram));
+                _SilhouetteScores_Diagram = value;
+                OnPropertyChanged(nameof(SilhouetteScores_Diagram));
             }
+        }
+
+        private DiagramData _DaviesBouldinIndex_Diagram;
+        public DiagramData DaviesBouldinIndex_Diagram
+        {
+            get { return _DaviesBouldinIndex_Diagram; }
+            set
+            {
+                _DaviesBouldinIndex_Diagram = value;
+                OnPropertyChanged(nameof(DaviesBouldinIndex_Diagram));
+            }
+        }
+
+        public CL_OutputData()
+        {
+            Clustering_Diagram = new DiagramClusteringData();
+            SilhouetteScores_Diagram = new DiagramData();
+            DaviesBouldinIndex_Diagram = new DiagramData();
         }
         #endregion
     }

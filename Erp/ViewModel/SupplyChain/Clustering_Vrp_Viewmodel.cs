@@ -30,6 +30,7 @@ using Accord.MachineLearning;
 using Erp.Model.SupplyChain.TSP;
 using System.Windows.Data;
 using System.Diagnostics.Metrics;
+using System.IO;
 
 namespace Erp.ViewModel.SupplyChain
 {
@@ -37,6 +38,31 @@ namespace Erp.ViewModel.SupplyChain
     {
 
         #region DataProperties
+
+        #region First Diagrams
+
+        private string _XAxisTitle;
+        public string XAxisTitle
+        {
+            get { return _XAxisTitle; }
+            set
+            {
+                _XAxisTitle = value;
+                INotifyPropertyChanged(nameof(XAxisTitle));
+            }
+        }
+
+        private string _YAxisTitle;
+        public string YAxisTitle
+        {
+            get { return _YAxisTitle; }
+            set
+            {
+                _YAxisTitle = value;
+                INotifyPropertyChanged(nameof(YAxisTitle));
+            }
+        }
+        #endregion
 
         private int _selectedTabIndex;
 
@@ -160,7 +186,7 @@ namespace Erp.ViewModel.SupplyChain
             }
         }
 
-
+        public int T { get; set; }
         #endregion
         #region Enums
 
@@ -182,7 +208,7 @@ namespace Erp.ViewModel.SupplyChain
 
         public Clustering_Vrp_Viewmodel()
         {
-
+            XAxisTitle = "Number Of Clusters";
             #region Αρχικοποιηση Data
 
             InputData = new CL_Vrp_InputData();
@@ -211,6 +237,14 @@ namespace Erp.ViewModel.SupplyChain
             #endregion
             #region TSP
             InputData.TSPInputData = new TSP_InputData();
+
+            InputData.TSPInputData.SAnnealing_InputData = new SAnnealing_TSP_InputData();
+            InputData.TSPInputData.SAnnealing_InputData.InitialTemp = 5000;
+            InputData.TSPInputData.SAnnealing_InputData.CoolingRate = 0.9;
+            InputData.TSPInputData.SAnnealing_InputData.StoppingTemp = 50;
+            InputData.TSPInputData.SAnnealing_InputData.MaxIterations = 5000;
+
+
             InputData.TSPInputData.AntColony_InputData = new AntColony_TSP_InputData();
             InputData.TSPInputData.AntColony_InputData.Alpha = 1;
             InputData.TSPInputData.AntColony_InputData.Beta = 5;
@@ -263,7 +297,7 @@ namespace Erp.ViewModel.SupplyChain
             ShowVehiclesGridCommand = new RelayCommand2(ExecuteShowVehiclesGridCommand);
             ShowSelectedClustersGridCommand = new RelayCommand2(ExecuteShowSelectedClustersGridCommand);
             CreateTSPDiagramCommand = new RelayCommand2(ExecuteCreateTSPDiagramCommand);
-
+            CalculateFirstDiagrams = new RelayCommand2(ExecuteCalculateFirstDiagrams);
 
             #endregion
 
@@ -304,6 +338,7 @@ namespace Erp.ViewModel.SupplyChain
             InputData.HardCodedVehicles.Add(newVehicle);
 
             #endregion
+            T = 1;
         }
 
 
@@ -379,6 +414,41 @@ namespace Erp.ViewModel.SupplyChain
 
             #endregion
 
+
+            #region Print CSVS
+
+            if (T == 0)
+            {
+                MessageBoxResult result = MessageBox.Show("Do you want to save the Dictionaries to CSV files?", "Save Results", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                if (result == MessageBoxResult.Yes)
+                {
+                    // Define the path to the directory
+                    string desktopPath = "C:\\Users\\npoly\\Source\\Repos\\Optimization\\";
+                    string directoryPath = Path.Combine(desktopPath, "ML_CSVFiles");
+
+                    // Create the directory if it doesn't exist
+                    if (!Directory.Exists(directoryPath))
+                    {
+                        Directory.CreateDirectory(directoryPath);
+                    }
+                    WriteToCsv(Path.Combine(directoryPath, $"DataPoints.csv"), InputData.CLInputData.DataPoints);
+                    WriteToCsv(Path.Combine(directoryPath, $"DataPoints_Int.csv"), InputData.CLInputData.DataPoints_Int);
+                    WriteToCsv(Path.Combine(directoryPath, $"City_IndexMap.csv"), InputData.CLInputData.City_Index);
+                    T = 1;
+                }
+                else
+                {
+                    T = 1;
+                }
+            }
+            else
+            {
+                T = 1;
+            }
+
+
+            #endregion
+
             var Cl_Enum = InputData.CLInputData.CL_Enum;
             var Dict = InputData.CLInputData.DataPoints;
             if (Cl_Enum == BasicEnums.Clustering_Techniques.K_means)
@@ -394,8 +464,8 @@ namespace Erp.ViewModel.SupplyChain
                     var clusterpoint = new ClusterDatapoint();
 
                     clusterpoint.ClusterCode = cl.CentroidCode;
-                    clusterpoint.Longitude = cl.CentroidLongitude;
-                    clusterpoint.Latitude = cl.CentroidLatitude;
+                    clusterpoint.Longitude = Math.Round(cl.CentroidLongitude, 3);
+                    clusterpoint.Latitude = Math.Round(cl.CentroidLatitude, 3);
 
 
                     var NumOfPoints = 0;
@@ -427,9 +497,9 @@ namespace Erp.ViewModel.SupplyChain
                     var clusterpoint = new ClusterDatapoint();
 
                     clusterpoint.ClusterCode = cl.CentroidCode;
-                    clusterpoint.Longitude = cl.CentroidLongitude;
-                    clusterpoint.Latitude = cl.CentroidLatitude;
-
+                    clusterpoint.Longitude = Math.Round(cl.CentroidLongitude,3);
+                    clusterpoint.Latitude = Math.Round(cl.CentroidLatitude, 3);
+                    clusterpoint.DaviesBouldinIndex = Math.Round(cl.DaviesBouldinIndex, 3);
 
                     var NumOfPoints = 0;
                     foreach (var point in cl.DataPoints)
@@ -446,6 +516,8 @@ namespace Erp.ViewModel.SupplyChain
             }
             ClResultsdata.Clusters.OrderByDescending(cluster => cluster.NumberOfPoints).Where(cluster => cluster.ClusterCode != "Noise").FirstOrDefault().IsSelected = true;
             ExecuteCreateClusteringDiagramCommand(ClResultsdata);
+
+
             SelectedTabIndex = 1;
         }
 
@@ -509,6 +581,8 @@ namespace Erp.ViewModel.SupplyChain
             }
         }
 
+
+
         public class ColorConverter
         {
             public List<System.Windows.Media.Color> GenerateColors(int numberOfColors)
@@ -529,6 +603,98 @@ namespace Erp.ViewModel.SupplyChain
         }
 
 
+        #endregion
+
+        #region Calculate First Diagrams
+        public ICommand CalculateFirstDiagrams { get; }
+
+        private void ExecuteCalculateFirstDiagrams(object obj)
+        {
+            var Cl_Enum = InputData.CLInputData.CL_Enum;
+
+            if (Cl_Enum == BasicEnums.Clustering_Techniques.K_means)
+            {
+                List<double> clusterNumbers = new List<double> { 3, 4, 5, 6, 7, 8 };
+                List<double> silhouetteScores = new List<double>();
+                List<double> dbIndexes = new List<double>();
+
+                foreach (var clusterNumber in clusterNumbers)
+                {
+                    InputData.CLInputData.KmeansInputData.NumberOfClusters = (int)clusterNumber;
+                    ExecuteCalculateClustering(obj);
+
+                    silhouetteScores.Add(ClResultsdata.Kmeansoutputdata.SilhouetteScore_Avg);
+                    dbIndexes.Add(ClResultsdata.Kmeansoutputdata.DaviesBouldinIndex_Avg);
+                }
+                XAxisTitle = "Number Of Clusters";
+
+                CreateSilhouetteDiagram(clusterNumbers, silhouetteScores, "K-means");
+                CreateDaviesBouldinIndexDiagram(clusterNumbers, dbIndexes, "K-means");
+            }
+            else if (Cl_Enum == BasicEnums.Clustering_Techniques.DBSCAN)
+            {
+                List<double> epsilons = new List<double> { 40, 80, 100, 120, 140 };
+                List<double> silhouetteScores = new List<double>();
+                List<double> dbIndexes = new List<double>();
+
+                foreach (var epsilon in epsilons)
+                {
+                    InputData.CLInputData.DBSCAN_InputData.Epsilon = epsilon;
+                    ExecuteCalculateClustering(obj);
+
+                    silhouetteScores.Add(ClResultsdata.DBSCANoutputdata.SilhouetteScore_Avg);
+                    dbIndexes.Add(ClResultsdata.DBSCANoutputdata.DaviesBouldinIndex_Avg);
+                }
+                XAxisTitle = "eps";
+                CreateSilhouetteDiagram(epsilons, silhouetteScores, "DBSCAN");
+                CreateDaviesBouldinIndexDiagram(epsilons, dbIndexes, "DBSCAN");
+            }
+            SelectedTabIndex = 0;
+        }
+
+        #endregion
+
+        #region Helper Methods for Creating Diagrams
+
+
+
+        private void CreateSilhouetteDiagram(List<double> xValues, List<double> silhouetteScores, string algorithm)
+        {
+            var seriesCollection = new SeriesCollection
+    {
+        new LineSeries
+        {
+            Title = "Silhouette Scores",
+            Values = new ChartValues<double>(silhouetteScores),
+            PointGeometry = DefaultGeometries.Circle,
+            StrokeThickness = 2,
+            Fill = System.Windows.Media.Brushes.Transparent
+        }
+    };
+
+            ClResultsdata.SilhouetteScores_Diagram.SeriesCollection = seriesCollection;
+            ClResultsdata.SilhouetteScores_Diagram.Labels = xValues.Select(x => x.ToString()).ToArray();
+            ClResultsdata.SilhouetteScores_Diagram.Formatter = value => value.ToString("N0");
+        }
+
+        private void CreateDaviesBouldinIndexDiagram(List<double> xValues, List<double> dbIndexes, string algorithm)
+        {
+            var seriesCollection = new SeriesCollection
+    {
+        new LineSeries
+        {
+            Title = "Davies-Bouldin Index",
+            Values = new ChartValues<double>(dbIndexes),
+            PointGeometry = DefaultGeometries.Circle,
+            StrokeThickness = 2,
+            Fill = System.Windows.Media.Brushes.Transparent
+        }
+    };
+
+            ClResultsdata.DaviesBouldinIndex_Diagram.SeriesCollection = seriesCollection;
+            ClResultsdata.DaviesBouldinIndex_Diagram.Labels = xValues.Select(x => x.ToString()).ToArray();
+            ClResultsdata.DaviesBouldinIndex_Diagram.Formatter = value => value.ToString("N0");
+        }
         #endregion
 
 
@@ -587,10 +753,33 @@ namespace Erp.ViewModel.SupplyChain
                 InputData.TSPInputData.City_IndexMap = City_IndexMap;
                 InputData.TSPInputData.Coords = Coords;
 
+                #region Print CSVS
+
+
                 var TSP_Enum = InputData.TSPInputData.TSP_Enum;
                 if (TSP_Enum == BasicEnums.TSP_Techniques.Simulation_Annealing)
                 {
+                    var SAnnealing_OutputData = ML_AiFunctions.Calculate_SAnnealing_TSP(InputData.TSPInputData);
 
+                    TSP_ResultsData.SAnnealing_Outputdata = SAnnealing_OutputData;
+
+
+                    int NumberVisited = 1;
+
+                    var CurrentCluster = ClResultsdata.Clusters.Where(cluster => cluster.ClusterCode == SelectedCluster).FirstOrDefault();
+
+                    foreach (var CityIndex in SAnnealing_OutputData.BestTour)
+                    {
+                        var Row = new City_Tsp_OutputData();
+                        Row.City = new CityData();
+                        Row.City.CityCode = City_IndexMap.FirstOrDefault(x => x.Value == CityIndex).Key;
+                        Row.City = InputData.CityData.Where(x => x.CityCode == Row.City.CityCode).FirstOrDefault();
+                        Row.Number_Visited = NumberVisited;
+                        Row.BestTourLength = Math.Round(SAnnealing_OutputData.BestTourLength,3);
+                        Row.Cluster = CurrentCluster;
+                        NumberVisited++;
+                        TSP_ResultsData.CityTSPResults.Add(Row);
+                    }
 
                 }
                 else if (TSP_Enum == BasicEnums.TSP_Techniques.Ant_Colony_Optimization)
@@ -611,18 +800,64 @@ namespace Erp.ViewModel.SupplyChain
                         Row.City.CityCode = City_IndexMap.FirstOrDefault(x => x.Value == CityIndex).Key;
                         Row.City = InputData.CityData.Where(x => x.CityCode == Row.City.CityCode).FirstOrDefault();
                         Row.Number_Visited = NumberVisited;
-                        Row.BestTourLength = AntColony_OutputData.BestTourLength;
+                        Row.BestTourLength = Math.Round(AntColony_OutputData.BestTourLength,3);
                         Row.Cluster = CurrentCluster;
                         NumberVisited++;
                         TSP_ResultsData.CityTSPResults.Add(Row);
                     }
 
                 }
-            }
+                else if (TSP_Enum == BasicEnums.TSP_Techniques.Optimization)
+                {
+                    var Optimization_OutputData = ML_AiFunctions.Calculate_Optimization_TSP(InputData.TSPInputData);
 
+
+                    int NumberVisited = 1;
+
+                    var CurrentCluster = ClResultsdata.Clusters.Where(cluster => cluster.ClusterCode == SelectedCluster).FirstOrDefault();
+
+                    foreach (var CityIndex in Optimization_OutputData.BestTour)
+                    {
+                        var Row = new City_Tsp_OutputData();
+                        Row.City = new CityData();
+                        Row.City.CityCode = City_IndexMap.FirstOrDefault(x => x.Value == CityIndex).Key;
+                        Row.City = InputData.CityData.Where(x => x.CityCode == Row.City.CityCode).FirstOrDefault();
+                        Row.Number_Visited = NumberVisited;
+                        Row.BestTourLength = Optimization_OutputData.BestTourLength;
+                        Row.Cluster = CurrentCluster;
+                        NumberVisited++;
+                        TSP_ResultsData.CityTSPResults.Add(Row);
+                    }
+
+                }
+
+            }
+            if (T == 0)
+            {
+                MessageBoxResult result = MessageBox.Show("Do you want to save the Dictionaries to CSV files?", "Save Results", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                if (result == MessageBoxResult.Yes)
+                {
+                    // Define the path to the directory
+                    string desktopPath = "C:\\Users\\npoly\\Source\\Repos\\Optimization\\";
+                    string directoryPath = Path.Combine(desktopPath, "ML_CSVFiles");
+
+                    // Create the directory if it doesn't exist
+                    if (!Directory.Exists(directoryPath))
+                    {
+                        Directory.CreateDirectory(directoryPath);
+                    }
+                    WriteToCsv(Path.Combine(directoryPath, $"Coords.csv"), InputData.TSPInputData.Coords);
+                    WriteToCsv(Path.Combine(directoryPath, $"City_IndexMap_TSP.csv"), InputData.TSPInputData.City_IndexMap);
+
+                }
+            }
+            SelectedTabIndex = 3;
             TSP_ResultsData.TSP_DiagramData = new DiagramData();
             TSP_ResultsData.SelectedCluster = new ClusterDatapoint();
         }
+
+        #endregion
+
 
         #endregion
 
@@ -644,7 +879,7 @@ namespace Erp.ViewModel.SupplyChain
 
             F7input.CollectionView = CollectionViewSource.GetDefaultView(SelecteDClusters);
 
-            CollectionView= F7input.CollectionView;
+            CollectionView = F7input.CollectionView;
             var a = F7input.SfGridColumns;
 
 
@@ -687,7 +922,7 @@ namespace Erp.ViewModel.SupplyChain
                     PointGeometry = DefaultGeometries.Circle,
                     DataLabels = true,
                     MinPointShapeDiameter = 35,
-                    FontSize = 20, 
+                    FontSize = 20,
                     LabelPoint = point =>
                     {
                         // Find the corresponding city by matching the coordinates
@@ -698,7 +933,7 @@ namespace Erp.ViewModel.SupplyChain
                         // Return the Number_Visited as the label if a matching city is found
                         return matchingCity != null ? matchingCity.Number_Visited.ToString() : string.Empty;
                     },
-                    
+
                 };
 
                 // LineSeries for connecting the points
@@ -750,28 +985,6 @@ namespace Erp.ViewModel.SupplyChain
             }
         }
 
-
-
-        public class ColorConverter2
-        {
-            public List<System.Windows.Media.Color> GenerateColors(int numberOfColors)
-            {
-                List<System.Windows.Media.Color> colors = new List<System.Windows.Media.Color>();
-                Random random = new Random();
-
-                for (int i = 0; i < numberOfColors; i++)
-                {
-                    byte r = (byte)random.Next(256);
-                    byte g = (byte)random.Next(256);
-                    byte b = (byte)random.Next(256);
-                    colors.Add(System.Windows.Media.Color.FromRgb(r, g, b));
-                }
-
-                return colors;
-            }
-        }
-
-
         #endregion
 
         public void ChangeCanExecute(object obj)
@@ -786,7 +999,6 @@ namespace Erp.ViewModel.SupplyChain
         }
 
         #endregion
-
         #endregion
 
         #region VRP
@@ -1004,6 +1216,50 @@ namespace Erp.ViewModel.SupplyChain
             }
         }
 
+        #region Write To CSV
+        static Dictionary<TKey, TValue> SortDictionary<TKey, TValue>(Dictionary<TKey, TValue> dict)
+        {
+            return dict.OrderBy(kv => kv.Key).ToDictionary(kv => kv.Key, kv => kv.Value);
+        }
 
+        static void WriteToCsv(string fileName, Dictionary<string, int> dictionary)
+        {
+            using (var writer = new StreamWriter(fileName))
+            {
+                writer.WriteLine("Key,Value");
+                foreach (var kvp in dictionary)
+                {
+                    writer.WriteLine($"{kvp.Key},{kvp.Value}");
+                }
+            }
+        }
+
+
+        static void WriteToCsv(string fileName, Dictionary<string, (double, double)> dictionary)
+        {
+            using (var writer = new StreamWriter(fileName))
+            {
+                writer.WriteLine("Key,Value1,Value2");
+                foreach (var kvp in dictionary)
+                {
+                    writer.WriteLine($"{kvp.Key},{kvp.Value.Item1},{kvp.Value.Item2}");
+                }
+            }
+        }
+
+        static void WriteToCsv(string fileName, Dictionary<int, (double, double)> dictionary)
+        {
+            using (var writer = new StreamWriter(fileName))
+            {
+                writer.WriteLine("Key,Value1,Value2");
+                foreach (var kvp in dictionary)
+                {
+                    writer.WriteLine($"{kvp.Key},{kvp.Value.Item1},{kvp.Value.Item2}");
+                }
+            }
+        }
+
+
+        #endregion
     }
 }

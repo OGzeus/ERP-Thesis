@@ -54,7 +54,8 @@ namespace Erp.Model.SupplyChain
         public enum TSP_ActivePanel
         {
             Simulation_Annealing,
-            Ant_Colony_Optimization
+            Ant_Colony_Optimization,
+            Optimization
 
         }
 
@@ -80,6 +81,11 @@ namespace Erp.Model.SupplyChain
             else if (TSP_Enum == BasicEnums.TSP_Techniques.Ant_Colony_Optimization)
             {
                 CurrentActivePanel_TSP = (TSP_Techniques)TSP_ActivePanel.Ant_Colony_Optimization;
+
+            }
+            else if (TSP_Enum == BasicEnums.TSP_Techniques.Optimization)
+            {
+                CurrentActivePanel_TSP = (TSP_Techniques)TSP_ActivePanel.Optimization;
 
             }
 

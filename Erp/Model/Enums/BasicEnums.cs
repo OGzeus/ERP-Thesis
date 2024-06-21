@@ -72,9 +72,12 @@ namespace Erp.Model.Enums
         public enum TSP_Techniques
         {
             Simulation_Annealing,
-            Ant_Colony_Optimization
+            Ant_Colony_Optimization,
+            Optimization
+            
         }
         #endregion
+
         #region Inventory Control
 
 

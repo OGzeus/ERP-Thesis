@@ -49,7 +49,7 @@ namespace Erp.DataBase
         #region Thesis
 
         public DbSet<LeaveBidsDataEntity> LeaveBids { get; set; }
-        public DbSet<LeaveBidRowsDataEntity> LeaveBidsRows { get; set; }
+
         public DbSet<LeaveStatusDataEntity> LeaveStatus { get; set; }
         public DbSet<VPInputDataEntity> VPInput { get; set; }
         public DbSet<VPYijzResultsDataEntity> VPYijzResults { get; set; }
@@ -70,6 +70,8 @@ namespace Erp.DataBase
         public DbSet<CSInputDataEntity> CSInput { get; set; }
 
 
+
+        //public DbSet<LeaveBidRowsDataEntity> LeaveBidsRows { get; set; }
         #endregion
 
         public static DbContextOptions<ErpDbContext> DbOptions { get; set; }

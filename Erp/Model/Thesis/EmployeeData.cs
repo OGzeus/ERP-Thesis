@@ -53,17 +53,9 @@ namespace Erp.Model.Thesis
         private LeaveBidsData _LeaveBidInfo { get; set; }
         private LeaveStatusData _LeaveStatus { get; set; }
 
-        private ObservableCollection<LeaveBidsData> _LeaveBidDataGrid { get; set; }
         private LeaveBidsDataStatic _LeaveBidsInfoStatic;
         private ObservableCollection<LeaveBidsDataStatic> _LeaveBidDataGridStatic;
 
-        private ObservableCollection<LeaveBidRowData> _LeaveBidRows;
-
-        public ObservableCollection<LeaveBidRowData> LeaveBidRows
-        {
-            get { return _LeaveBidRows; }
-            set { _LeaveBidRows = value; OnPropertyChanged("LeaveBidRows"); }
-        }
         public LeaveBidsData LeaveBidInfo
         {
             get { return _LeaveBidInfo; }
@@ -75,11 +67,7 @@ namespace Erp.Model.Thesis
             get { return _LeaveStatus; }
             set { _LeaveStatus = value; OnPropertyChanged("LeaveStatus"); }
         }
-        public ObservableCollection<LeaveBidsData> LeaveBidDataGrid
-        {
-            get { return _LeaveBidDataGrid; }
-            set { _LeaveBidDataGrid = value; OnPropertyChanged("LeaveBidDataGrid"); }
-        }
+
         public AirportData BaseAirport
         {
             get { return _BaseAirport; }

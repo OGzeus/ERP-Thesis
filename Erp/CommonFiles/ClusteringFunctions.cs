@@ -118,7 +118,7 @@ namespace Erp.CommonFiles
                 }
 
                 outputData.Inertia = totalInertia;
-                outputData.SilhouetteScore = silhouetteScores.Count > 0 ? silhouetteScores.Average() : 0;
+                outputData.SilhouetteScore_Avg = silhouetteScores.Count > 0 ? silhouetteScores.Average() : 0;
 
                 outputData.Clusters = clustersDict.Values.OrderBy(d => d.ClusterId).ToList();
                 return outputData;

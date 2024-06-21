@@ -20,8 +20,10 @@ namespace Erp.Model.SupplyChain.Clusters
         }
 
         public List<ClusterData> Clusters { get; set; }
-        public double SilhouetteScore { get; set; }
+        public double SilhouetteScore_Avg { get; set; }
         public double Inertia { get; set; }
+        public double DaviesBouldinIndex_Avg { get; set; } // Add this field
+
 
 
         public KmeansOutputData()

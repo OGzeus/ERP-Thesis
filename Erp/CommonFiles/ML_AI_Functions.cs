@@ -18,6 +18,8 @@ using Accord.MachineLearning;
 using Accord.MachineLearning.VectorMachines;
 using Accord.Math;
 using Accord.Statistics;
+using Gurobi;
+using System.IO;
 
 namespace Erp.CommonFiles
 {
@@ -159,10 +161,6 @@ namespace Erp.CommonFiles
                 double totalInertia = 0;
                 var silhouetteScores = new List<double>();
 
-                // Calculate CH Index variables
-                double betweenClusterSumOfSquares = 0;
-                double withinClusterSumOfSquares = 0;
-
                 // Initialize clusters
                 var clustersDict = new Dictionary<uint, KmeansOutputData.ClusterData>();
 
@@ -209,27 +207,14 @@ namespace Erp.CommonFiles
 
                     // Compute silhouette score
                     silhouetteScores.Add(ComputeSilhouetteScore(point, clusteredData));
-
-                    // Update withinClusterSumOfSquares
-                    withinClusterSumOfSquares += Math.Pow(distanceToCentroid, 2);
-                }
-
-                // Calculate betweenClusterSumOfSquares
-                var overallCentroid = new DataPoint
-                {
-                    Latitude = (float)dataPointsList.Average(dp => dp.Latitude),
-                    Longitude = (float)dataPointsList.Average(dp => dp.Longitude)
-                };
-
-                foreach (var cluster in clustersDict.Values)
-                {
-                    var centroidDistance = Math.Sqrt(Math.Pow(cluster.CentroidLatitude - overallCentroid.Latitude, 2) +
-                                                     Math.Pow(cluster.CentroidLongitude - overallCentroid.Longitude, 2));
-                    betweenClusterSumOfSquares += cluster.DataPoints.Count * Math.Pow(centroidDistance, 2);
                 }
 
                 outputData.Inertia = totalInertia;
-                outputData.SilhouetteScore = silhouetteScores.Count > 0 ? silhouetteScores.Average() : 0;
+                outputData.SilhouetteScore_Avg = silhouetteScores.Count > 0 ? silhouetteScores.Average() : 0;
+                outputData.SilhouetteScore_Avg = Math.Round(outputData.SilhouetteScore_Avg, 3);
+                // Calculate Davies-Bouldin Index
+                var dbIndex = CalculateDaviesBouldinIndex(clustersDict.Values.ToList());
+                outputData.DaviesBouldinIndex_Avg = Math.Round(dbIndex, 3);
 
                 outputData.Clusters = clustersDict.Values.OrderBy(d => d.ClusterId).ToList();
                 return outputData;
@@ -241,7 +226,6 @@ namespace Erp.CommonFiles
                 throw;
             }
         }
-
         // Placeholder function for silhouette score computation
         private double ComputeSilhouetteScore(ClusteredDataPoint point, List<ClusteredDataPoint> allPoints)
         {
@@ -259,6 +243,61 @@ namespace Erp.CommonFiles
         {
             return Math.Sqrt(Math.Pow(p1.Latitude - p2.Latitude, 2) + Math.Pow(p1.Longitude - p2.Longitude, 2));
         }
+
+        #region Tha to dw meta
+        private double CalculateDaviesBouldinIndex(List<KmeansOutputData.ClusterData> clusters)
+        {
+            var dbIndexList = new List<double>();
+
+            foreach (var cluster in clusters)
+            {
+                double maxRatio = double.MinValue;
+
+                foreach (var otherCluster in clusters)
+                {
+                    if (otherCluster.ClusterId == cluster.ClusterId) continue;
+
+                    double si = AverageClusterScatter(cluster.DataPoints);
+                    double sj = AverageClusterScatter(otherCluster.DataPoints);
+                    double dij = CalculateDistance(
+                        (cluster.CentroidLatitude, cluster.CentroidLongitude),
+                        (otherCluster.CentroidLatitude, otherCluster.CentroidLongitude));
+
+                    double ratio = (si + sj) / dij;
+                    if (ratio > maxRatio)
+                    {
+                        maxRatio = ratio;
+                    }
+                }
+
+                dbIndexList.Add(maxRatio);
+            }
+
+            return dbIndexList.Average();
+        }
+
+
+
+        private (double Latitude, double Longitude) CalculateCentroid(ObservableCollection<MainDatapoint> clusterPoints)
+        {
+            double latitudeSum = 0.0;
+            double longitudeSum = 0.0;
+
+            foreach (var point in clusterPoints)
+            {
+                latitudeSum += point.Latitude;
+                longitudeSum += point.Longitude;
+            }
+
+            return (latitudeSum / clusterPoints.Count, longitudeSum / clusterPoints.Count);
+        }
+
+
+
+
+
+        #endregion
+
 
 
 
@@ -326,6 +365,12 @@ namespace Erp.CommonFiles
             int clusterIndex = 1;
             foreach (var cluster in clusters)
             {
+                if (cluster.Count < dbscanInput.MinPoints)
+                {
+                    noisePoints.AddRange(cluster.Select(p => (p.Code, p.Latitude, p.Longitude)));
+                    continue;
+                }
+
                 // Calculate centroid
                 double centroidLatitude = cluster.Average(p => p.Latitude);
                 double centroidLongitude = cluster.Average(p => p.Longitude);
@@ -361,7 +406,7 @@ namespace Erp.CommonFiles
                     noisePoints.Select(p => new MainDatapoint
                     {
                         Code = p.Code,
-                        Latitude = Math.Round(p.Latitude,4),
+                        Latitude = Math.Round(p.Latitude, 4),
                         Longitude = Math.Round(p.Longitude, 4),
                         ClusterCode = "Noise"
                     }).ToList())
@@ -370,18 +415,16 @@ namespace Erp.CommonFiles
             output.Clusters.Add(noiseClusterData);
 
             // Calculate clustering quality metrics
-            var SilhouetteScore = CalculateSilhouetteScore(data, labels);
-            var DaviesBouldinIndex = CalculateDaviesBouldinIndex(data, labels);
-            var NoiseRatio = CalculateNoiseRatio(noisePoints.Count, data.Length);
+            var silhouetteAvg = CalculateSilhouetteScore(output);
+            var dbIndexAvg = CalculateDaviesBouldinIndex(output);
+            var noiseRatio = CalculateNoiseRatio(noisePoints.Count, data.Length);
 
-            output.SilhouetteScore = Math.Round(SilhouetteScore,3);
-            output.DaviesBouldinIndex = Math.Round(DaviesBouldinIndex, 3);
-            output.NoiseRatio = Math.Round(NoiseRatio, 3);
+            output.SilhouetteScore_Avg = Math.Round(silhouetteAvg, 3);
+            output.DaviesBouldinIndex_Avg = Math.Round(dbIndexAvg, 3);
+            output.NoiseRatio = Math.Round(noiseRatio, 3);
 
             return output;
-        }
-
-        // Utility function to calculate Euclidean distance between two points
+        }        // Utility function to calculate Euclidean distance between two points
         private static double CalculateDistance((double Latitude, double Longitude) point1, (double Latitude, double Longitude) point2)
         {
             double earthRadiusKm = 6371.0;
@@ -452,69 +495,58 @@ namespace Erp.CommonFiles
         }
         #region Calculate Silhouette,Davies-Bouldin Index,Noise Ratio
         // Function to calculate the silhouette score
-        private double CalculateSilhouetteScore(double[][] data, int[] labels)
+
+        private double CalculateSilhouetteScore(DBSCAN_OutputData output)
         {
-            double silhouetteSum = 0.0;
-            int[] uniqueLabels = labels.Distinct().Where(l => l != -1).ToArray(); // Exclude noise
+            var silhouetteScores = new List<double>();
 
-            for (int i = 0; i < data.Length; i++)
+            foreach (var cluster in output.Clusters)
             {
-                if (labels[i] == -1) continue; // Skip noise points
+                if (cluster.ClusterId == -1) continue; // Skip noise
 
-                double a = AverageDistanceToCluster(data, labels, i, labels[i]);
-                double b = double.MaxValue;
-
-                foreach (int label in uniqueLabels)
+                foreach (var point in cluster.DataPoints)
                 {
-                    if (label == labels[i]) continue;
-                    double avgDist = AverageDistanceToCluster(data, labels, i, label);
-                    if (avgDist < b)
+                    double a = AverageDistanceToCluster(point, cluster.DataPoints);
+                    double b = double.MaxValue;
+
+                    foreach (var otherCluster in output.Clusters)
                     {
-                        b = avgDist;
+                        if (otherCluster.ClusterId == cluster.ClusterId || otherCluster.ClusterId == -1) continue;
+
+                        double avgDist = AverageDistanceToCluster(point, otherCluster.DataPoints);
+                        if (avgDist < b)
+                        {
+                            b = avgDist;
+                        }
                     }
-                }
 
-                silhouetteSum += (b - a) / Math.Max(a, b);
-            }
-
-            return silhouetteSum / data.Length;
-        }
-
-        private double AverageDistanceToCluster(double[][] data, int[] labels, int pointIndex, int clusterLabel)
-        {
-            double sum = 0.0;
-            int count = 0;
-
-            for (int i = 0; i < data.Length; i++)
-            {
-                if (labels[i] == clusterLabel)
-                {
-                    sum += CalculateDistance((data[pointIndex][0], data[pointIndex][1]), (data[i][0], data[i][1]));
-                    count++;
+                    silhouetteScores.Add((b - a) / Math.Max(a, b));
                 }
             }
 
-            return count > 0 ? sum / count : 0;
+            return silhouetteScores.Average();
         }
 
-        // Function to calculate the Davies-Bouldin index
-        private double CalculateDaviesBouldinIndex(double[][] data, int[] labels)
-        {
-            var clusters = labels.Distinct().Where(l => l != -1).ToArray(); // Exclude noise
-            double dbIndex = 0.0;
-            int clusterCount = clusters.Length;
 
-            for (int i = 0; i < clusterCount; i++)
+        private double CalculateDaviesBouldinIndex(DBSCAN_OutputData output)
+        {
+            var dbIndexList = new List<double>();
+
+            foreach (var cluster in output.Clusters)
             {
+                if (cluster.ClusterId == -1) continue; // Skip noise
+
                 double maxRatio = double.MinValue;
 
-                for (int j = 0; j < clusterCount; j++)
+                foreach (var otherCluster in output.Clusters)
                 {
-                    if (i == j) continue;
+                    if (otherCluster.ClusterId == cluster.ClusterId || otherCluster.ClusterId == -1) continue;
 
-                    double si = AverageClusterScatter(data, labels, clusters[i]);
-                    double sj = AverageClusterScatter(data, labels, clusters[j]);
-                    double dij = CalculateDistance(CalculateCentroid(data, labels, clusters[i]), CalculateCentroid(data, labels, clusters[j]));
+                    double si = AverageClusterScatter(cluster.DataPoints);
+                    double sj = AverageClusterScatter(otherCluster.DataPoints);
+                    double dij = CalculateDistance(
+                        (cluster.CentroidLatitude, cluster.CentroidLongitude),
+                        (otherCluster.CentroidLatitude, otherCluster.CentroidLongitude));
 
                     double ratio = (si + sj) / dij;
                     if (ratio > maxRatio)
@@ -523,24 +555,41 @@ namespace Erp.CommonFiles
                     }
                 }
 
-                dbIndex += maxRatio;
+                dbIndexList.Add(maxRatio);
             }
 
-            return dbIndex / clusterCount;
+            return dbIndexList.Average();
         }
 
-        private double AverageClusterScatter(double[][] data, int[] labels, int clusterLabel)
+        private double AverageClusterScatter(ObservableCollection<MainDatapoint> clusterPoints)
         {
-            var clusterPoints = data.Where((_, index) => labels[index] == clusterLabel).ToArray();
-            var centroid = CalculateCentroid(data, labels, clusterLabel);
+            var centroid = CalculateCentroid(clusterPoints);
             double scatterSum = 0.0;
 
             foreach (var point in clusterPoints)
             {
-                scatterSum += CalculateDistance((point[0], point[1]), centroid);
+                scatterSum += CalculateDistance((point.Latitude, point.Longitude), centroid);
             }
 
-            return scatterSum / clusterPoints.Length;
+            return clusterPoints.Count > 0 ? scatterSum / clusterPoints.Count : 0;
+        }
+
+        private double CalculateNoiseRatio(int noisePointsCount, int totalPointsCount)
+        {
+            return (double)noisePointsCount / totalPointsCount;
+        }
+        // Function to calculate the silhouette score
+
+        private double AverageDistanceToCluster(MainDatapoint point, ObservableCollection<MainDatapoint> clusterPoints)
+        {
+            double sum = 0.0;
+
+            foreach (var otherPoint in clusterPoints)
+            {
+                sum += CalculateDistance((point.Latitude, point.Longitude), (otherPoint.Latitude, otherPoint.Longitude));
+            }
+
+            return clusterPoints.Count > 0 ? sum / clusterPoints.Count : 0;
         }
 
         private (double Latitude, double Longitude) CalculateCentroid(double[][] data, int[] labels, int clusterLabel)
@@ -559,15 +608,16 @@ namespace Erp.CommonFiles
         }
 
         // Function to calculate the noise ratio
-        private double CalculateNoiseRatio(int noisePointsCount, int totalPointsCount)
-        {
-            return (double)noisePointsCount / totalPointsCount;
-        }
+
+
+
+
 
         #endregion
         #endregion
 
         #endregion
+
         #region VRP 
 
         #region S_ANNEALING
@@ -598,22 +648,22 @@ namespace Erp.CommonFiles
             try
             {
                 // Initialize the solution
-                var currentSolution = InitializeSolution(demand, coords, vehicleCapacity);
+                var currentSolution = InitializeSolution_VRP(demand, coords, vehicleCapacity);
                 var bestSolution = currentSolution;
                 double currentTemperature = initialTemp;
 
                 int iteration = 0;
                 while (currentTemperature > stoppingTemp && iteration < maxIterations)
                 {
-                    var neighborSolution = GenerateNeighborSolution(currentSolution, demand, vehicleCapacity);
-                    double currentCost = CalculateCost(currentSolution, coords);
-                    double neighborCost = CalculateCost(neighborSolution, coords);
+                    var neighborSolution = GenerateNeighborSolution_VRP(currentSolution, demand, vehicleCapacity);
+                    double currentCost = CalculateCost_VRP(currentSolution, coords);
+                    double neighborCost = CalculateCost_VRP(neighborSolution, coords);
                     double costDifference = neighborCost - currentCost;
 
-                    if (costDifference < 0 || AcceptanceProbability(costDifference, currentTemperature) > new Random().NextDouble())
+                    if (costDifference < 0 || AcceptanceProbability_VRP(costDifference, currentTemperature) > new Random().NextDouble())
                     {
                         currentSolution = neighborSolution;
-                        if (neighborCost < CalculateCost(bestSolution, coords))
+                        if (neighborCost < CalculateCost_VRP(bestSolution, coords))
                         {
                             bestSolution = neighborSolution;
                         }
@@ -623,7 +673,7 @@ namespace Erp.CommonFiles
                     iteration++;
                 }
 
-                results.TotalCost = CalculateCost(bestSolution, coords);
+                results.TotalCost = CalculateCost_VRP(bestSolution, coords);
                 results.Iterations = iteration;
 
                 // Populate routes data
@@ -653,7 +703,7 @@ namespace Erp.CommonFiles
             }
         }
 
-        private List<List<int>> InitializeSolution(Dictionary<int, double> demand, Dictionary<int, (double, double)> coords, Dictionary<int, double> vehicleCapacity)
+        private List<List<int>> InitializeSolution_VRP(Dictionary<int, double> demand, Dictionary<int, (double, double)> coords, Dictionary<int, double> vehicleCapacity)
         {
             try
             {
@@ -697,7 +747,7 @@ namespace Erp.CommonFiles
 
         }
 
-        private List<List<int>> GenerateNeighborSolution(List<List<int>> currentSolution, Dictionary<int, double> demand, Dictionary<int, double> vehicleCapacity)
+        private List<List<int>> GenerateNeighborSolution_VRP(List<List<int>> currentSolution, Dictionary<int, double> demand, Dictionary<int, double> vehicleCapacity)
         {
             try
             {
@@ -732,7 +782,7 @@ namespace Erp.CommonFiles
 
         }
 
-        private double CalculateCost(List<List<int>> solution, Dictionary<int, (double, double)> coords)
+        private double CalculateCost_VRP(List<List<int>> solution, Dictionary<int, (double, double)> coords)
         {
             try
             {
@@ -762,7 +812,7 @@ namespace Erp.CommonFiles
             return Math.Sqrt(Math.Pow(point2.Item1 - point1.Item1, 2) + Math.Pow(point2.Item2 - point1.Item2, 2));
         }
 
-        private double AcceptanceProbability(double costDifference, double currentTemperature)
+        private double AcceptanceProbability_VRP(double costDifference, double currentTemperature)
         {
             // Implement acceptance probability calculation
             return Math.Exp(-costDifference / currentTemperature);
@@ -773,6 +823,156 @@ namespace Erp.CommonFiles
         #endregion
 
         #region TSP
+
+        #region SAnnealing
+        public  SAnnealing_TSP_OutputData Calculate_SAnnealing_TSP(TSP_InputData InputData)
+        {
+            var OutputData = new SAnnealing_TSP_OutputData();
+
+            try
+            {
+                #region CityData
+
+                var City_IndexMap = InputData.City_IndexMap;
+                var Coords = InputData.Coords;
+
+                // Calculate the distance matrix
+                int n = Coords.Count;
+                double[,] distanceMatrix = new double[n, n];
+                for (int i = 0; i < n; i++)
+                {
+                    for (int j = 0; j < n; j++)
+                    {
+                        if (i != j)
+                        {
+                            distanceMatrix[i, j] = CalculateDistance(Coords[i], Coords[j]);
+                        }
+                        else
+                        {
+                            distanceMatrix[i, j] = 0; // Distance to itself
+                        }
+                    }
+                }
+
+                #endregion
+
+                #region SAnnealing Settings
+                double T0 = InputData.SAnnealing_InputData.InitialTemp;      // Initial Temperature
+                double alpha = InputData.SAnnealing_InputData.CoolingRate;   // Cooling Rate
+                double Ts = InputData.SAnnealing_InputData.StoppingTemp;     // Stopping Temperature
+                double Nmax = InputData.SAnnealing_InputData.MaxIterations;  // Maximum Iterations
+                #endregion
+
+                // Initialize variables for the algorithm
+                double currentTemp = T0;
+                int iteration = 0;
+
+                // Initial solution and its cost
+                List<int> currentSolution = GenerateInitialSolution(n);
+                double currentCost = CalculateTourLength(currentSolution, distanceMatrix);
+
+                // Best solution found
+                List<int> bestSolution = new List<int>(currentSolution);
+                double bestCost = currentCost;
+
+                // Main loop of the Simulated Annealing algorithm
+                while (currentTemp > Ts && iteration < Nmax)
+                {
+                    // Generate a neighboring solution
+                    List<int> neighborSolution = GenerateNeighbor(currentSolution);
+                    double neighborCost = CalculateTourLength(neighborSolution, distanceMatrix);
+
+                    // Determine if we should accept the neighboring solution
+                    if (AcceptSolution(currentCost, neighborCost, currentTemp))
+                    {
+                        currentSolution = neighborSolution;
+                        currentCost = neighborCost;
+
+                        // Update the best solution found
+                        if (currentCost < bestCost)
+                        {
+                            bestSolution = new List<int>(currentSolution);
+                            bestCost = currentCost;
+                        }
+                    }
+
+                    // Cool down the temperature
+                    currentTemp *= alpha;
+                    iteration++;
+                }
+
+                // Set the output data
+                OutputData.BestTour = bestSolution;
+                OutputData.BestTourLength = bestCost;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred: {ex.Message}");
+            }
+
+            return OutputData;
+        }
+
+        private static List<int> GenerateInitialSolution(int cityCount)
+        {
+            List<int> solution = Enumerable.Range(0, cityCount).ToList();
+            Random rng = new Random();
+            int n = solution.Count;
+            while (n > 1)
+            {
+                n--;
+                int k = rng.Next(n + 1);
+                int value = solution[k];
+                solution[k] = solution[n];
+                solution[n] = value;
+            }
+            return solution;
+        }
+
+        // Helper method to generate a neighboring solution by swapping two cities
+        private static List<int> GenerateNeighbor(List<int> currentSolution)
+        {
+            List<int> neighbor = new List<int>(currentSolution);
+            Random rng = new Random();
+            int index1 = rng.Next(neighbor.Count);
+            int index2 = (index1 + 1 + rng.Next(neighbor.Count - 1)) % neighbor.Count;
+            int temp = neighbor[index1];
+            neighbor[index1] = neighbor[index2];
+            neighbor[index2] = temp;
+            return neighbor;
+        }
+
+        // Helper method to determine if a new solution should be accepted
+        private static bool AcceptSolution(double currentCost, double neighborCost, double temperature)
+        {
+            if (neighborCost < currentCost)
+            {
+                return true;
+            }
+            else
+            {
+                double acceptanceProbability = Math.Exp((currentCost - neighborCost) / temperature);
+                Random rng = new Random();
+                return rng.NextDouble() < acceptanceProbability;
+            }
+        }
+
+        // Ensure the CalculateTourLength method is static
+        public static double CalculateTourLength(List<int> tour, double[,] distanceMatrix)
+        {
+            double length = 0.0;
+            for (int i = 0; i < tour.Count - 1; i++)
+            {
+                length += distanceMatrix[tour[i], tour[i + 1]];
+            }
+            length += distanceMatrix[tour[tour.Count - 1], tour[0]]; // Return to start
+            return length;
+        }
+
+        #endregion
+
+        #region AntColony
+
         public AntColony_TSP_OutputData Calculate_AntColony_TSP(TSP_InputData InputData)
         {
             var OutputData = new AntColony_TSP_OutputData();
@@ -911,16 +1111,6 @@ namespace Erp.CommonFiles
             return tour;
         }
 
-        private double CalculateTourLength(List<int> tour, double[,] distanceMatrix)
-        {
-            double length = 0.0;
-            for (int i = 0; i < tour.Count - 1; i++)
-            {
-                length += distanceMatrix[tour[i], tour[i + 1]];
-            }
-            length += distanceMatrix[tour[tour.Count - 1], tour[0]]; // Return to start
-            return length;
-        }
 
         private void UpdatePheromones(double[,] pheromones, List<int>[] tours, double[] tourLengths, double evaporationRate)
         {
@@ -947,5 +1137,215 @@ namespace Erp.CommonFiles
         }
 
         #endregion
+
+        #region Optimization
+        public SAnnealing_TSP_OutputData Calculate_Optimization_TSP(TSP_InputData InputData)
+        {
+            var OutputData = new SAnnealing_TSP_OutputData();
+            GRBEnv env = new GRBEnv("tsplogfile.log");
+            GRBModel model = new GRBModel(env);
+            string relativePath = Path.Combine("OptimizationResults", "Gurobi", "Logistics", "TSP");
+
+            try
+            {
+                #region CityData
+
+                var City_IndexMap = InputData.City_IndexMap;
+                var Coords = InputData.Coords;
+
+                // Calculate the distance matrix
+                int n = Coords.Count;
+                double[,] distanceMatrix = new double[n, n];
+                for (int i = 0; i < n; i++)
+                {
+                    for (int j = 0; j < n; j++)
+                    {
+                        if (i != j)
+                        {
+                            distanceMatrix[i, j] = CalculateDistance(Coords[i], Coords[j]);
+                        }
+                        else
+                        {
+                            distanceMatrix[i, j] = 0; // Distance to itself
+                        }
+                    }
+                }
+
+                #endregion
+
+                #region Optimization Algorithm
+                int I = InputData.City_IndexMap.Count;
+
+                #region Decision Variables
+
+                // Decision Variables
+                GRBVar[,] X = new GRBVar[I, I];
+
+                for (int i = 0; i < I; i++)
+                {
+                    for (int j = 0; j < I; j++)
+                    {
+                        string varName = $"X{i}_{j}";
+                        X[i, j] = model.AddVar(0.0, 1.0, 0.0, GRB.BINARY, varName);
+                    }
+                }
+
+                #endregion
+
+                #region Objective Function
+
+                GRBLinExpr MinObjective = 0;
+
+                for (int i = 0; i < I; i++)
+                {
+                    for (int j = 0; j < I; j++)
+                    {
+                        MinObjective.AddTerm(distanceMatrix[i, j], X[i, j]);
+                    }
+                }
+                model.SetObjective(MinObjective, GRB.MINIMIZE);
+
+                #endregion
+
+                #region Constraints
+
+                // Symmetry Constraints
+                for (int i = 0; i < I; i++)
+                {
+                    for (int j = i + 1; j < I; j++)
+                    {
+                        model.AddConstr(X[i, j] == X[j, i], $"Symmetry_{i}_{j}");
+                    }
+                }
+
+                // Entering and Leaving a Capital City
+                for (int i = 0; i < I; i++)
+                {
+                    GRBLinExpr lhs = 0;
+                    for (int j = 0; j < I; j++)
+                    {
+                        lhs += X[i, j];
+                    }
+                    model.AddConstr(lhs == 2, $"Degree_{i}");
+                }
+
+                // Subtour Elimination Constraints
+                model.Set(GRB.IntParam.LazyConstraints, 1);
+                model.SetCallback(new TSPSubtourEliminationCallback(X, I));
+
+                #endregion
+
+                model.Optimize();
+
+                if (model.Status == GRB.Status.OPTIMAL)
+                {
+                    OutputData.BestTourLength = model.ObjVal;
+                   
+
+    
+                    // Save the files
+                    Directory.CreateDirectory(relativePath); // Ensure the directory exists
+                    model.Write(Path.Combine(relativePath, "TSP.mst"));
+                    model.Write(Path.Combine(relativePath, "TSP.sol"));
+                    model.Write(Path.Combine(relativePath, "TSP.lp"));
+                    model.Write(Path.Combine(relativePath, "TSP.mps"));
+
+                    // Print the BestTour for debugging
+
+                }
+
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred: {ex.Message}");
+            }
+            finally
+            {
+                model.Dispose();
+                env.Dispose();
+            }
+
+            return OutputData;
+        }
+
+        private class TSPSubtourEliminationCallback : GRBCallback
+        {
+            private GRBVar[,] X;
+            private int I;
+
+            public TSPSubtourEliminationCallback(GRBVar[,] x, int i)
+            {
+                X = x;
+                I = i;
+            }
+
+            protected override void Callback()
+            {
+                if (where == GRB.Callback.MIPSOL)
+                {
+                    int[] tour = FindSubtour();
+                    if (tour.Length < I)
+                    {
+                        GRBLinExpr lhs = 0;
+                        for (int i = 0; i < tour.Length; i++)
+                        {
+                            for (int j = i + 1; j < tour.Length; j++)
+                            {
+                                lhs += X[tour[i], tour[j]];
+                            }
+                        }
+                        AddLazy(lhs <= tour.Length - 1);
+                    }
+                }
+            }
+
+            private int[] FindSubtour()
+            {
+                bool[] visited = new bool[I];
+                int[] tour = new int[I];
+                int currentIndex = 0;
+                int startNode = 0;
+
+                for (int i = 0; i < I; i++)
+                {
+                    visited[i] = false;
+                }
+
+                visited[startNode] = true;
+                tour[currentIndex++] = startNode;
+
+                while (currentIndex < I)
+                {
+                    bool found = false;
+                    for (int j = 0; j < I; j++)
+                    {
+                        if (!visited[j] && GetSolution(X[tour[currentIndex - 1], j]) > 0.5)
+                        {
+                            tour[currentIndex++] = j;
+                            visited[j] = true;
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found)
+                    {
+                        break;
+                    }
+                }
+
+                int[] result = new int[currentIndex];
+                Array.Copy(tour, result, currentIndex);
+                return result;
+            }
+        }
+
+        #endregion
+
+        #endregion
+
+        #endregion
+
+
     }
 }

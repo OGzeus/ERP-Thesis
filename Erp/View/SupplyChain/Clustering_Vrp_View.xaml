@@ -49,7 +49,8 @@
             <TabControl SelectedIndex="{Binding SelectedTabIndex}">
                 <TabItem Header="Clustering Input ">
                     <StackPanel>
-                        <Grid  Margin="0,0,-193,0">
+
+                        <Grid  Margin="0,0,-193,0" Grid.Column="0">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
@@ -68,7 +69,7 @@
                             </Grid.ColumnDefinitions>
 
 
-                            <Border BorderBrush="Black" BorderThickness="2" Grid.Row="0" Grid.Column ="0" MinWidth="300" MinHeight="190"  Margin="5"  >
+                            <Border BorderBrush="Black" BorderThickness="2" Grid.Row="0" Grid.Column ="0" Width="260" MinHeight="190"  Margin="5"  HorizontalAlignment="Left" >
                                 <StackPanel>
                                     <TextBlock Text="Clustering 1" FontWeight="Bold" HorizontalAlignment="Center" Margin="5"/>
                                     <Grid>
@@ -93,7 +94,7 @@
                                         <TextBlock Text="Clustering Type : " Grid.Row="1" Grid.Column="0" Margin="5"/>
 
                                         <ComboBox ItemsSource="{Binding Cl_Enums}" SelectedItem="{Binding InputData.CLInputData.CL_Enum , UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" Grid.Row="1" Grid.Column="1" Margin="5" />
-                                       
+
                                         <StackPanel x:Name="K_Means1"
                             Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Grid.RowSpan="3" Orientation="Horizontal" Background="Beige"
                             Visibility="{Binding InputData.CLInputData.CL_Enum, Converter={StaticResource ActivePanelToVisibilityConverter_CL}, ConverterParameter=K_means}">
@@ -124,7 +125,6 @@
 
                                             </Grid>
                                         </StackPanel>
-                                        
                                         <StackPanel x:Name="DBSCAN_1"
                             Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Grid.RowSpan="3" Orientation="Horizontal" Background="Beige"
                             Visibility="{Binding InputData.CLInputData.CL_Enum, Converter={StaticResource ActivePanelToVisibilityConverter_CL}, ConverterParameter=DBSCAN}">
@@ -173,20 +173,71 @@
                                             </Grid>
                                         </StackPanel>
 
+
+
+                                    </Grid>
+                                </StackPanel>
+
+                            </Border>
+                            <Border BorderBrush="Black" BorderThickness="2" Grid.Row="0" Grid.Column ="1" Width="700" MinHeight="190"  Margin="5"  HorizontalAlignment="Left" >
+                                <StackPanel>
+                                    <TextBlock Text="Diagrams" FontWeight="Bold" HorizontalAlignment="Center" Margin="5"/>
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+
+                                        <StackPanel x:Name="Diagrams"
+            Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Grid.RowSpan="3" Orientation="Horizontal" >
+                                            <lvc:CartesianChart  Zoom="Xy" Pan="Xy" ZoomingSpeed="0.9"  MinHeight="240" MinWidth="300" Margin="5"  
+                         Series="{Binding ClResultsdata.SilhouetteScores_Diagram.SeriesCollection}" 
+                         FontSize="15" LegendLocation="Top" Name="SilhouetteScores_Diagram">
+                                                <lvc:CartesianChart.AxisX>
+                                                    <lvc:Axis Title="{Binding XAxisTitle}" Labels="{Binding ClResultsdata.SilhouetteScores_Diagram.Labels}" />
+                                                </lvc:CartesianChart.AxisX>
+                                                <lvc:CartesianChart.AxisY>
+                                                    <lvc:Axis Title="Silhouette Score" LabelFormatter="{Binding ClResultsdata.SilhouetteScores_Diagram.Formatter}" />
+                                                </lvc:CartesianChart.AxisY>
+                                            </lvc:CartesianChart>
+                                            <lvc:CartesianChart  Zoom="Xy" Pan="Xy" ZoomingSpeed="0.9"  MinHeight="240" MinWidth="300"  Margin="5" 
+                         Series="{Binding ClResultsdata.DaviesBouldinIndex_Diagram.SeriesCollection}" 
+                         FontSize="15" LegendLocation="Top" Name="DaviesBouldinIndex_Diagram">
+                                                <lvc:CartesianChart.AxisX>
+                                                    <lvc:Axis Title="{Binding XAxisTitle}" Labels="{Binding ClResultsdata.DaviesBouldinIndex_Diagram.Labels}" />
+                                                </lvc:CartesianChart.AxisX>
+                                                <lvc:CartesianChart.AxisY>
+                                                    <lvc:Axis Title="Davies Bouldin Index" LabelFormatter="{Binding ClResultsdata.DaviesBouldinIndex_Diagram.Formatter}" />
+                                                </lvc:CartesianChart.AxisY>
+                                            </lvc:CartesianChart>
+                                        </StackPanel>
+
+
+
+
                                     </Grid>
                                 </StackPanel>
 
                             </Border>
 
+                            <StackPanel Grid.Row="3" Grid.ColumnSpan="5" HorizontalAlignment="Left" Orientation="Horizontal" >
 
-                            <StackPanel Grid.Row="3" Grid.ColumnSpan="4" HorizontalAlignment="Center" Orientation="Horizontal">
-
-                                <Button x:Name="ShowCities"  Width="180" HorizontalAlignment="Left" Margin="2"  Command="{Binding ShowCitiesGridCommand}">
+                                <Button x:Name="ShowCities"  Width="130" HorizontalAlignment="Left" Margin="2"  Command="{Binding ShowCitiesGridCommand}">
                                     <TextBlock Text="Show Cities"/>
                                 </Button>
 
                                 <Button x:Name="CalculateCL1"  Width="180" HorizontalAlignment="Left" Margin="2"  Command="{Binding CalculateClustering}">
                                     <TextBlock Text="Calculate Clustering 1"/>
+                                </Button>
+
+                                <Button x:Name="CalculateDiagrams"  Width="210" HorizontalAlignment="Left" Margin="2"  Command="{Binding CalculateFirstDiagrams}">
+                                    <TextBlock Text="Calculate SL,DB Diagrams"/>
                                 </Button>
                             </StackPanel>
                             <syncfusion:SfDataGrid  x:Name="dataGrid"
@@ -217,8 +268,6 @@
                                     <syncfusion:GridTextColumn MappingName="CountryDescr" HeaderText="Country Descr"/>
                                     <syncfusion:GridTextColumn MappingName="Longitude" HeaderText="Longitude " />
                                     <syncfusion:GridTextColumn MappingName="Latitude" HeaderText="Latitude" />
-                                    <syncfusion:GridTextColumn MappingName="Population" HeaderText="Population" />
-                                    <syncfusion:GridTextColumn MappingName="Demand" HeaderText="Demand"  AllowEditing="True" />
 
                                     <syncfusion:GridCheckBoxColumn MappingName="Selected" HeaderText="Selected" AllowEditing ="True" />
 
@@ -239,62 +288,67 @@
                     <TabControl>
 
                         <TabItem Header="Clustering Results ">
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="800"/>
-                                    <RowDefinition Height="*"/>
-                                </Grid.RowDefinitions>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
+                        
 
-                                </Grid.ColumnDefinitions>
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="800"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
 
-                                <TextBlock Text="Clustering Type: " Grid.Row="0" Grid.Column="0"  Margin="2" />
-                                <TextBox Text="{Binding InputData.CLInputData.CL_Enum, Mode=TwoWay}" Grid.Row="0" Grid.Column="1" HorizontalAlignment="Stretch" Width="135" Margin="2" />
-                                <StackPanel x:Name="Kmeans_Results"                                          
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Text="Clustering Type: " Grid.Row="0" Grid.Column="0"  Margin="2" />
+                                    <TextBox Text="{Binding InputData.CLInputData.CL_Enum, Mode=TwoWay}" Grid.Row="0" Grid.Column="1" HorizontalAlignment="Stretch" Width="135" Margin="2" />
+                                    <StackPanel x:Name="Kmeans_Results"                                          
                             Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="6"   Orientation="Horizontal" Background="Beige"
                             Visibility="{Binding InputData.CLInputData.CL_Enum, Converter={StaticResource ActivePanelToVisibilityConverter_CL}, ConverterParameter=K_means}">
-                                    
-                                    
-                                    <TextBlock Text="Inertia: "  Margin="2"/>
-                                    <TextBox Text="{Binding ClResultsdata.Kmeansoutputdata.Inertia, Mode=TwoWay}"  HorizontalAlignment="Stretch" Width="135" Margin="2" />
 
-                                    <TextBlock Text="Silhouette Score: "  Margin="2"/>
-                                    <TextBox Text="{Binding ClResultsdata.Kmeansoutputdata.SilhouetteScore, Mode=TwoWay}"  HorizontalAlignment="Stretch" Width="135" Margin="2" />
 
-                                </StackPanel>
-                                <StackPanel x:Name="DBSCAN_Results"
+
+                                        <TextBlock Text="Silhouette Score: "  Margin="2"/>
+                                        <TextBox Text="{Binding ClResultsdata.Kmeansoutputdata.SilhouetteScore_Avg, Mode=TwoWay}"  HorizontalAlignment="Stretch" Width="135" Margin="2" />
+
+
+
+                                        <TextBlock Text="Davies-Bouldin Index: "  Margin="2"/>
+                                        <TextBox Text="{Binding ClResultsdata.Kmeansoutputdata.DaviesBouldinIndex_Avg, Mode=TwoWay}"  HorizontalAlignment="Stretch" Width="135" Margin="2" />
+
+                                    </StackPanel>
+                                    <StackPanel x:Name="DBSCAN_Results"
                             Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="6"   Orientation="Horizontal" Background="Beige"
                             Visibility="{Binding InputData.CLInputData.CL_Enum, Converter={StaticResource ActivePanelToVisibilityConverter_CL}, ConverterParameter=DBSCAN}">
-                                    <TextBlock Text="Silhouette Score: "  Margin="2"/>
-                                    <TextBox Text="{Binding ClResultsdata.DBSCANoutputdata.SilhouetteScore, Mode=TwoWay}"  HorizontalAlignment="Stretch"  Margin="2" />
+                                        <TextBlock Text="Silhouette Score: "  Margin="2"/>
+                                        <TextBox Text="{Binding ClResultsdata.DBSCANoutputdata.SilhouetteScore_Avg, Mode=TwoWay}"  HorizontalAlignment="Stretch"  Margin="2" />
 
-                                    <TextBlock Text="Davies-Bouldin Index: "  Margin="2"/>
-                                    <TextBox Text="{Binding ClResultsdata.DBSCANoutputdata.DaviesBouldinIndex, Mode=TwoWay}"  HorizontalAlignment="Stretch"  Margin="2" />
+                                        <TextBlock Text="Davies-Bouldin Index: "  Margin="2"/>
+                                        <TextBox Text="{Binding ClResultsdata.DBSCANoutputdata.DaviesBouldinIndex_Avg, Mode=TwoWay}"  HorizontalAlignment="Stretch"  Margin="2" />
 
-                                    <TextBlock Text="Noise Ratio: "  Margin="2"/>
-                                    <TextBox Text="{Binding ClResultsdata.DBSCANoutputdata.NoiseRatio, Mode=TwoWay}"  HorizontalAlignment="Stretch"  Margin="2" />
+                                        <TextBlock Text="Noise Ratio: "  Margin="2"/>
+                                        <TextBox Text="{Binding ClResultsdata.DBSCANoutputdata.NoiseRatio, Mode=TwoWay}"  HorizontalAlignment="Stretch"  Margin="2" />
 
-                                </StackPanel>
+                                    </StackPanel>
 
-                                <StackPanel x:Name="Hierarchical_Results"
+                                    <StackPanel x:Name="Hierarchical_Results"
                             Grid.Row="1" Grid.Column="0"   Orientation="Horizontal" Background="Beige"
                             Visibility="{Binding InputData.CLInputData.CL_Enum, Converter={StaticResource ActivePanelToVisibilityConverter_CL}, ConverterParameter=Hierarchical}">
-                                    <TextBlock Text="Hierarchical: "  Margin="2"/>
-                                    <TextBox Text="{Binding ClResultsdata.Kmeansoutputdata.Inertia, Mode=TwoWay}"  HorizontalAlignment="Stretch"  Margin="2" />
+                                        <TextBlock Text="Hierarchical: "  Margin="2"/>
+                                        <TextBox Text="{Binding ClResultsdata.Kmeansoutputdata.Inertia, Mode=TwoWay}"  HorizontalAlignment="Stretch"  Margin="2" />
 
-                                    <TextBlock Text="Hierarchical Score: "  Margin="2"/>
-                                    <TextBox Text="{Binding ClResultsdata.Kmeansoutputdata.SilhouetteScore, Mode=TwoWay}"  HorizontalAlignment="Stretch"  Margin="2" />
+                                        <TextBlock Text="Hierarchical Score: "  Margin="2"/>
+                                        <TextBox Text="{Binding ClResultsdata.Kmeansoutputdata.SilhouetteScore_Avg, Mode=TwoWay}"  HorizontalAlignment="Stretch"  Margin="2" />
 
-                                </StackPanel>
+                                    </StackPanel>
 
-                                <syncfusion:SfDataGrid x:Name="sfGrid_CL1"
+                                    <syncfusion:SfDataGrid x:Name="sfGrid_CL1"
                                                     Grid.Row="2"
                                                     Grid.Column="0"
                                                     Grid.ColumnSpan="10"
@@ -316,42 +370,38 @@
                                                     AutoExpandGroups="True"
                                                     ShowRowHeader="True" 
                                                 >
-                                    <syncfusion:SfDataGrid.GroupColumnDescriptions>
-                                        <syncfusion:GroupColumnDescription ColumnName="ClusterCode" />
-                                    </syncfusion:SfDataGrid.GroupColumnDescriptions>
-                                    <syncfusion:SfDataGrid.SortColumnDescriptions>
-                                        <syncfusion:SortColumnDescription ColumnName="ClusterCode"  />
-                                    </syncfusion:SfDataGrid.SortColumnDescriptions>
-                                    <syncfusion:SfDataGrid.Columns>
-                                        <syncfusion:GridTextColumn MappingName="ClusterCode" HeaderText="Cluster Code" AllowEditing="False"/>
-                                        <syncfusion:GridTextColumn MappingName="Code" HeaderText="Point Code" AllowEditing="False"/>
-                                        <syncfusion:GridTextColumn MappingName="Longitude" HeaderText="Longitude" AllowEditing="False"/>
-                                        <syncfusion:GridTextColumn MappingName="Latitude" HeaderText="Latitude" AllowEditing="False"/>
+                                        <syncfusion:SfDataGrid.GroupColumnDescriptions>
+                                            <syncfusion:GroupColumnDescription ColumnName="ClusterCode" />
+                                        </syncfusion:SfDataGrid.GroupColumnDescriptions>
+                                        <syncfusion:SfDataGrid.SortColumnDescriptions>
+                                            <syncfusion:SortColumnDescription ColumnName="ClusterCode"  />
+                                        </syncfusion:SfDataGrid.SortColumnDescriptions>
+                                        <syncfusion:SfDataGrid.Columns>
+                                            <syncfusion:GridTextColumn MappingName="ClusterCode" HeaderText="Cluster Code" AllowEditing="False"/>
+                                            <syncfusion:GridTextColumn MappingName="Code" HeaderText="Point Code" AllowEditing="False"/>
+                                            <syncfusion:GridTextColumn MappingName="Longitude" HeaderText="Longitude" AllowEditing="False"/>
+                                            <syncfusion:GridTextColumn MappingName="Latitude" HeaderText="Latitude" AllowEditing="False"/>
 
-                                    </syncfusion:SfDataGrid.Columns>
+                                        </syncfusion:SfDataGrid.Columns>
 
-                                </syncfusion:SfDataGrid>
+                                    </syncfusion:SfDataGrid>
 
 
-                            </Grid>
+                                </Grid>
                         </TabItem>
                         <TabItem Header="Clusters Info">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
 
                                 </Grid.ColumnDefinitions>
                                 <syncfusion:SfDataGrid x:Name="sfGrid_CLustersInfo1"
                                                     Grid.Row="1"
-                                                    Grid.Column="2"
+                                                    Grid.Column="1"
                                                     ColumnSizer="Star"
                                                     Background="White"
                                                     AllowSorting="True"
@@ -377,9 +427,8 @@
                                     <syncfusion:SfDataGrid.Columns>
                                         <syncfusion:GridTextColumn MappingName="ClusterCode" HeaderText="Cluster Code" AllowEditing="False"/>
                                         <syncfusion:GridTextColumn MappingName="NumberOfPoints" HeaderText="Number Of Points" AllowEditing="False"/>
-                                        <syncfusion:GridTextColumn MappingName="Latitude" HeaderText="Latitude" AllowEditing="False"/>
                                         <syncfusion:GridTextColumn MappingName="Longitude" HeaderText="Longtitude" AllowEditing="False"/>
-
+                                        <syncfusion:GridTextColumn MappingName="Latitude" HeaderText="Latitude" AllowEditing="False"/>
                                     </syncfusion:SfDataGrid.Columns>
                                 </syncfusion:SfDataGrid>
                             </Grid>
@@ -403,24 +452,25 @@
                                 <Grid Grid.Row="0" Grid.Column="0">
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="500"/>
-                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="600"/>
+                                        <RowDefinition Height="600"/>
 
                                     </Grid.RowDefinitions>
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="700"/>
-                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="900"/>
+                                        <ColumnDefinition Width="600"/>
+                                        <ColumnDefinition Width="600"/>
+                                        
                                     </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Row="0" Grid.Column="1" HorizontalAlignment="Center" Margin="5" Orientation="Horizontal">
+                                    <StackPanel Grid.Row="0" Grid.Column="0" HorizontalAlignment="Center" Margin="5" Orientation="Horizontal">
                                         <TextBlock Text="{Binding InputData.CLInputData.CL_Enum}" FontSize="20" FontWeight="SemiBold"/>
                                         <TextBlock Text=" Diagram" FontSize="20" FontWeight="SemiBold" />
 
                                     </StackPanel>
 
 
-                                        <lvc:CartesianChart  Zoom="Xy" Pan="Xy" ZoomingSpeed="0.9"  Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3"
-                                                             Grid.RowSpan="3"
+                                        <lvc:CartesianChart  Zoom="Xy" Pan="Xy" ZoomingSpeed="0.9"  Grid.Row="1" Grid.Column="0" 
+                                                             
                                                          Series="{Binding ClResultsdata.Clustering_Diagram.SeriesCollection}" 
                                                          FontSize="15" LegendLocation="Right" Name="Clustering_Diagram" >
 
@@ -488,7 +538,7 @@
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
 
                             </Grid.ColumnDefinitions>
 
@@ -511,15 +561,15 @@
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
 
                                         <TextBlock Text="TSP Type : " Grid.Row="1" Grid.Column="0" Margin="5"/>
 
-                                        <ComboBox ItemsSource="{Binding TSP_Enums}" SelectedItem="{Binding InputData.TSPInputData.TSP_Enum , UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" Grid.Row="1" Grid.Column="1" Margin="5" />
+                                        <ComboBox ItemsSource="{Binding TSP_Enums}" Grid.Row="1" Grid.Column="1" SelectedItem="{Binding InputData.TSPInputData.TSP_Enum , UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" Margin="5" />
 
                                         <StackPanel x:Name="Simulation_Annealing_TSP"
-                            Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Grid.RowSpan="3" Orientation="Horizontal" Background="Beige"
+                            Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="5" Grid.RowSpan="3" Orientation="Horizontal" Background="Beige"
                             Visibility="{Binding InputData.TSPInputData.TSP_Enum, Converter={StaticResource ActivePanelToVisibilityConverter_TSP}, ConverterParameter=Simulation_Annealing}">
 
                                             <Grid>
@@ -537,18 +587,22 @@
                                                     <ColumnDefinition Width="Auto" />
                                                 </Grid.ColumnDefinitions>
                                                 <!-- Number of Clusters -->
-                                                <TextBlock Text="Initial Temperature = :" Grid.Row="1" Grid.Column="0" Margin="5" VerticalAlignment="Center" />
-                                                <TextBlock Text="Stopping Temperature = :" Grid.Row="1" Grid.Column="2" Margin="5" VerticalAlignment="Center" />
-                                                <TextBlock Text="Cooling Rate = :" Grid.Row="2" Grid.Column="0" Margin="5" VerticalAlignment="Center" />
-                                                <TextBlock Text="Max Iterations  = :" Grid.Row="2" Grid.Column="2" Margin="5" VerticalAlignment="Center" />
-                                                <TextBlock Text="Number Of Depots = :" Grid.Row="3" Grid.Column="0" Margin="5" VerticalAlignment="Center" />
+                                                <TextBlock Text="Initial Temperature (To) = :" Grid.Row="1" Grid.Column="0" Margin="5" VerticalAlignment="Center" />
+                                                <TextBlock Text="Stopping Temperature (Ts) = :" Grid.Row="1" Grid.Column="2" Margin="5" VerticalAlignment="Center" />
+                                                <TextBlock Text="Cooling Rate (a) = :" Grid.Row="2" Grid.Column="0" Margin="5" VerticalAlignment="Center" />
+                                                <TextBlock Text="Max Iterations (N) = :" Grid.Row="2" Grid.Column="2" Margin="5" VerticalAlignment="Center" />
+
+                                                <TextBox Text="{Binding InputData.TSPInputData.SAnnealing_InputData.InitialTemp}" Grid.Row="1" Grid.Column="1" Margin="5" Width="50" />
+                                                <TextBox Text="{Binding InputData.TSPInputData.SAnnealing_InputData.StoppingTemp}" Grid.Row="1" Grid.Column="3" Margin="5" Width="50" />
+                                                <TextBox Text="{Binding InputData.TSPInputData.SAnnealing_InputData.CoolingRate}" Grid.Row="2" Grid.Column="1" Margin="5" Width="50" />
+                                                <TextBox Text="{Binding InputData.TSPInputData.SAnnealing_InputData.MaxIterations}" Grid.Row="2" Grid.Column="3" Margin="5" Width="50" />
 
 
 
                                             </Grid>
                                         </StackPanel>
                                         <StackPanel x:Name="Ant_Colony_TSP"
-                            Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Grid.RowSpan="3" Orientation="Horizontal" Background="Beige"
+                            Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="5" Grid.RowSpan="3" Orientation="Horizontal" Background="Beige"
                             Visibility="{Binding InputData.TSPInputData.TSP_Enum, Converter={StaticResource ActivePanelToVisibilityConverter_TSP}, ConverterParameter=Ant_Colony_Optimization}">
 
                                             <Grid>
@@ -568,12 +622,12 @@
                                                     <ColumnDefinition Width="Auto" />
 
                                                 </Grid.ColumnDefinitions>
-                                                <TextBlock Text="Alpha  = " Grid.Row="1" Grid.Column="0" Margin="5"/>
-                                                <TextBlock Text="Beta  = " Grid.Row="1" Grid.Column="2" Margin="5"/>
-                                                <TextBlock Text="EvaporationRate  = " Grid.Row="2" Grid.Column="0" Margin="5"/>
-                                                <TextBlock Text="Initial Pheromone Level  = " Grid.Row="2" Grid.Column="2" Margin="5"/>
-                                                <TextBlock Text="Number Of Ants  = " Grid.Row="3" Grid.Column="0" Margin="5"/>
-                                                <TextBlock Text="Number Of Iterations  = " Grid.Row="3" Grid.Column="2" Margin="5"/>
+                                                <TextBlock Text="Alpha (α)  = " Grid.Row="1" Grid.Column="0" Margin="5"/>
+                                                <TextBlock Text="Beta (β) = " Grid.Row="1" Grid.Column="2" Margin="5"/>
+                                                <TextBlock Text="EvaporationRate (ρ)  = " Grid.Row="2" Grid.Column="0" Margin="5"/>
+                                                <TextBlock Text="Initial Pheromone Level (το)  = " Grid.Row="2" Grid.Column="2" Margin="5"/>
+                                                <TextBlock Text="Number Of Ants (m) = " Grid.Row="3" Grid.Column="0" Margin="5"/>
+                                                <TextBlock Text="Number Of Iterations (N)  = " Grid.Row="3" Grid.Column="2" Margin="5"/>
 
                                                 <TextBox Text="{Binding InputData.TSPInputData.AntColony_InputData.Alpha}" Grid.Row="1" Grid.Column="1" Margin="5" Width="50" />
                                                 <TextBox Text="{Binding InputData.TSPInputData.AntColony_InputData.Beta}" Grid.Row="1" Grid.Column="3" Margin="5" Width="50" />
@@ -584,15 +638,33 @@
 
                                             </Grid>
                                         </StackPanel>
+                                        <StackPanel x:Name="Optimization_TSP"
+                            Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="5" Grid.RowSpan="3" Orientation="Horizontal" Background="Beige"
+                            Visibility="{Binding InputData.TSPInputData.TSP_Enum, Converter={StaticResource ActivePanelToVisibilityConverter_TSP}, ConverterParameter=Optimization}">
+
+                                            <Grid>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="5"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+  
+
+                                            </Grid>
+                                        </StackPanel>
                                     </Grid>
                                 </StackPanel>
 
                             </Border>
-                            <StackPanel Grid.Row="3" Grid.ColumnSpan="4" HorizontalAlignment="Center" Orientation="Horizontal">
-
-                                <Button x:Name="SelectClusters"  Width="180" HorizontalAlignment="Left" Margin="2"  Command="{Binding ShowClusters_TSP_GridCommand}">
-                                    <TextBlock Text="Select Clusters"/>
-                                </Button>
+                            <StackPanel Grid.Row="3" Grid.ColumnSpan="6" HorizontalAlignment="Center" Orientation="Horizontal">
                                 <Button x:Name="CalculateTSP"  Width="180" HorizontalAlignment="Left" Margin="2"  Command="{Binding CalculateTSP}">
                                     <TextBlock Text="Calculate TSP "/>
                                 </Button>
@@ -601,7 +673,6 @@
                                                     Grid.Row="4"
                                                     Grid.Column="0"
                                                     Grid.ColumnSpan="6"
-
                                                     ColumnSizer="Star"
                                                     Background="White"
                                                     AllowSorting="True"
@@ -649,19 +720,24 @@
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="800"/>
+                                    <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="800"/>
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
 
                                 </Grid.ColumnDefinitions>
+                                <TextBlock Text="TSP Type: " Grid.Row="0" Grid.Column="0"  Margin="2" />
+                                <TextBox Text="{Binding InputData.TSPInputData.TSP_Enum, Mode=TwoWay}" Grid.Row="0" Grid.Column="1" HorizontalAlignment="Stretch" Width="210" Margin="2" />
+
                                 <syncfusion:SfDataGrid x:Name="sfGrid_TSPResults"
                                                     Grid.Row="1"
-                                                    Grid.Column="1"
-
+                                                    Grid.Column="0"
+                                                    Grid.ColumnSpan="10" 
                                                     ColumnSizer="Star"
                                                     Background="White"
                                                     AllowSorting="True"
@@ -758,7 +834,7 @@
                                     </i:Interaction.Triggers>
                                 </syncfusion:SfDataGrid>
                                 
-                                <lvc:CartesianChart  Zoom="Xy" Pan="Xy" ZoomingSpeed="0.9"  Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="5" MinHeight="500" MinWidth="600"
+                                <lvc:CartesianChart  Zoom="Xy" Pan="Xy" ZoomingSpeed="0.9"  Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="5" MaxHeight="600" MaxWidth="800"
                                                          Series="{Binding TSP_ResultsData.TSP_DiagramData.SeriesCollection}" 
                                                          FontSize="15" LegendLocation="Right" Name="TSP_Diagram" >
 
@@ -778,7 +854,7 @@
                     </TabControl>
                 </TabItem>
                 <TabItem Header="VRP Input ">
-                    <!--<StackPanel>
+                    <StackPanel>
                         <Grid  Margin="0,0,-193,0">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -890,7 +966,7 @@
                                                     <ColumnDefinition Width="Auto" />
                                                     <ColumnDefinition Width="Auto" />
                                                 </Grid.ColumnDefinitions>
-                                                --><!-- Number of Clusters --><!--
+                                                
                                                 <TextBlock Text="Initial Temperature = :" Grid.Row="1" Grid.Column="0" Margin="5" VerticalAlignment="Center" />
                                                 <TextBlock Text="Stopping Temperature = :" Grid.Row="1" Grid.Column="2" Margin="5" VerticalAlignment="Center" />
                                                 <TextBlock Text="Cooling Rate = :" Grid.Row="2" Grid.Column="0" Margin="5" VerticalAlignment="Center" />
@@ -992,7 +1068,7 @@
 
 
 
-                    </StackPanel>-->
+                    </StackPanel>
                 </TabItem>
                 <TabItem Header="VRP Results">
                     <!--<TabControl>

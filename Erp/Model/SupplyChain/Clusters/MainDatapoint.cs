@@ -14,6 +14,7 @@ namespace Erp.Model.SupplyChain.Clusters
         private double longitude;
         private double latitude;
         private double _Demand;
+        private double _SilhouetteScore;
 
         public string ClusterCode
         {
@@ -41,5 +42,11 @@ namespace Erp.Model.SupplyChain.Clusters
             get { return _Demand; }
             set { _Demand = value; OnPropertyChanged("Demand"); }
         }
+        public double SilhouetteScore
+        {
+            get { return _SilhouetteScore; }
+            set { _SilhouetteScore = value; OnPropertyChanged("SilhouetteScore"); }
+        }
+
     }
 }

@@ -116,6 +116,7 @@
     <Compile Include="CommonFiles\CPLEXFunctions.cs" />
     <Compile Include="CommonFiles\F7Common.cs" />
     <Compile Include="CommonFiles\ML_AI_Functions.cs" />
+    <Compile Include="CommonFiles\Nikos_Polychronopoulos_ML_Functions.cs" />
     <Compile Include="Converters\ColorConverter.cs" />
     <Compile Include="Converters\CultureFormatConverter.cs" />
     <Compile Include="Converters\CustomRowStyleConverter.cs" />
@@ -164,7 +165,6 @@
     <Compile Include="DataBase\Τhesis\FlightLegsDataEntity.cs" />
     <Compile Include="DataBase\Τhesis\FlightRoutesDataEntity.cs" />
     <Compile Include="DataBase\Τhesis\LanguageDataEntity.cs" />
-    <Compile Include="DataBase\Τhesis\LeaveBidRowsDataEntity.cs" />
     <Compile Include="DataBase\Τhesis\LeaveBidsDataEntity.cs" />
     <Compile Include="DataBase\Τhesis\LeaveStatusDataEntity.cs" />
     <Compile Include="DataBase\Τhesis\ReqScheduleInfoDataEntity.cs" />
@@ -265,6 +265,7 @@
     <Compile Include="Model\SupplyChain\TSP\City_Tsp_OutputData.cs" />
     <Compile Include="Model\SupplyChain\TSP\DiagramData.cs" />
     <Compile Include="Model\SupplyChain\TSP\SAnnealing_TSP_InputData.cs" />
+    <Compile Include="Model\SupplyChain\TSP\SAnnealing_TSP_OutputData.cs" />
     <Compile Include="Model\SupplyChain\TSP_InputData.cs" />
     <Compile Include="Model\SupplyChain\TSP_OutputData.cs" />
     <Compile Include="Model\SupplyChain\Vehicle.cs" />
@@ -515,6 +516,19 @@
     <Compile Include="View\UserControlMenuItem.xaml.cs">
       <DependentUpon>UserControlMenuItem.xaml</DependentUpon>
     </Compile>
+    <Compile Include="V_Proxeiro\Vacation Planning\Employee\EmployeeData.cs" />
+    <Compile Include="V_Proxeiro\Vacation Planning\Employee\LeaveBidDataStatic.cs" />
+    <Compile Include="V_Proxeiro\Vacation Planning\Employee\LeaveBidsData.cs" />
+    <Compile Include="V_Proxeiro\Vacation Planning\Employee\LeaveStatusData.cs" />
+    <Compile Include="V_Proxeiro\Vacation Planning\Schedule\ReqScheduleInfoData.cs" />
+    <Compile Include="V_Proxeiro\Vacation Planning\Schedule\ReqScheduleRows.cs" />
+    <Compile Include="V_Proxeiro\Vacation Planning\Vacation Planning Optimization\VacationPlanningInputData.cs" />
+    <Compile Include="V_Proxeiro\Vacation Planning\Vacation Planning Optimization\VacationPlanningOutputData.cs" />
+    <Compile Include="V_Proxeiro\Vacation Planning\Vacation Planning Optimization\VP Output\VPXijResultsData.cs" />
+    <Compile Include="V_Proxeiro\Vacation Planning\Vacation Planning Optimization\VP Output\VPXiResultData.cs" />
+    <Compile Include="V_Proxeiro\Vacation Planning\Vacation Planning Optimization\VP Output\VPYijResultsData.cs" />
+    <Compile Include="V_Proxeiro\Vacation Planning\Vacation Planning Optimization\VPCGInputData.cs" />
+    <Compile Include="V_Proxeiro\Vacation Planning\Vacation Planning Optimization\VPCGOutputData.cs" />
     <Page Include="CustomControls\BindablePasswordBox.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -794,6 +808,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Model\Stores\" />
+    <Folder Include="V_Proxeiro\Crew Scheduling\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

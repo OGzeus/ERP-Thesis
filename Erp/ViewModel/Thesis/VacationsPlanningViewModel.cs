@@ -217,9 +217,7 @@ namespace Erp.ViewModel.Thesis
             CalculateVacationPlanningGB = new RelayCommand2(ExecuteCalculateVacationPlanning_Gurobi);
             CalculateVacationPlanningCP = new RelayCommand2(ExecuteCalculateVacationPlanning_Cplex);
 
-            ClearItemsInputCommand = new RelayCommand2(ExecuteClearItemsInputCommand);
-            RefreshItemsInputCommand = new RelayCommand2(ExecuteRefreshItemsInputCommand);
-            InsertDataItemsInputCommand = new RelayCommand2(ExecuteInsertDataItemsInputCommand);
+
 
 
 
@@ -229,11 +227,10 @@ namespace Erp.ViewModel.Thesis
             ShowScheduleGridCommand = new RelayCommand2(ExecuteShowScheduleGridCommand);
 
         }
+
         #region CRUD  Commands
 
-        #region Input 
-
-        #region ADD VacationPlanning
+        #region ADD 
         public ICommand AddVPCommand { get; }
 
         private void ExecuteAddVPCommand(object obj)
@@ -293,7 +290,7 @@ namespace Erp.ViewModel.Thesis
 
         #endregion
 
-        #region SaveVP
+        #region Save
 
 
         private ViewModelCommand _SaveInputCommand;
@@ -354,19 +351,12 @@ namespace Erp.ViewModel.Thesis
         }
 
         #endregion
-        #endregion
-
-        #region Output 
-
-
 
         #endregion
 
-        #endregion
 
-        #region Commands
+        #region F7Commands
 
-        #region FlatData
         public ICommand ShowVPCommand { get; }
         public ICommand ShowScheduleGridCommand { get; }
 
@@ -431,11 +421,6 @@ namespace Erp.ViewModel.Thesis
 
                 #endregion
 
-
-
-
-
-
             }
             if (F7key == "ReqSchedule")
             {
@@ -449,87 +434,7 @@ namespace Erp.ViewModel.Thesis
 
                 #endregion
             }
-
         }
-
-        #endregion
-
-        #region Insert ItemData/PriceListData
-        public ICommand ClearItemsInputCommand { get; }
-        public ICommand RefreshItemsInputCommand { get; }
-        public ICommand InsertDataItemsInputCommand { get; }
-
-        private void ExecuteInsertDataItemsInputCommand(object obj)
-        {
-            //if (InputData.ItemsDefaultSettings == true)
-            //{
-            //    foreach (var item in InputData.Items)
-            //    {
-            //        item.StoreTarget = InputData.InvStoreTarget;
-            //        item.MaxInventory = InputData.MaxInventory;
-            //        item.HoldingCost = (float)InputData.HoldingCost;
-            //    }
-            //}
-            //#region Profit Dict 
-
-            //foreach (var itemInfo in InputData.PriceList.ItemsInfo)
-            //{
-            //    var matchingItem = InputData.Items.FirstOrDefault(item => item.ItemCode == itemInfo.Item.ItemCode);
-            //    if (matchingItem != null)
-            //    {
-            //        matchingItem.SalesPrice = itemInfo.SalesPrice;
-            //    }
-
-
-            //}
-
-            //#endregion
-
-
-
-
-        }
-
-
-
-
-        private void ExecuteClearItemsInputCommand(object commandParameter)
-        {
-            //ChooserData.ItemCode = "";
-            //ChooserData.ItemDescr = "";
-            //ChooserData.ItemId = -1;
-
-            //ChooserData = new ItemData();
-
-            //FlatData.ItemCode = "";
-            //FlatData.ItemDescr = "";
-            //FlatData.ItemId = 0;
-
-            //FlatData.MesUnit = "";
-            //FlatData.ItemType = "";
-            //FlatData.Assembly = 99;
-            //FlatData.CanBeProduced = false;
-            //FlatData.InputOrderFlag = false;
-            //FlatData.OutputOrderFlag = false;
-            //FlatData2 = new ObservableCollection<BomData>();
-            //ProcessData = new ObservableCollection<ItemProcessData>();
-
-        }
-
-
-
-
-
-
-
-        private void ExecuteRefreshItemsInputCommand(object commandParameter)
-        {
-
-            //FlatData = CommonFunctions.GetItemData(ChooserData);
-
-
-        }
-
 
         #endregion
 
@@ -540,20 +445,19 @@ namespace Erp.ViewModel.Thesis
 
         private void ExecuteCalculateVacationPlanning_Gurobi(object obj)
         {
+            #region Vacation Planning
+
+            #region  Dictionaries
+
             InputData.MaxLeaveBidsPerEmployee = new Dictionary<string, int>();
 
-            InputData.MaxLeaveBidsPerEmployee_Int = new Dictionary<int, int>();
             InputData.ZBidsDict = new Dictionary<(string, string, int), int>();
             InputData.RBidsDict = new Dictionary<(string, string), int>();
 
-            InputData.ZBidsDict_Int = new Dictionary<(int, int, int), int>();
-            InputData.RBidsDict_Int = new Dictionary<(int, int), int>();
 
+            #endregion
 
-            #region Employee Insert Data
-
-
-
+            #region Populate Dictionaries
 
             InputData.Employees = CommonFunctions.GetEmployeesByTypeData(InputData.EmployeeType, false);
             InputData.MaxLeaveBids = 0;
@@ -575,14 +479,13 @@ namespace Erp.ViewModel.Thesis
                 LeaveBidRowsCount = emp.LeaveBidDataGridStatic.Count();
 
                 InputData.MaxLeaveBidsPerEmployee[emp.Code] = LeaveBidRowsCount;
-                InputData.MaxLeaveBidsPerEmployee_Int[EmpCount] = LeaveBidRowsCount;
                 if (LeaveBidRowsCount > InputData.MaxLeaveBids)
                 {
                     InputData.MaxLeaveBids = LeaveBidRowsCount;
                 }
                 #endregion
 
-                #region Zbids Dict ,Rbids Dict
+                #region Zbids ,Rbids Dictionaries
                 foreach (var Bid in emp.LeaveBidDataGridStatic)
                 {
 
@@ -592,8 +495,6 @@ namespace Erp.ViewModel.Thesis
                         InputData.RBidsDict[(emp.Code, Bid.BidCode)] = 1;
                         InputData.ZBidsDict[(emp.Code, Bid.BidCode, 1)] = 1;
 
-                        InputData.RBidsDict_Int[(emp.Seniority - 1, Bid.PriorityLevel - 1)] = 1;
-                        InputData.ZBidsDict_Int[(emp.Seniority - 1, Bid.PriorityLevel - 1, 1)] = 1;
                     }
                     else if (Bid.BidType == BasicEnums.BidType.Non_Specific)
                     {
@@ -605,11 +506,8 @@ namespace Erp.ViewModel.Thesis
                         InputData.RBidsDict[(emp.Code, Bid.BidCode)] = 1;
 
                         int Z = totalDaysInRange - Bid.NumberOfDays + 2;
-
                         InputData.ZBidsDict[(emp.Code, Bid.BidCode, 1)] = Z;
 
-                        InputData.RBidsDict_Int[(emp.Seniority - 1, Bid.PriorityLevel - 1)] = 1;
-                        InputData.ZBidsDict_Int[(emp.Seniority - 1, Bid.PriorityLevel - 1, 1)] = Z;
 
                     }
                     else if (Bid.BidType == BasicEnums.BidType.Min_Max)
@@ -621,7 +519,6 @@ namespace Erp.ViewModel.Thesis
                         var Max = Bid.NumberOfDaysMax;
 
                         InputData.RBidsDict[(emp.Code, Bid.BidCode)] = Max - Min + 1;
-                        InputData.RBidsDict_Int[(emp.Seniority - 1, Bid.PriorityLevel - 1)] = Max - Min + 1;
 
                         for (int i = 0; i < Max - Min + 1; i++)
                         {
@@ -629,33 +526,41 @@ namespace Erp.ViewModel.Thesis
                             int Z = totalDaysInRange - Bid.NumberOfDays + 2;
 
                             InputData.ZBidsDict[(emp.Code, Bid.BidCode, i + 1)] = Z;
-                            InputData.ZBidsDict_Int[(emp.Seniority - 1, Bid.PriorityLevel - 1, i + 1)] = Z;
 
                         };
 
                     }
 
                 }
-                #endregion 
+                #endregion
+
 
             }
             #endregion
 
-
-            //OutputData = CplexFunctions.CalculateVacationPlanning_CPLEX(InputData);
-            OutputData = CommonFunctions.CalculateVacationPlanning_Gurobi(InputData);
+            #region Call Function For Optimization
+            OutputData = CommonFunctions.Calculate_VacationPlanning_Gurobi_String(InputData);
 
             OutputData.VPYijResultsDataGrid = OutputData.VPYijResultsDataGrid.OrderBy(item => item.Employee.Seniority).ToObservableCollection();
             OutputData.VPYijzResultsDataGrid = OutputData.VPYijzResultsDataGrid.OrderBy(item => item.Employee.Seniority).ToObservableCollection();
             OutputData.VPXijResultsDataGrid = OutputData.VPXijResultsDataGrid.OrderBy(item => item.Employee.Seniority).ToObservableCollection();
 
+
+            #endregion
+
+            #endregion
+
             #region Column Generation
 
-            #region Input Data
+            #region Dictionaries
             CGInputdata.LeaveDays = new Dictionary<int, int>();
             CGInputdata.LLiDict = new Dictionary<int, int>();
+            #endregion
+
+            #region Populate Dictionaries
 
             var XijList = OutputData.VPXijResultsDataGrid;
+
             var groupedByDate = XijList
                 .GroupBy(x => x.Date) // Group by Date
                 .Select(g => new VPXiResultData
@@ -688,6 +593,10 @@ namespace Erp.ViewModel.Thesis
                 t++;
 
             }
+
+            #endregion
+
+            #region Call Function For Optimization
             CGOutputdata = new VPCGOutputData();
             CGOutputdata = CommonFunctions.CalculateVPColumnGeneration(CGInputdata);
 
@@ -695,44 +604,45 @@ namespace Erp.ViewModel.Thesis
 
             #endregion
 
-
-            #region Create Python input txt
-            //var result = System.Windows.MessageBox.Show($"Do you want to Create a Notepad as Python Input?", "Confirmation", MessageBoxButton.YesNo);
-
-            //if (result == MessageBoxResult.Yes)
-            //{
-            //    var a = CommonFunctions.CreatePythonTxt(InputData);
-
-            //}
-
             SelectedTabIndex = 1;
-            #endregion
+
         }
 
         private void ExecuteCalculateVacationPlanning_Cplex(object obj)
         {
+            #region Vacation Planning
+
+            #region  Dictionaries
+
+            InputData.LLi_Dict = new Dictionary<int, int>();
+            InputData.N_dict = new Dictionary<int, int>();
+            InputData.NDays_Dict = new Dictionary<(int, int), int>();
+            InputData.DateFrom_Dict = new Dictionary<(int, int), int>();
+            InputData.DateTo_Dict = new Dictionary<(int, int), int>();
+
+            InputData.RBids_Dict = new Dictionary<(int, int), int>();
+            InputData.ZBids_Dict = new Dictionary<(int, int, int), int>();
+
+
+            #region Extra
             InputData.MaxLeaveBidsPerEmployee = new Dictionary<string, int>();
-
-            InputData.MaxLeaveBidsPerEmployee_Int = new Dictionary<int, int>();
-            InputData.ZBidsDict = new Dictionary<(string, string,int), int>();
+            InputData.ZBidsDict = new Dictionary<(string, string, int), int>();
             InputData.RBidsDict = new Dictionary<(string, string), int>();
+            #endregion
 
-            InputData.ZBidsDict_Int = new Dictionary<(int, int, int), int>();
-            InputData.RBidsDict_Int = new Dictionary<(int, int), int>();
+            #endregion
 
+            #region Populate Dictionaries
 
-            #region Employee Insert Data
+            InputData.Employees = CommonFunctions.GetEmployeesByTypeData(InputData.EmployeeType, false);
 
-
-
-
-            InputData.Employees = CommonFunctions.GetEmployeesByTypeData(InputData.EmployeeType,false);
             InputData.MaxLeaveBids = 0;
             int LeaveBidRowsCount = 0;
             int EmpCount = 0;
+
+
             foreach (var emp in InputData.Employees)
             {
-                EmpCount++;
                 #region LeaveStatus
                 emp.LeaveStatus = new LeaveStatusData();
                 emp.LeaveStatus = CommonFunctions.GetLeaveStatusChooserData(emp.EmployeeId, emp.Code);
@@ -740,92 +650,150 @@ namespace Erp.ViewModel.Thesis
                 #endregion
 
                 #region LeaveBids
+
                 emp.LeaveBidDataGridStatic = new ObservableCollection<LeaveBidsDataStatic>();
                 emp.LeaveBidDataGridStatic = CommonFunctions.GetLeaveBids(emp.Code, InputData.Schedule.ReqCode);
+                foreach(var LeaveBid in emp.LeaveBidDataGridStatic)
+                {
+                    if(LeaveBid.BidType == BasicEnums.BidType.Specific || LeaveBid.BidType == BasicEnums.BidType.Non_Specific)
+                    {
+                        LeaveBid.NumberOfDaysMax = LeaveBid.NumberOfDays;
+                    }
+                }
 
                 LeaveBidRowsCount = emp.LeaveBidDataGridStatic.Count();
 
-                InputData.MaxLeaveBidsPerEmployee[emp.Code] = LeaveBidRowsCount;
-                InputData.MaxLeaveBidsPerEmployee_Int[EmpCount] = LeaveBidRowsCount;
+                InputData.N_dict[EmpCount] = LeaveBidRowsCount; 
                 if (LeaveBidRowsCount > InputData.MaxLeaveBids)
                 {
                     InputData.MaxLeaveBids = LeaveBidRowsCount;
                 }
+
                 #endregion
 
-                #region Zbids Dict ,Rbids Dict
+                #region Zbids ,Rbids Dictionaries
+
+                var DatesArray = InputData.Dates;
+
                 foreach (var Bid in emp.LeaveBidDataGridStatic)
                 {
 
 
+                    #region DateFrom,DateTo,NDays Dictionaries
+
+                    int DateFrom_Index = Array.IndexOf(DatesArray, Bid.DateFrom);
+                    int DateTo_Index = Array.IndexOf(DatesArray, Bid.DateTo);
+
+                    InputData.DateFrom_Dict[(emp.Seniority - 1, Bid.PriorityLevel - 1)] = DateFrom_Index;
+                    InputData.DateTo_Dict[(emp.Seniority - 1, Bid.PriorityLevel - 1)] = DateTo_Index;
+
+                    InputData.NDays_Dict[(emp.Seniority - 1, Bid.PriorityLevel - 1)] = Bid.NumberOfDaysMax;
+
+                    #endregion
+
                     if (Bid.BidType == BasicEnums.BidType.Specific)
                     {
-                        InputData.RBidsDict[(emp.Code, Bid.BidCode)] = 1;
-                        InputData.ZBidsDict[(emp.Code, Bid.BidCode,1)] = 1;
+                        InputData.RBids_Dict[(emp.Seniority - 1, Bid.PriorityLevel - 1)] = 1;
+                        InputData.ZBids_Dict[(emp.Seniority - 1, Bid.PriorityLevel - 1, 0)] = 1;
 
-                        InputData.RBidsDict_Int[(emp.Seniority-1, Bid.PriorityLevel-1)] = 1;
-                        InputData.ZBidsDict_Int[(emp.Seniority-1, Bid.PriorityLevel-1, 1)] = 1;
+                        #region Extra
+                        InputData.RBidsDict[(emp.Code, Bid.BidCode)] = 1;
+                        InputData.ZBidsDict[(emp.Code, Bid.BidCode, 1)] = 1;
+                        #endregion
                     }
                     else if (Bid.BidType == BasicEnums.BidType.Non_Specific)
                     {
 
                         // Calculate the number of combinations
-                        TimeSpan range = Bid.DateTo - Bid.DateFrom; 
+                        TimeSpan range = Bid.DateTo - Bid.DateFrom;
                         int totalDaysInRange = (int)range.TotalDays;
-
-                        InputData.RBidsDict[(emp.Code, Bid.BidCode)] = 1;
 
                         int Z = totalDaysInRange - Bid.NumberOfDays + 2;
 
-                        InputData.ZBidsDict[(emp.Code, Bid.BidCode,1)] = Z;
+                        InputData.RBids_Dict[(emp.Seniority - 1, Bid.PriorityLevel - 1)] = 1;
+                        InputData.ZBids_Dict[(emp.Seniority - 1, Bid.PriorityLevel - 1, 0)] = Z;
 
-                        InputData.RBidsDict_Int[(emp.Seniority-1, Bid.PriorityLevel-1)] = 1;
-                        InputData.ZBidsDict_Int[(emp.Seniority-1, Bid.PriorityLevel-1, 1)] = Z;
+                        #region Extra
+
+                        InputData.RBidsDict[(emp.Code, Bid.BidCode)] = 1;
+                        InputData.ZBidsDict[(emp.Code, Bid.BidCode, 1)] = Z;
+
+                        #endregion
 
                     }
                     else if (Bid.BidType == BasicEnums.BidType.Min_Max)
                     {
+
                         TimeSpan range = Bid.DateTo - Bid.DateFrom;
                         int totalDaysInRange = (int)range.TotalDays;
 
                         var Min = Bid.NumberOfDaysMin;
                         var Max = Bid.NumberOfDaysMax;
 
+                        InputData.RBids_Dict[(emp.Seniority - 1, Bid.PriorityLevel - 1)] = Max - Min + 1;
+
+
+
+                        #region Extra
+
                         InputData.RBidsDict[(emp.Code, Bid.BidCode)] = Max - Min + 1;
-                        InputData.RBidsDict_Int[(emp.Seniority-1, Bid.PriorityLevel-1)] = Max - Min + 1;
+
+                        #endregion
 
                         for (int i = 0; i < Max - Min + 1; i++)
                         {
                             Bid.NumberOfDays = Max - i;
                             int Z = totalDaysInRange - Bid.NumberOfDays + 2;
 
-                            InputData.ZBidsDict[(emp.Code, Bid.BidCode, i+1)] = Z;
-                            InputData.ZBidsDict_Int[(emp.Seniority - 1, Bid.PriorityLevel - 1, i + 1)] = Z;
+                            InputData.ZBids_Dict[(emp.Seniority - 1, Bid.PriorityLevel - 1, i)] = Z;
 
+                            #region Extra
+
+                            InputData.ZBidsDict[(emp.Code, Bid.BidCode, i + 1)] = Z;
+
+                            #endregion
                         };
 
                     }
 
                 }
-                #endregion 
+                #endregion
 
+                EmpCount++;
+            }
+
+            int DateCount = 0;
+            var ScheduleDates = InputData.Schedule.ReqScheduleRowsData;
+            foreach (var Date in ScheduleDates)
+            {
+                InputData.LLi_Dict[DateCount] = Date.LimitLine;
+                DateCount++;
             }
             #endregion
 
-
+            #region Call Function For Optimization
             OutputData = CplexFunctions.CalculateVacationPlanning_CPLEX(InputData);
 
             OutputData.VPYijResultsDataGrid = OutputData.VPYijResultsDataGrid.OrderBy(item => item.Employee.Seniority).ToObservableCollection();
             OutputData.VPYijzResultsDataGrid = OutputData.VPYijzResultsDataGrid.OrderBy(item => item.Employee.Seniority).ToObservableCollection();
             OutputData.VPXijResultsDataGrid = OutputData.VPXijResultsDataGrid.OrderBy(item => item.Employee.Seniority).ToObservableCollection();
 
+
+            #endregion
+
+            #endregion
+
             #region Column Generation
 
-            #region Input Data
+            #region Dictionaries
             CGInputdata.LeaveDays = new Dictionary<int, int>();
             CGInputdata.LLiDict = new Dictionary<int, int>();
+            #endregion
+
+            #region Populate Dictionaries
 
             var XijList = OutputData.VPXijResultsDataGrid;
+
             var groupedByDate = XijList
                 .GroupBy(x => x.Date) // Group by Date
                 .Select(g => new VPXiResultData
@@ -839,44 +807,214 @@ namespace Erp.ViewModel.Thesis
             {
                 var PreviousLimitLine = InputData.Schedule.ReqScheduleRowsData.ElementAt(t).LimitLine;
 
-                row.LimitLine = PreviousLimitLine -row.LimitLine;
+                row.LimitLine = PreviousLimitLine - row.LimitLine;
                 row.LLi = $"LL{t + 1}";
 
                 OutputData.VPXiResultsDataGrid.Add(row);
-                CGInputdata.LLiDict[t+1] = row.LimitLine;
+                CGInputdata.LLiDict[t + 1] = row.LimitLine;
 
                 t++;
             }
 
             CGInputdata.Dates = InputData.DatesStr;
 
-            t=0;
+            t = 0;
             foreach (var emp in OutputData.EmpLeaveStatusData)
             {
 
-                    CGInputdata.LeaveDays[t+1] = emp.LeaveStatus.ProjectedBalance;
-                    t++;
-                
+                CGInputdata.LeaveDays[t + 1] = emp.LeaveStatus.ProjectedBalance;
+                t++;
+
             }
+
+            #endregion
+
+            #region Call Function For Optimization
             CGOutputdata = new VPCGOutputData();
-            CGOutputdata = CplexFunctions.CalculateVPColumnGeneration(CGInputdata);
+            CGOutputdata = CplexFunctions.CalculateVPColumnGeneration_CPLEX(CGInputdata);
 
             #endregion
 
             #endregion
 
+            SelectedTabIndex = 1;
+        }
 
-            #region Create Python input txt
-            //var result = System.Windows.MessageBox.Show($"Do you want to Create a Notepad as Python Input?", "Confirmation", MessageBoxButton.YesNo);
+        private void ExecuteCalculateVacationPlanning_Cplex2(object obj)
+        {
+            //#region Vacation Planning
 
-            //if (result == MessageBoxResult.Yes)
+            //#region  Dictionaries
+
+            //InputData.MaxLeaveBidsPerEmployee = new Dictionary<string, int>();
+            //InputData.ZBidsDict = new Dictionary<(string, string, int), int>();
+            //InputData.RBidsDict = new Dictionary<(string, string), int>();
+
+            //InputData.N_dict = new Dictionary<int, int>();
+            //InputData.NDays_Dict = new Dictionary<(int, int), int>();
+            //InputData.DateFrom_Dict = new Dictionary<(int, int), int>();
+            //InputData.DateTo_Dict = new Dictionary<(int, int), int>();
+
+            //InputData.RBids_Dict = new Dictionary<(int, int), int>();
+            //InputData.ZBids_Dict = new Dictionary<(int, int, int), int>();
+
+            //#endregion
+
+            //#region Populate Dictionaries
+
+            //InputData.Employees = CommonFunctions.GetEmployeesByTypeData(InputData.EmployeeType, false);
+            //InputData.MaxLeaveBids = 0;
+            //int LeaveBidRowsCount = 0;
+            //int EmpCount = 0;
+            //foreach (var emp in InputData.Employees)
             //{
-            //    var a = CommonFunctions.CreatePythonTxt(InputData);
+            //    #region LeaveStatus
+            //    emp.LeaveStatus = new LeaveStatusData();
+            //    emp.LeaveStatus = CommonFunctions.GetLeaveStatusChooserData(emp.EmployeeId, emp.Code);
+
+            //    #endregion
+
+            //    #region LeaveBids
+            //    emp.LeaveBidDataGridStatic = new ObservableCollection<LeaveBidsDataStatic>();
+            //    emp.LeaveBidDataGridStatic = CommonFunctions.GetLeaveBids(emp.Code, InputData.Schedule.ReqCode);
+
+            //    LeaveBidRowsCount = emp.LeaveBidDataGridStatic.Count();
+
+            //    InputData.MaxLeaveBidsPerEmployee[emp.Code] = LeaveBidRowsCount;
+            //    InputData.MaxLeaveBidsPerEmployee_Int[EmpCount] = LeaveBidRowsCount;
+            //    if (LeaveBidRowsCount > InputData.MaxLeaveBids)
+            //    {
+            //        InputData.MaxLeaveBids = LeaveBidRowsCount;
+            //    }
+            //    #endregion
+
+            //    #region Zbids ,Rbids Dictionaries
+            //    foreach (var Bid in emp.LeaveBidDataGridStatic)
+            //    {
+
+
+            //        if (Bid.BidType == BasicEnums.BidType.Specific)
+            //        {
+            //            InputData.RBidsDict[(emp.Code, Bid.BidCode)] = 1;
+            //            InputData.ZBidsDict[(emp.Code, Bid.BidCode, 1)] = 1;
+
+            //            InputData.RBidsDict_Int[(emp.Seniority - 1, Bid.PriorityLevel - 1)] = 1;
+            //            InputData.ZBidsDict_Int[(emp.Seniority - 1, Bid.PriorityLevel - 1, 1)] = 1;
+            //        }
+            //        else if (Bid.BidType == BasicEnums.BidType.Non_Specific)
+            //        {
+
+            //            // Calculate the number of combinations
+            //            TimeSpan range = Bid.DateTo - Bid.DateFrom;
+            //            int totalDaysInRange = (int)range.TotalDays;
+
+            //            InputData.RBidsDict[(emp.Code, Bid.BidCode)] = 1;
+
+            //            int Z = totalDaysInRange - Bid.NumberOfDays + 2;
+            //            InputData.ZBidsDict[(emp.Code, Bid.BidCode, 1)] = Z;
+
+            //            InputData.RBidsDict_Int[(emp.Seniority - 1, Bid.PriorityLevel - 1)] = 1;
+            //            InputData.ZBidsDict_Int[(emp.Seniority - 1, Bid.PriorityLevel - 1, 1)] = Z;
+
+            //        }
+            //        else if (Bid.BidType == BasicEnums.BidType.Min_Max)
+            //        {
+            //            TimeSpan range = Bid.DateTo - Bid.DateFrom;
+            //            int totalDaysInRange = (int)range.TotalDays;
+
+            //            var Min = Bid.NumberOfDaysMin;
+            //            var Max = Bid.NumberOfDaysMax;
+
+            //            InputData.RBidsDict[(emp.Code, Bid.BidCode)] = Max - Min + 1;
+            //            InputData.RBidsDict_Int[(emp.Seniority - 1, Bid.PriorityLevel - 1)] = Max - Min + 1;
+
+            //            for (int i = 0; i < Max - Min + 1; i++)
+            //            {
+            //                Bid.NumberOfDays = Max - i;
+            //                int Z = totalDaysInRange - Bid.NumberOfDays + 2;
+
+            //                InputData.ZBidsDict[(emp.Code, Bid.BidCode, i + 1)] = Z;
+            //                InputData.ZBidsDict_Int[(emp.Seniority - 1, Bid.PriorityLevel - 1, i + 1)] = Z;
+
+            //            };
+
+            //        }
+
+            //    }
+            //    #endregion
+
+            //    EmpCount++;
+
+            //}
+            //#endregion
+
+            //#region Call Function For Optimization
+            //OutputData = CplexFunctions.CalculateVacationPlanning_CPLEX(InputData);
+
+            //OutputData.VPYijResultsDataGrid = OutputData.VPYijResultsDataGrid.OrderBy(item => item.Employee.Seniority).ToObservableCollection();
+            //OutputData.VPYijzResultsDataGrid = OutputData.VPYijzResultsDataGrid.OrderBy(item => item.Employee.Seniority).ToObservableCollection();
+            //OutputData.VPXijResultsDataGrid = OutputData.VPXijResultsDataGrid.OrderBy(item => item.Employee.Seniority).ToObservableCollection();
+
+
+            //#endregion
+
+            //#endregion
+
+            //#region Column Generation
+
+            //#region Dictionaries
+            //CGInputdata.LeaveDays = new Dictionary<int, int>();
+            //CGInputdata.LLiDict = new Dictionary<int, int>();
+            //#endregion
+
+            //#region Populate Dictionaries
+
+            //var XijList = OutputData.VPXijResultsDataGrid;
+
+            //var groupedByDate = XijList
+            //    .GroupBy(x => x.Date) // Group by Date
+            //    .Select(g => new VPXiResultData
+            //    {
+            //        Date = g.Key, // Date
+            //        LimitLine = g.Sum(x => (int)x.XijFlag)
+            //    });
+
+            //var t = 0;
+            //foreach (var row in groupedByDate)
+            //{
+            //    var PreviousLimitLine = InputData.Schedule.ReqScheduleRowsData.ElementAt(t).LimitLine;
+
+            //    row.LimitLine = PreviousLimitLine - row.LimitLine;
+            //    row.LLi = $"LL{t + 1}";
+
+            //    OutputData.VPXiResultsDataGrid.Add(row);
+            //    CGInputdata.LLiDict[t + 1] = row.LimitLine;
+
+            //    t++;
+            //}
+
+            //CGInputdata.Dates = InputData.DatesStr;
+
+            //t = 0;
+            //foreach (var emp in OutputData.EmpLeaveStatusData)
+            //{
+
+            //    CGInputdata.LeaveDays[t + 1] = emp.LeaveStatus.ProjectedBalance;
+            //    t++;
 
             //}
 
-            SelectedTabIndex = 1;
-            #endregion
+            //#endregion
+
+            //#region Call Function For Optimization
+            //CGOutputdata = new VPCGOutputData();
+            //CGOutputdata = CplexFunctions.CalculateVPColumnGeneration_CPLEX(CGInputdata);
+
+            //#endregion
+
+            //#endregion
+
+            //SelectedTabIndex = 1;
         }
         #endregion
 
@@ -907,6 +1045,5 @@ namespace Erp.ViewModel.Thesis
             }
         }
 
-        #endregion
     }
 }

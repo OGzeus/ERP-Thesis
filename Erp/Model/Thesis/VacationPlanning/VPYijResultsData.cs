@@ -30,11 +30,10 @@ namespace Erp.Model.Thesis.VacationPlanning
         public List<string> Dates { get; set; }
 
         public string Yij { get; set; }
-        public string Yijr { get; set; }
+        public string Rijr { get; set; }
         public string Yijrz { get; set; }
 
         public double YijFlag { get; set; }
-        public double ConfirmedBidFlag { get; set; }
 
         public DateTime DateFrom { get; set; }
         public DateTime DateTo { get; set; }

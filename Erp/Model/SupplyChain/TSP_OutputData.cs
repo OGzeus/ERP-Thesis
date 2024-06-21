@@ -25,7 +25,18 @@ namespace Erp.Model.SupplyChain
 
             }
         }
+        private SAnnealing_TSP_OutputData _SAnnealing_outputdata;
+        public SAnnealing_TSP_OutputData SAnnealing_Outputdata
+        {
+            get { return _SAnnealing_outputdata; }
+            set
+            {
+                _SAnnealing_outputdata = value;
+                INotifyPropertyChanged(nameof(SAnnealing_Outputdata));
 
+
+            }
+        }
 
         #region Diagrams
 

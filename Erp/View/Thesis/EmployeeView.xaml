@@ -459,12 +459,12 @@
                                         <TextBlock Text="Total : " Grid.Row="0" Grid.Column="0" Margin="2"/>
                                         <TextBlock Text="Used: " Grid.Row="1" Grid.Column="0" Margin="2"/>
                                         <TextBlock Text="Current Balance : " Grid.Row="2" Grid.Column="0" Margin="2"/>
-                                        <TextBlock Text="Projected Balance : " Grid.Row="3" Grid.Column="0" Margin="2"/>
+                                        <!--<TextBlock Text="Projected Balance : " Grid.Row="3" Grid.Column="0" Margin="2"/>-->
 
                                         <TextBox Text="{Binding FlatData.LeaveStatus.Total, Mode=TwoWay}" Grid.Row="0" Grid.Column="1" Margin="2" HorizontalAlignment="Stretch" Width="135" />
                                         <TextBox Text="{Binding FlatData.LeaveStatus.Used, Mode=TwoWay}" Grid.Row="1" Grid.Column="1" Margin="2" HorizontalAlignment="Stretch" Width="135" />
                                         <TextBox Text="{Binding FlatData.LeaveStatus.CurrentBalance, Mode=OneWay}" Grid.Row="2" Grid.Column="1" Margin="2" HorizontalAlignment="Stretch" Width="135" IsReadOnly="True"/>
-                                        <TextBox Text="{Binding FlatData.LeaveStatus.ProjectedBalance, Mode=TwoWay}" Grid.Row="3" Grid.Column="1" Margin="2" HorizontalAlignment="Stretch" Width="135" IsReadOnly="True" />
+                                        <!--<TextBox Text="{Binding FlatData.LeaveStatus.ProjectedBalance, Mode=TwoWay}" Grid.Row="3" Grid.Column="1" Margin="2" HorizontalAlignment="Stretch" Width="135" IsReadOnly="True" />-->
 
                                         <StackPanel  Grid.Row="4" Grid.Column="0" Margin="4"  HorizontalAlignment="Center"  Grid.ColumnSpan="5" VerticalAlignment="Stretch" Orientation="Horizontal"  >
                                             <Button Margin="4" Width="100"  x:Name="RefreshLeaveStatusCommand"   HorizontalAlignment="Left" Command="{Binding RefreshCommandLeaveStatus}">

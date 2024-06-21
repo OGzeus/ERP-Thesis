@@ -45,7 +45,6 @@ namespace Erp.DataBase.Τhesis
         [Column(TypeName = "datetime")]
         public DateTime? HireDate { get; set; }
 
-
         [Column(TypeName = "int")]
         public int? Seniority { get; set; }
 
@@ -57,7 +56,6 @@ namespace Erp.DataBase.Τhesis
 
         public int? BaseAirportId { get; set; }
         public int? CertificationID { get; set; }
-
 
         [Column(TypeName = "int")]
         public int? LowerBound { get; set; }

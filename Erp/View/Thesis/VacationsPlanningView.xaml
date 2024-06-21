@@ -355,7 +355,7 @@
                                         <syncfusion:GridTextColumn MappingName="DateToStr" HeaderText="Date To" AllowEditing="False"/>
                                         <syncfusion:GridTextColumn MappingName="NumberOfDays" HeaderText="Number Of Days" AllowEditing="False"/>
                                         <syncfusion:GridTextColumn MappingName="Yij" HeaderText="Yij" AllowEditing="False"/>
-                                        <syncfusion:GridTextColumn MappingName="Yijr" HeaderText="Yijr" AllowEditing="False"/>
+                                        <syncfusion:GridTextColumn MappingName="Rijr" HeaderText="Rijr" AllowEditing="False"/>
                                         <syncfusion:GridTextColumn MappingName="Yijrz" HeaderText="Yijrz" AllowEditing="False"/>
 
                                         <syncfusion:GridCheckBoxColumn MappingName="YijFlag" HeaderText="Granted " AllowEditing="False"/>

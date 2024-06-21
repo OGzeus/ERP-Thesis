@@ -11,6 +11,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Erp.Model.Enums;
+using Deedle.Internal;
 
 namespace Erp.Model.Thesis.CrewScheduling
 {
@@ -105,24 +106,28 @@ namespace Erp.Model.Thesis.CrewScheduling
 
         #region Crew Scheduling Input
         public int T { get; set; }  //Planning Horizon
-        public int N { get; set; }  //Number Of Employees
-        public int R { get; set; }  //Number Of Routes
+        public int I { get; set; }  //Number Of Employees N
+        public int F { get; set; }  //Number Of Routes R
+
+
 
         public Dictionary<int, DateTime> DatesIndexMap { get; set; } 
         public Dictionary<int, string> EmployeesIndexMap { get; set; } 
         public Dictionary<int, string> RoutesIndexMap { get; set; }
-
-
         public Dictionary<int, (DateTime, DateTime)> RoutesDates_Dict { get; set; } //Dictionary<Route, (StartDate, EndDate)>
+   
         public Dictionary<int, (int, int)> RoutesDay_Dict { get; set; } //Dictionary<Route, (StartDay, EndDay)>
         public Dictionary<int, (int, int)> RoutesTime_Dict { get; set; } //Dictionary<Route, (StartTime, EndTime)> 
         public Dictionary<int, (double, double)> EmpBounds_Dict { get; set; } //Dictionary<Employee, (LowerBound, UpperBound)>
 
-    
+        public Dictionary<int, List<int>> Ri { get; set; } //Dictionary<Employee, List<Routes>> 
+
+        public Dictionary<(int, int), double> Cij_Hours { get; set; } //Dictionary<(Emp, Route),Cost> 
+
         #endregion
 
 
-
+  
 
 
     }

@@ -85,8 +85,6 @@ namespace Erp.Model.Thesis.VacationPlanning
 
         public Dictionary<string, int> MaxLeaveBidsPerEmployee { get; set; } 
 
-        public List<(int, int)> OverlappingBids1 = new List<(int, int)>();
-        public List<(int, int)> OverlappingBids2 = new List<(int, int)>();
         public Dictionary<(string, string,int), int> ZBidsDict { get; set; }
         public Dictionary<(string, string), int> RBidsDict { get; set; }
 
@@ -118,9 +116,28 @@ namespace Erp.Model.Thesis.VacationPlanning
         private int _MaxLeaveBidsInt;
         private int _MaxNonSpecificInt;
 
-        public Dictionary<int, int> MaxLeaveBidsPerEmployee_Int { get; set; }
-        public Dictionary<(int, int, int), int> ZBidsDict_Int { get; set; }
-        public Dictionary<(int, int), int> RBidsDict_Int { get; set; }
+
+        //Dictionary<Date, Limit Line> 
+        public Dictionary<int, int> LLi_Dict { get; set; }
+
+        //Dictionary<Employee, Number of Bids> 
+        public Dictionary<int, int> N_dict { get; set; }
+
+        //Dictionary<(Employee, Bid), Number Of Days> . If Bid.BidType = Min_Max then Number Of Days = Max Number Of Days
+        public Dictionary<(int, int), int> NDays_Dict { get; set; }
+
+        //Dictionary<(Employee, Bid), Date From>
+        public Dictionary<(int, int), int> DateFrom_Dict { get; set; }
+
+        //Dictionary<(Employee, Bid), Date To>
+        public Dictionary<(int, int), int> DateTo_Dict { get; set; }
+
+        //Dictionary<(Employee, Bid), Number Of Non-Specific Bids>
+        public Dictionary<(int, int), int> RBids_Dict { get; set; }
+
+        //Dictionary<(Employee, Bid, Non-Specific), Number Specific Bids>
+        public Dictionary<(int, int, int), int> ZBids_Dict { get; set; }
+
 
         #endregion
     }
