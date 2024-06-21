@@ -83,10 +83,12 @@ namespace Erp.Model.Thesis.VacationPlanning
         private string[] datesstr;
         private DateTime[] dates;
 
+        #region Dictionaries String
         public Dictionary<string, int> MaxLeaveBidsPerEmployee { get; set; } 
-
         public Dictionary<(string, string,int), int> ZBidsDict { get; set; }
         public Dictionary<(string, string), int> RBidsDict { get; set; }
+
+        #endregion
 
         public int MaxLeaveBids
         {
@@ -113,15 +115,18 @@ namespace Erp.Model.Thesis.VacationPlanning
 
         #region Dictionaries/Input for Optimisation Int
 
-        private int _MaxLeaveBidsInt;
-        private int _MaxNonSpecificInt;
-
 
         //Dictionary<Date, Limit Line> 
         public Dictionary<int, int> LLi_Dict { get; set; }
 
+        //Dictionary<Employee, Max Leave Days> 
+        public Dictionary<int, int> MaxD_Dict { get; set; }
+
         //Dictionary<Employee, Number of Bids> 
-        public Dictionary<int, int> N_dict { get; set; }
+        public Dictionary<int, int> N_Dict { get; set; }
+
+        //Dictionary<Employee, LeaveDays> 
+        public Dictionary<int, int> ELDays_dict { get; set; }
 
         //Dictionary<(Employee, Bid), Number Of Days> . If Bid.BidType = Min_Max then Number Of Days = Max Number Of Days
         public Dictionary<(int, int), int> NDays_Dict { get; set; }

@@ -739,7 +739,7 @@ namespace Erp.ViewModel.Thesis
         }
 
 
-        private void ExecuteUpdateLeaveBid(object commandParameter)
+        private void ExecuteUpdateLeaveBid2(object commandParameter)
         {
             //var result = System.Windows.MessageBox.Show($"The Forecast with Code {FlatData.ForCode}  will be set as the Main Forecast for the MRP . Proceed?", "Confirmation", MessageBoxButton.YesNo);
             bool add = string.IsNullOrWhiteSpace(FlatData.LeaveBidInfo.BidCode);
@@ -959,7 +959,7 @@ namespace Erp.ViewModel.Thesis
 
         }
 
-        private void ExecuteUpdateLeaveBid2(object commandParameter)
+        private void ExecuteUpdateLeaveBid(object commandParameter)
         {
             //var result = System.Windows.MessageBox.Show($"The Forecast with Code {FlatData.ForCode}  will be set as the Main Forecast for the MRP . Proceed?", "Confirmation", MessageBoxButton.YesNo);
             bool add = string.IsNullOrWhiteSpace(FlatData.LeaveBidInfo.BidCode);

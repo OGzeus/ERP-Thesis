@@ -3545,7 +3545,7 @@ Where 1=1 {0}", FilterStr);
 
             List<string> rows = new List<string>();
             List<string> columns = new List<string>();
-            Dictionary<(string, string), double> make_plan = new Dictionary<(string, string), double>();
+            Dictionary<(string, string), double> GrantedDays_Dict = new Dictionary<(string, string), double>();
             double bigM = 10000;
 
             try
@@ -3722,16 +3722,9 @@ Where 1=1 {0}", FilterStr);
 
                         }
                     }
-                    for (int t = 0; t < Dates.Length; t++)
-                    {
 
-                        // Create the binary variable with a name
-                        SumX.AddTerm(1, X[i, t]);
-
-                    }
                 }
 
-                objective = objective - 0.00000001 * SumX;
                 model.SetObjective(objective, GRB.MAXIMIZE);
 
                 #endregion
@@ -4128,7 +4121,7 @@ Where 1=1 {0}", FilterStr);
                                     modelFromFiles.Update();
                                     Data.ObjValue = modelFromFiles.ObjVal;
                                     //Data.ObjValue = Math.Round(Data.ObjValue);
-                                    #region Insert Xij
+                                    #region Extract Xij
                                     // Extract the optimal solution for the 'X' variables
                                     for (int i = 0; i < Employees.Length; i++)
                                     {
@@ -4138,13 +4131,13 @@ Where 1=1 {0}", FilterStr);
                                             string date = Dates[t];
                                             GRBVar Xit = modelFromFiles.GetVarByName($"X{i + 1}_{t + 1}");
 
-                                            double xValue = Xit.X;
+                                            double xValue = 0;
                                             if (xValue == 1)
                                             {
                                                 Console.WriteLine($"Employee: {employee}, Date: {date}, Value: {xValue}");
                                             }
                                             // Store the optimal 'X' value in the data structure
-                                            make_plan[(employee, date)] = xValue;
+                                            GrantedDays_Dict[(employee, date)] = xValue;
 
                                             // Add 'employee' and 'date' to the respective lists if they are not already there
                                             if (!rows.Contains(employee))
@@ -4152,41 +4145,6 @@ Where 1=1 {0}", FilterStr);
                                             if (!columns.Contains(date))
                                                 columns.Add(date);
                                         }
-                                    }
-                                    #endregion
-
-
-
-
-
-                                    #region Print the optimal solution for 'X' variables
-                                    Console.WriteLine("Optimal Solution for X Variables:");
-                                    foreach (var employee in rows)
-                                    {
-                                        foreach (var date in columns)
-                                        {
-                                            double xValue = make_plan.ContainsKey((employee, date)) ? make_plan[(employee, date)] : 0.0;
-                                            Console.WriteLine($"Employee: {employee}, Date: {date}, Value: {xValue} -> Employee: {employee}, Date: {date}, Value: {xValue} X{(Array.IndexOf(Employees, employee) + 1)}{(Array.IndexOf(Dates, date) + 1)}");
-
-
-                                            #region Populate VP Xij
-                                            VPXijResultsData singleDataRecord = new VPXijResultsData();
-
-
-                                            singleDataRecord.Xij = $"X{(Array.IndexOf(Employees, employee) + 1)}{(Array.IndexOf(Dates, date) + 1)}";
-                                            singleDataRecord.XijFlag = xValue;
-                                            singleDataRecord.Date = date;
-
-
-
-
-                                            var SpecificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == employee);
-                                            singleDataRecord.Employee = SpecificEmployee;
-
-                                            Data.VPXijResultsDataGrid.Add(singleDataRecord);
-                                            #endregion
-                                        }
-
                                     }
                                     #endregion
 
@@ -4236,6 +4194,7 @@ Where 1=1 {0}", FilterStr);
                                     }
 
                                     #endregion
+
                                     #region Print the optimal solution for 'Y' variables
                                     Console.WriteLine("\nOptimal Solution for Y Variables:");
                                     int counter = 0;
@@ -4365,7 +4324,7 @@ Where 1=1 {0}", FilterStr);
 
                                                     yijzDataRecord.LeaveBidData = SpecificEmployee.LeaveBidDataGridStatic[j];
 
-                                                    #region Edit Dates
+                                                    #region Change Dates Format , Fill GrantedDays_Dict
 
 
                                                     DateFrom = SpecificEmployee.LeaveBidDataGridStatic[j].DateFrom.AddDays(z);
@@ -4377,6 +4336,19 @@ Where 1=1 {0}", FilterStr);
                                                     yijzDataRecord.NumberOfDays = NumberOfDays;
                                                     yijzDataRecord.DateFromStr = DateFrom.ToString("dd/MM/yyyy");
                                                     yijzDataRecord.DateToStr = DateTo.ToString("dd/MM/yyyy");
+
+                                                    #region Insert Dates To List
+                                                    if (yValue == 1)
+                                                    {
+                                                        for (DateTime date = DateFrom; date <= DateTo; date = date.AddDays(1))
+                                                        {
+                                                            var SelectedDate_Str = date.ToString("dd/MM/yyyy");
+
+                                                            GrantedDays_Dict[(SpecificEmployee.Code, SelectedDate_Str)] = 1;
+
+                                                        }
+                                                    }
+                                                    #endregion
 
                                                     #endregion
                                                     Data.VPYijzResultsDataGrid.Add(yijzDataRecord);
@@ -4401,6 +4373,38 @@ Where 1=1 {0}", FilterStr);
 
                                     }
                                     #endregion
+
+                                    #region Insert the optimal solution for 'X' variables
+                                    Console.WriteLine("Optimal Solution for X Variables:");
+                                    foreach (var employee in rows)
+                                    {
+                                        foreach (var date in columns)
+                                        {
+                                            double xValue = GrantedDays_Dict.ContainsKey((employee, date)) ? GrantedDays_Dict[(employee, date)] : 0.0;
+                                            Console.WriteLine($"Employee: {employee}, Date: {date}, Value: {xValue} -> Employee: {employee}, Date: {date}, Value: {xValue} X{(Array.IndexOf(Employees, employee) + 1)}{(Array.IndexOf(Dates, date) + 1)}");
+
+
+                                            #region Populate VP Xij
+                                            VPXijResultsData singleDataRecord = new VPXijResultsData();
+
+
+                                            singleDataRecord.Xij = $"X{(Array.IndexOf(Employees, employee) + 1)}{(Array.IndexOf(Dates, date) + 1)}";
+                                            singleDataRecord.XijFlag = xValue;
+                                            singleDataRecord.Date = date;
+
+
+
+
+                                            var SpecificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == employee);
+                                            singleDataRecord.Employee = SpecificEmployee;
+
+                                            Data.VPXijResultsDataGrid.Add(singleDataRecord);
+                                            #endregion
+                                        }
+
+                                    }
+                                    #endregion
+
 
                                     #region Create c#sol.txt for python
                                     //string filePath = @"C:\Users\npoly\Source\Repos\Bids_CrewScheduling_Kozanidis\c#sol.txt";
