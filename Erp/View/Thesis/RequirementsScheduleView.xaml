@@ -38,30 +38,32 @@
 
         <TextBlock Text="Schedule Code : " FontWeight="Bold"   Grid.Row="1" Grid.Column="0" Margin="2"/>
         <StackPanel Grid.Row="1" Grid.Column="1" Margin="2" HorizontalAlignment="Left"  Orientation="Horizontal">
-            <TextBox Text="{Binding FlatData.ReqCode, Mode=TwoWay}" HorizontalAlignment="left" Width="115"  />
-            <Button Content="f" Width="20"                        Command="{Binding ShowReqScheduleInfoDataGridCommand}"/>
+            <TextBox Text="{Binding FlatData.ReqCode, Mode=TwoWay}" HorizontalAlignment="left" Width="115" Height="28" />
+            <Button Content="f" Width="20" Height="28"                       Command="{Binding ShowReqScheduleInfoDataGridCommand}"/>
         </StackPanel>
 
         <TextBlock Text="Schedule Description  : " FontWeight="Bold"  Grid.Row="1" Grid.Column="2" Margin="2" />
         <StackPanel Grid.Row="1" Grid.Column="3" HorizontalAlignment="Stretch"  Orientation="Horizontal" Margin="2">
-            <TextBox Text="{Binding FlatData.ReqDescr, Mode=TwoWay}" HorizontalAlignment="Stretch" Width="135" />
+            <TextBox Text="{Binding FlatData.ReqDescr, Mode=TwoWay}" HorizontalAlignment="Stretch" Width="135"  Height="28"/>
         </StackPanel>
 
         <StackPanel Grid.Row="1" Grid.Column="4" HorizontalAlignment="Stretch"  Orientation="Horizontal" Margin="2" >
             <Button x:Name="AddItem"  Width="160" HorizontalAlignment="Left" Margin="2" Command="{Binding AddScheduleCommand}">
                 <TextBlock Text="Add New Schedule"/>
             </Button>
-            <TextBlock Text="Delete : " FontWeight="Bold"   Margin="15,0,0,0"/>
-            <CheckBox IsChecked="{Binding FlatData.IsDeleted, Mode=TwoWay}"  Margin="2" VerticalAlignment="Center"  />
-            <ToggleButton x:Name = "tb" Content = "Show Deleted"  
-         IsChecked="{Binding ShowDeleted, Mode=TwoWay}"  Margin = "2" Background="Beige" BorderBrush="Black" 
-         Width = "117" HorizontalAlignment = "Center" >
-            </ToggleButton>
-
             <ToggleButton x:Name = "MainSchedule" Content = "Main Schedule"  
-         IsChecked="{Binding FlatData.MainSchedule, Mode=TwoWay}"  Command="{Binding MainScheduleCommand}"  Margin = "2" Background="Red" BorderBrush="Black" 
+         IsChecked="{Binding FlatData.MainSchedule, Mode=TwoWay}"  Command="{Binding MainScheduleCommand}" Margin="15,2,2,2"  Background="Red" BorderBrush="Black" 
            HorizontalAlignment = "Center" >
             </ToggleButton>
+            <ToggleButton x:Name = "tb" Content = "Show Deleted"  
+         IsChecked="{Binding ShowDeleted, Mode=TwoWay}"  Margin="15,2,2,2" Background="Beige" BorderBrush="Black" 
+         Width = "120" HorizontalAlignment = "Center"  >
+            </ToggleButton>
+            <TextBlock Text="Delete : " FontWeight="Bold"   Margin="5,2,2,2"/>
+            <CheckBox IsChecked="{Binding FlatData.IsDeleted, Mode=TwoWay}"  Margin="2" VerticalAlignment="Center"  />
+
+
+
 
         </StackPanel>
         <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="8"  converter:MainStackPanelReadonly.IsEnabledBasedOnProperty="{Binding FlatData.ReqCode}" >

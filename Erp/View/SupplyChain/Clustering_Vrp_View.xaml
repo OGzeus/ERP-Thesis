@@ -289,7 +289,6 @@
 
                         <TabItem Header="Clustering Results ">
                         
-
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
@@ -396,7 +395,7 @@
                                 </Grid.RowDefinitions>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
 
                                 </Grid.ColumnDefinitions>
                                 <syncfusion:SfDataGrid x:Name="sfGrid_CLustersInfo1"
@@ -664,7 +663,7 @@
                                 </StackPanel>
 
                             </Border>
-                            <StackPanel Grid.Row="3" Grid.ColumnSpan="6" HorizontalAlignment="Center" Orientation="Horizontal">
+                            <StackPanel Grid.Row="3" Grid.ColumnSpan="6" HorizontalAlignment="Left" Orientation="Horizontal">
                                 <Button x:Name="CalculateTSP"  Width="180" HorizontalAlignment="Left" Margin="2"  Command="{Binding CalculateTSP}">
                                     <TextBlock Text="Calculate TSP "/>
                                 </Button>
@@ -676,6 +675,8 @@
                                                     ColumnSizer="Star"
                                                     Background="White"
                                                     AllowSorting="True"
+                                                    MaxWidth="900"
+                                                    HorizontalAlignment="Left"
                                                     ShowSortNumbers="True"
                                                     AllowEditing="True"
                                                     AllowResizingColumns="True"
@@ -818,6 +819,7 @@
                                                     AutoGenerateColumns="False"
                                                     AllowEditing="False"
                                                     AllowResizingColumns="True"
+                                                    HorizontalAlignment="Left"
                                                     FilterRowPosition="FixedTop"
                                                     ScrollViewer.VerticalScrollBarVisibility="Visible"
                                                     ScrollViewer.HorizontalScrollBarVisibility="Visible"
@@ -834,7 +836,7 @@
                                     </i:Interaction.Triggers>
                                 </syncfusion:SfDataGrid>
                                 
-                                <lvc:CartesianChart  Zoom="Xy" Pan="Xy" ZoomingSpeed="0.9"  Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="5" MaxHeight="600" MaxWidth="800"
+                                <lvc:CartesianChart  Zoom="Xy" Pan="Xy" ZoomingSpeed="0.9"  Grid.Row="3" Grid.Column="0"  Grid.ColumnSpan="5" MaxHeight="600" MaxWidth="800"
                                                          Series="{Binding TSP_ResultsData.TSP_DiagramData.SeriesCollection}" 
                                                          FontSize="15" LegendLocation="Right" Name="TSP_Diagram" >
 
@@ -853,7 +855,7 @@
                         </TabItem>
                     </TabControl>
                 </TabItem>
-                <TabItem Header="VRP Input ">
+                <!--<TabItem Header="VRP Input ">
                     <StackPanel>
                         <Grid  Margin="0,0,-193,0">
                             <Grid.RowDefinitions>
@@ -1071,7 +1073,7 @@
                     </StackPanel>
                 </TabItem>
                 <TabItem Header="VRP Results">
-                    <!--<TabControl>
+                    --><!--<TabControl>
                         <TabItem Header="VRP Results">
                             <Grid>
                                 <Grid.RowDefinitions>
@@ -1177,8 +1179,8 @@
                                 </Grid>
                             </Grid>
                         </TabItem>
-                    </TabControl>-->
-                </TabItem>
+                    </TabControl>--><!--
+                </TabItem>-->
             </TabControl>
         </StackPanel>
 

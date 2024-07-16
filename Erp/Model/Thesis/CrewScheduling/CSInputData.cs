@@ -12,6 +12,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Erp.Model.Enums;
 using Deedle.Internal;
+using Erp.Model.Thesis.CrewScheduling;
 
 namespace Erp.Model.Thesis.CrewScheduling
 {
@@ -29,9 +30,16 @@ namespace Erp.Model.Thesis.CrewScheduling
         private ObservableCollection<FlightRoutesData> _FlightRoutesData;
         private ObservableCollection<EmployeeData> _Employees;
         private BasicEnums.EmployeeType _Position { get; set; }
+        private BasicEnums.CSType _CSType { get; set; }
 
         private int _RoutesPenalty;
         private int _BoundsPenalty;
+
+        public BasicEnums.CSType CSType
+        {
+            get { return _CSType; }
+            set { _CSType = value; OnPropertyChanged("CSType"); }
+        }
 
         public int RoutesPenalty
         {
@@ -90,8 +98,6 @@ namespace Erp.Model.Thesis.CrewScheduling
             set { _Position = value; OnPropertyChanged("Position"); }
         }
 
-
-
         public ObservableCollection<FlightRoutesData> FlightRoutesData
         {
             get { return _FlightRoutesData; }
@@ -103,31 +109,47 @@ namespace Erp.Model.Thesis.CrewScheduling
             set { _Employees = value; OnPropertyChanged("Employees"); }
         }
 
-
         #region Crew Scheduling Input
+
+        #region Indexes
         public int T { get; set; }  //Planning Horizon
-        public int I { get; set; }  //Number Of Employees N
-        public int F { get; set; }  //Number Of Routes R
-
-
-
-        public Dictionary<int, DateTime> DatesIndexMap { get; set; } 
-        public Dictionary<int, string> EmployeesIndexMap { get; set; } 
-        public Dictionary<int, string> RoutesIndexMap { get; set; }
-        public Dictionary<int, (DateTime, DateTime)> RoutesDates_Dict { get; set; } //Dictionary<Route, (StartDate, EndDate)>
-   
-        public Dictionary<int, (int, int)> RoutesDay_Dict { get; set; } //Dictionary<Route, (StartDay, EndDay)>
-        public Dictionary<int, (int, int)> RoutesTime_Dict { get; set; } //Dictionary<Route, (StartTime, EndTime)> 
-        public Dictionary<int, (double, double)> EmpBounds_Dict { get; set; } //Dictionary<Employee, (LowerBound, UpperBound)>
-
-        public Dictionary<int, List<int>> Ri { get; set; } //Dictionary<Employee, List<Routes>> 
-
-        public Dictionary<(int, int), double> Cij_Hours { get; set; } //Dictionary<(Emp, Route),Cost> 
+        public int I { get; set; }  //Number Of Employees 
+        public int F { get; set; }  //Number Of Routes 
 
         #endregion
 
+        #region Dictionaries 
+        public Dictionary<int, DateTime> DatesIndexMap { get; set; }
+        public Dictionary<int, string> EmployeesIndexMap { get; set; }
 
-  
+        //Dictionary<Employee, List<Rosters>> 
+        public Dictionary<int, List<int>> Ri { get; set; }
+
+        //Dictionary<(Employee, Roster),Hours Penalty> 
+        public Dictionary<(int, int), double> Cij_Hours { get; set; }
+
+        //Dictionary<(Employee, Roster,Route),0 or 1 > 
+        public Dictionary<(int, int,int), int> Aijf { get; set; } 
+
+        #endregion
+
+        #region  Routes Support Dictionaries
+        public Dictionary<int, string> RoutesIndexMap { get; set; }
+        public Dictionary<int, (DateTime, DateTime)> RoutesDates_Dict { get; set; } //Dictionary<Route, (StartDate, EndDate)>
+        public Dictionary<int, (int, int)> RoutesDay_Dict { get; set; } //Dictionary<Route, (StartDay, EndDay)>
+        public Dictionary<int, (int, int)> RoutesTime_Dict { get; set; } //Dictionary<Route, (StartTime, EndTime)> 
+        public Dictionary<int,int> RoutesCompl_Dict { get; set; } //Dictionary<Route, Complement> 
+
+        public Dictionary<int, (double, double)> EmpBounds_Dict { get; set; } //Dictionary<Employee, (LowerBound, UpperBound)>
+        #endregion
+        #endregion
+
+
+
+
+
+
+
 
 
     }

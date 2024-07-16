@@ -69,33 +69,42 @@ namespace Erp.Model.Thesis.CrewScheduling
 
         public DateTime StartDate
         {
-            get
-            {
-                return _StartDate == default(DateTime) ? DateTime.Now : _StartDate;
-            }
+            get { return _StartDate; }
             set
             {
                 if (_StartDate != value)
                 {
-                    _StartDate = value == default(DateTime) ? DateTime.Now : value;
-                    FlightTime = (float)(_EndDate - _StartDate).TotalHours;
-                    INotifyPropertyChanged(nameof(StartDate));
+                    _StartDate = value;
+                    OnPropertyChanged(nameof(StartDate));
+                    OnPropertyChanged(nameof(TotalTime)); // TotalTime depends on StartDate and EndDate
                 }
             }
         }
+
         public DateTime EndDate
         {
-            get
-            {
-                return _EndDate == default(DateTime) ? DateTime.Now.AddDays(1) : _EndDate;
-            }
+            get { return _EndDate; }
             set
             {
                 if (_EndDate != value)
                 {
-                    _EndDate = value == default(DateTime) ? DateTime.Now.AddDays(1) : value;
-                    FlightTime = (float)(_EndDate - _StartDate).TotalHours;
-                    INotifyPropertyChanged(nameof(EndDate));
+                    _EndDate = value;
+                    OnPropertyChanged(nameof(EndDate));
+                    OnPropertyChanged(nameof(TotalTime)); // TotalTime depends on StartDate and EndDate
+                }
+            }
+        }
+
+        public float TotalTime
+        {
+            get { return _TotalTime; }
+            set
+            {
+                if (_TotalTime != value)
+                {
+                    // Round the value to two decimal places
+                    _TotalTime = (float)Math.Round(value, 2);
+                    INotifyPropertyChanged(nameof(TotalTime));
                 }
             }
         }
@@ -118,11 +127,6 @@ namespace Erp.Model.Thesis.CrewScheduling
             get { return _GroundTime; }
             set { _GroundTime = value; INotifyPropertyChanged(nameof(GroundTime)); }
         }
-        public float TotalTime
-        {
-            get { return _TotalTime; }
-            set { _TotalTime = value; INotifyPropertyChanged(nameof(TotalTime)); }
-        }
 
         public int Complement_Captain
         {
@@ -144,5 +148,6 @@ namespace Erp.Model.Thesis.CrewScheduling
             get { return _Complement_Flight_Attendant; }
             set { _Complement_Flight_Attendant = value; INotifyPropertyChanged(nameof(Complement_Flight_Attendant)); }
         }
+
     }
 }

@@ -14,9 +14,6 @@ namespace Erp.Model.Thesis.VacationPlanning
     public class VacationPlanningInputData : RecordBaseModel
     {
         private int _VPId;
-        private int _MaxSatisfiedBids;
-        private int _SeparValue;
-
         private string _VPCode;
         private string _VPDescr;
         private BasicEnums.EmployeeType _EmployeeType;
@@ -36,17 +33,7 @@ namespace Erp.Model.Thesis.VacationPlanning
             set { _VPId = value; OnPropertyChanged("VPId"); }
         }
 
-        public int MaxSatisfiedBids
-        {
-            get { return _MaxSatisfiedBids; }
-            set { _MaxSatisfiedBids = value; OnPropertyChanged("MaxSatisfiedBids"); }
-        }
 
-        public int SeparValue
-        {
-            get { return _SeparValue; }
-            set { _SeparValue = value; OnPropertyChanged("SeparValue"); }
-        }
 
         public string VPCode
         {
@@ -73,6 +60,20 @@ namespace Erp.Model.Thesis.VacationPlanning
         {
             get { return _Schedule; }
             set { _Schedule = value; OnPropertyChanged("Schedule"); }
+        }
+
+        private int _Bmax;
+        private int _Se;
+        public int Bmax
+        {
+            get { return _Bmax; }
+            set { _Bmax = value; OnPropertyChanged("Bmax"); }
+        }
+
+        public int Se
+        {
+            get { return _Se; }
+            set { _Se = value; OnPropertyChanged("Se"); }
         }
 
         #region Dictionaries/Input for Optimisation

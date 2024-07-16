@@ -25,8 +25,8 @@ namespace Erp.Model.Thesis.VacationPlanning
 
 
         public string EmpCode { get; set; }
-        public string Xij { get; set; }
-        public double XijFlag { get; set; }
+        public string Xit { get; set; }
+        public double XitFlag { get; set; }
 
         public string Date { get; set; }
         public List<string> Dates { get; set; }

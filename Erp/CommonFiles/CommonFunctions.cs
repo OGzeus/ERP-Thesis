@@ -33,13 +33,8 @@ using Erp.DataBase.Τhesis;
 using Erp.Model.Thesis.VacationPlanning;
 using Microsoft.EntityFrameworkCore.Internal;
 using Erp.View.Thesis.CustomButtons;
-using Newtonsoft.Json.Linq;
-using Erp.Model.SupplyChain;
 using Erp.Model.Thesis.CrewScheduling;
-using OxyPlot;
-using NetTopologySuite.Mathematics;
-using System.Collections;
-using static OfficeOpenXml.ExcelErrorValue;
+
 
 namespace Erp.CommonFiles
 {
@@ -49,1484 +44,7 @@ namespace Erp.CommonFiles
 
         #region Thesis
 
-        #region FlightLegs
-        public int SaveFlightLegsData(FlightLegsData flatData)
-        {
-            try
-            {
-                using (var dbContext = new ErpDbContext(options))
-                {
-                    // Separate query from execution
-                    int Id = flatData.FlightLegId;
-                    var existingQuery = dbContext.FlightLegs.Where(c => c.FlightLegId == Id);
-                    var existing = existingQuery.SingleOrDefault();
-                    // Execute the query and get the result
-                    var AirportFromQuery = dbContext.Airports.Where(c => c.AirportID == flatData.AirportDataFrom.Id);
-                    var AirportToQuery = dbContext.Airports.Where(c => c.AirportID == flatData.AirportDataTo.Id);
-
-                    var AirportFrom = AirportFromQuery.SingleOrDefault();
-                    var AirportTo = AirportToQuery.SingleOrDefault();
-
-                    if (existing != null)
-                    {
-
-
-                        // Update existing customer
-                        existing.Code = flatData.Code;
-                        existing.Descr = flatData.Descr;
-
-                        existing.AirportFrom = AirportFrom.AirportID;
-                        existing.AirportTo = AirportTo.AirportID;
-                        existing.StartDate = flatData.StartDate;
-                        existing.EndDate = flatData.EndDate;
-                        existing.FlightTime = flatData.FlightTime;
-                        existing.IsDeleted = flatData.IsDeleted;
-
-                        dbContext.SaveChanges();
-                        return 1;
-                    }
-                    else
-                    {
-                        return -1;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                LogError(ex, "SaveFlightLegsData", "Notes");
-                return -1;
-            }
-        }
-
-        public int AddFlightLegsData(FlightLegsData flatData)
-        {
-            try
-            {
-                using (var dbContext = new ErpDbContext(options))
-                {
-                    // Separate query from execution
-                    var existingQuery = dbContext.FlightLegs.Where(r => r.Code == flatData.Code);
-                    var existing= existingQuery.SingleOrDefault();
-                    // Execute the query and get the result
-
-
-                    if (existing == null)
-                    {
-                        var newItem = new FlightLegsDataEntity();
-                        // Insert new item
-                        newItem.Code = flatData.Code;
-                        newItem.Descr = flatData.Descr;
-
-                        newItem.AirportFrom = dbContext.Airports.FirstOrDefault().AirportID;
-                        newItem.AirportTo = dbContext.Airports.Skip(1).FirstOrDefault().AirportID;
-                        newItem.StartDate = DateTime.Now;
-                        newItem.EndDate = DateTime.Now.AddDays(1);
-                        newItem.FlightTime =(float)(newItem.EndDate - newItem.StartDate).Value.TotalHours;
-                        newItem.IsDeleted = flatData.IsDeleted;
-                        newItem.IsDeleted = false;
-
-                        dbContext.FlightLegs.Add(newItem);
-
-                        dbContext.SaveChanges();
-                        return 0;
-                    }
-                    else
-                    {
-                        // Else Print messages
-                        return 1;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                LogError(ex, "AddFlightLegsData", "Notes");
-                return 2;
-
-            }
-        }
-
-        public FlightLegsData GetFlightLegsChooserData(int Id, string Code)
-        {
-            FlightLegsData data = new FlightLegsData();
-            string FilterStr = "";
-            try
-            {
-                using (var connection = GetConnection())
-                using (var command = new SqlCommand())
-                {
-                    connection.Open();
-                    command.Connection = connection;
-
-                    if (Id > 0)
-                    {
-                        command.Parameters.AddWithValue("@ID", Id);
-                        FilterStr = String.Format(@" and F.FlightLegId =@ID");
-
-                    }
-
-                    else if (!string.IsNullOrWhiteSpace(Code))
-                    {
-                        command.Parameters.AddWithValue("@Code", Code);
-                        FilterStr = String.Format(@" and F.Code =@Code");
-
-                    }
-                    command.CommandText = string.Format(@"select F.FlightLegId,F.Code,F.Descr,F.StartDate,F.EndDate,F.FlightTime,F.IsDeleted,
-AFrom.AirportID as AFId,AFrom.AirportCode as AFCode,AFrom.AirportDescr as AFDescr,
-ATo.AirportID as ATId,ATo.AirportCode as ATCode,ATo.AirportDescr  as ATDescr
-From FlightLegs as F
-Inner Join Airports as AFrom on AFrom.AirportID = F.AirportFrom
-Inner Join Airports as ATo on ATo.AirportID = F.AirportTo
-                                              Where 1=1 {0}", FilterStr);
-                    using (var reader = command.ExecuteReader())
-                    {
-                        if (reader.Read())
-                        {
-                            data.AirportDataFrom = new AirportData();
-                            data.AirportDataTo = new AirportData();
-
-
-                            data.FlightLegId = int.Parse(reader["FlightLegId"].ToString());
-                            data.Code = reader["Code"].ToString();
-                            data.Descr = reader["Descr"].ToString();
-                            data.StartDate = DateTime.Parse(reader["StartDate"].ToString());
-                            data.EndDate = DateTime.Parse(reader["EndDate"].ToString());
-
-                            data.StartDate_String = data.StartDate.ToString("dd/MM/yyyy HH:mm");
-                            data.EndDate_String = data.EndDate.ToString("dd/MM/yyyy HH:mm");
-
-                            data.FlightTime = float.Parse(reader["FlightTime"].ToString());
-
-                            data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
-
-
-                            data.AirportDataFrom.Id = int.Parse(reader["AFId"].ToString());
-                            data.AirportDataFrom.Code = reader["AFCode"].ToString();
-                            data.AirportDataFrom.Descr = reader["AFDescr"].ToString();
-
-                            data.AirportDataTo.Id = int.Parse(reader["ATId"].ToString());
-                            data.AirportDataTo.Code = reader["ATCode"].ToString();
-                            data.AirportDataTo.Descr = reader["ATDescr"].ToString();
-                        }
-                    }
-
-                    connection.Close();
-                }
-
-                return data;
-            }
-            catch (Exception ex)
-            {
-                LogError(ex, "GetFlightLegsChooserData", "Notes");
-                return data;
-            }
-        }
-        public ObservableCollection<FlightLegsData> GetFlightLegsData(bool ShowDeleted)
-        {
-            ObservableCollection<FlightLegsData> DataList = new ObservableCollection<FlightLegsData>();
-
-            string FilterStr = "";
-
-            using (var connection = GetConnection())
-            using (var command = new SqlCommand())
-            {
-                connection.Open();
-                command.Connection = connection;
-
-                if (ShowDeleted == false)
-                {
-                    command.Parameters.AddWithValue("@ShowDeleted", ShowDeleted);
-                    FilterStr = String.Format(@" and F.IsDeleted =@ShowDeleted");
-                }
-                command.CommandText = string.Format(@"select F.FlightLegId,F.Code,F.Descr,F.StartDate,F.EndDate,F.FlightTime,F.IsDeleted,
-AFrom.AirportID as AFId,AFrom.AirportCode as AFCode,AFrom.AirportDescr as AFDescr,
-ATo.AirportID as ATId,ATo.AirportCode as ATCode,ATo.AirportDescr  as ATDescr
-From FlightLegs as F
-Inner Join Airports as AFrom on AFrom.AirportID = F.AirportFrom
-Inner Join Airports as ATo on ATo.AirportID = F.AirportTo
-                                              Where 1=1 {0}", FilterStr);
-
-
-
-                using (var reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        FlightLegsData data = new FlightLegsData();
-                        data.AirportDataFrom = new AirportData();
-                        data.AirportDataTo = new AirportData();
-
-
-                        data.FlightLegId = int.Parse(reader["FlightLegId"].ToString());
-                        data.Code = reader["Code"].ToString();
-                        data.Descr = reader["Descr"].ToString();
-                        data.StartDate = DateTime.Parse(reader["StartDate"].ToString());
-                        data.EndDate = DateTime.Parse(reader["EndDate"].ToString());
-
-                        data.StartDate_String = data.StartDate.ToString("dd/MM/yyyy HH:mm");
-                        data.EndDate_String = data.EndDate.ToString("dd/MM/yyyy HH:mm");
-
-                        data.FlightTime = float.Parse(reader["FlightTime"].ToString());
-
-                        data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
-
-
-                        data.AirportDataFrom.Id = int.Parse(reader["AFId"].ToString());
-                        data.AirportDataFrom.Code = reader["AFCode"].ToString();
-                        data.AirportDataFrom.Descr = reader["AFDescr"].ToString();
-
-                        data.AirportDataTo.Id = int.Parse(reader["ATId"].ToString());
-                        data.AirportDataTo.Code = reader["ATCode"].ToString();
-                        data.AirportDataTo.Descr = reader["ATDescr"].ToString();
-
-
-
-                        DataList.Add(data);
-                    }
-                }
-
-                connection.Close();
-            }
-
-            return DataList;
-        }
-        #endregion
-
-        #region FlightRoutes
-        public int SaveFlightRoutesData(FlightRoutesData flatData)
-        {
-            try
-            {
-                using (var dbContext = new ErpDbContext(options))
-                {
-                    // Separate query from execution
-                    int Id = flatData.FlightRouteId;
-                    var existingQuery = dbContext.FlightRoutes.Where(c => c.FlightRouteId == Id);
-                    var existing = existingQuery.SingleOrDefault();
-                    // Execute the query and get the result
-                    var AirportQuery = dbContext.Airports.Where(c => c.AirportID == flatData.Airport.Id);
-
-                    var Airport = AirportQuery.SingleOrDefault();
-
-                    if (existing != null)
-                    {
-
-
-                        // Update existing customer
-                        existing.Code = flatData.Code;
-                        existing.Descr = flatData.Descr;
-
-                        existing.AirportId = Airport.AirportID;
-                        existing.StartDate = flatData.StartDate;
-                        existing.EndDate = flatData.EndDate;
-                        existing.FlightTime = (float)Math.Round(flatData.FlightTime, 2);
-                        existing.GroundTime = (float)Math.Round(flatData.GroundTime,2);
-                        existing.TotalTime = (float)Math.Round(flatData.TotalTime, 2);
-                        existing.Complement_Captain = flatData.Complement_Captain;
-                        existing.Complement_FO = flatData.Complement_FO;
-                        existing.Complement_Cabin_Manager = flatData.Complement_Cabin_Manager;
-                        existing.Complement_Flight_Attendant = flatData.Complement_Flight_Attendant;
-                        existing.FlightTime = flatData.FlightTime;
-                        existing.IsDeleted = flatData.IsDeleted;
-
-                        dbContext.SaveChanges();
-                        return 1;
-                    }
-                    else
-                    {
-                        return -1;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                LogError(ex, "SaveFlightRoutesData", "Notes");
-                return -1;
-            }
-        }
-
-        public int AddFlightRoutesData(FlightRoutesData flatData)
-        {
-            try
-            {
-                using (var dbContext = new ErpDbContext(options))
-                {
-                    // Separate query from execution
-                    var existingQuery = dbContext.FlightRoutes.Where(r => r.Code == flatData.Code);
-                    var existing = existingQuery.SingleOrDefault();
-                    // Execute the query and get the result
-
-
-                    if (existing == null)
-                    {
-                        var newItem = new FlightRoutesDataEntity();
-                        newItem.Code = flatData.Code;
-                        newItem.Descr = flatData.Descr;
-
-                        newItem.AirportId = dbContext.Airports.FirstOrDefault().AirportID;
-                        newItem.StartDate = DateTime.Now;
-                        newItem.EndDate = DateTime.Now.AddDays(2);
-                        newItem.TotalTime = (float)Math.Round((newItem.EndDate - newItem.StartDate).Value.TotalHours, 2);
-                        var TotalTime = (float)newItem.TotalTime;
-                        newItem.FlightTime = (float)Math.Round(TotalTime * 0.7, 2);
-                        newItem.GroundTime = newItem.TotalTime - newItem.FlightTime;
-                        newItem.Complement_Captain = 1;
-                        newItem.Complement_FO = 1;
-                        newItem.Complement_Cabin_Manager = 1;
-                        newItem.Complement_Flight_Attendant = 3;
-                        newItem.IsDeleted = false;
-
-
-                        dbContext.FlightRoutes.Add(newItem);
-
-                        dbContext.SaveChanges();
-                        return 0;
-                    }
-                    else
-                    {
-                        // Else Print messages
-                        return 1;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                LogError(ex, "AddFlightLegsData", "Notes");
-                return 2;
-
-            }
-        }
-
-        public FlightRoutesData GetFlightRoutesChooserData(int Id, string Code)
-        {
-            FlightRoutesData data = new FlightRoutesData();
-            string FilterStr = "";
-            try
-            {
-                using (var connection = GetConnection())
-                using (var command = new SqlCommand())
-                {
-                    connection.Open();
-                    command.Connection = connection;
-
-                    if (Id > 0)
-                    {
-                        command.Parameters.AddWithValue("@ID", Id);
-                        FilterStr = String.Format(@" and F.FlightRouteId =@ID");
-
-                    }
-
-                    else if (!string.IsNullOrWhiteSpace(Code))
-                    {
-                        command.Parameters.AddWithValue("@Code", Code);
-                        FilterStr = String.Format(@" and F.Code =@Code");
-
-                    }
-                    command.CommandText = string.Format(@"select F.FlightRouteId,F.Code,F.Descr,F.StartDate,F.EndDate,F.FlightTime,F.GroundTime,F.TotalTime,F.IsDeleted,
-F.Complement_Captain AS CCA,F.Complement_FO AS CFO, F.Complement_Flight_Attendant AS CFA, F.Complement_Cabin_Manager AS CCM, 
-A.AirportID ,A.AirportCode,A.AirportDescr
-From FlightRoutes as F
-Inner Join Airports as A on A.AirportID = F.AirportId
-                                              Where 1=1 {0}", FilterStr);
-                    using (var reader = command.ExecuteReader())
-                    {
-                        if (reader.Read())
-                        {
-                            data.Airport = new AirportData();
-
-
-                            data.FlightRouteId = int.Parse(reader["FlightRouteId"].ToString());
-                            data.Code = reader["Code"].ToString();
-                            data.Descr = reader["Descr"].ToString();
-                            data.StartDate = DateTime.Parse(reader["StartDate"].ToString());
-                            data.EndDate = DateTime.Parse(reader["EndDate"].ToString());
-
-                            data.StartDate_String = data.StartDate.ToString("dd/MM/yyyy HH:mm");
-                            data.EndDate_String = data.EndDate.ToString("dd/MM/yyyy HH:mm");
-
-                            data.TotalTime = float.Parse(reader["TotalTime"].ToString());
-                            data.FlightTime = float.Parse(reader["FlightTime"].ToString());
-                            data.GroundTime = float.Parse(reader["GroundTime"].ToString());
-
-                            data.Complement_Captain = int.Parse(reader["CCA"].ToString());
-                            data.Complement_FO = int.Parse(reader["CFO"].ToString());
-                            data.Complement_Flight_Attendant = int.Parse(reader["CFA"].ToString());
-                            data.Complement_Cabin_Manager = int.Parse(reader["CCM"].ToString());
-
-                            data.Airport.Id = int.Parse(reader["AirportID"].ToString());
-                            data.Airport.Code = reader["AirportCode"].ToString();
-                            data.Airport.Descr = reader["AirportDescr"].ToString();
-
-                            data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
-
-
-                        }
-                    }
-
-                    connection.Close();
-                }
-
-                return data;
-            }
-            catch (Exception ex)
-            {
-                LogError(ex, "GetFlightRoutesChooserData", "Notes");
-                return data;
-            }
-        }
-        public ObservableCollection<FlightRoutesData> GetFlightRoutesData(bool ShowDeleted)
-        {
-            ObservableCollection<FlightRoutesData> DataList = new ObservableCollection<FlightRoutesData>();
-
-            string FilterStr = "";
-
-            using (var connection = GetConnection())
-            using (var command = new SqlCommand())
-            {
-                connection.Open();
-                command.Connection = connection;
-
-                if (ShowDeleted == false)
-                {
-                    command.Parameters.AddWithValue("@ShowDeleted", ShowDeleted);
-                    FilterStr = String.Format(@" and F.IsDeleted =@ShowDeleted");
-                }
-                command.CommandText = string.Format(@"select F.FlightRouteId,F.Code,F.Descr,F.StartDate,F.EndDate,F.FlightTime,F.GroundTime,F.TotalTime,F.IsDeleted,
-F.Complement_Captain AS CCA,F.Complement_FO AS CFO, F.Complement_Flight_Attendant AS CFA, F.Complement_Cabin_Manager AS CCM, 
-A.AirportID ,A.AirportCode,A.AirportDescr
-From FlightRoutes as F
-Inner Join Airports as A on A.AirportID = F.AirportId
-                                              Where 1=1 {0}", FilterStr);
-
-
-
-                using (var reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        FlightRoutesData data = new FlightRoutesData();
-                        data.Airport = new AirportData();
-
-
-                        data.FlightRouteId = int.Parse(reader["FlightRouteId"].ToString());
-                        data.Code = reader["Code"].ToString();
-                        data.Descr = reader["Descr"].ToString();
-                        data.StartDate = DateTime.Parse(reader["StartDate"].ToString());
-                        data.EndDate = DateTime.Parse(reader["EndDate"].ToString());
-
-                        data.StartDate_String = data.StartDate.ToString("dd/MM/yyyy HH:mm");
-                        data.EndDate_String = data.EndDate.ToString("dd/MM/yyyy HH:mm");
-
-                        data.TotalTime = float.Parse(reader["TotalTime"].ToString());
-                        data.FlightTime = float.Parse(reader["FlightTime"].ToString());
-                        data.GroundTime = float.Parse(reader["GroundTime"].ToString());
-
-                        data.Complement_Captain = int.Parse(reader["CCA"].ToString());
-                        data.Complement_FO = int.Parse(reader["CFO"].ToString());
-                        data.Complement_Flight_Attendant = int.Parse(reader["CFA"].ToString());
-                        data.Complement_Cabin_Manager = int.Parse(reader["CCM"].ToString());
-
-                        data.Airport.Id = int.Parse(reader["AirportID"].ToString());
-                        data.Airport.Code = reader["AirportCode"].ToString();
-                        data.Airport.Descr = reader["AirportDescr"].ToString();
-
-                        data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
-
-
-
-                        DataList.Add(data);
-                    }
-                }
-
-                connection.Close();
-            }
-
-            return DataList;
-        }
-        #endregion
-
-        #region Language
-
-        public ObservableCollection<LanguageData> GetLanguageData(bool ShowDeleted)
-        {
-            ObservableCollection<LanguageData> DataList = new ObservableCollection<LanguageData>();
-
-            string FilterStr = "";
-
-            using (var connection = GetConnection())
-            using (var command = new SqlCommand())
-            {
-                connection.Open();
-                command.Connection = connection;
-
-                if (ShowDeleted == false)
-                {
-                    command.Parameters.AddWithValue("@ShowDeleted", ShowDeleted);
-                    FilterStr = String.Format(@" and IsDeleted =@ShowDeleted");
-                }
-                command.CommandText = string.Format(@"select LId,LCode,LDescr,IsDeleted from Language Where 1=1 {0}", FilterStr);
-                using (var reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        LanguageData data = new LanguageData();
-
-                        data.Id = int.Parse(reader["LId"].ToString());
-                        data.Code = reader["LCode"].ToString();
-                        data.Descr = reader["LDescr"].ToString();
-                        data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
-
-                        DataList.Add(data);
-                    }
-                }
-
-                connection.Close();
-
-            }
-
-            return DataList;
-        }
-
-
-        public bool SaveLanguageData(ObservableCollection<LanguageData> Data)
-        {
-            try
-            {
-                using (var dbContext = new ErpDbContext(options))
-                {
-
-
-                    bool hasChanges = false;
-                    foreach (var row in Data)
-                    {
-                        var existingrow = dbContext.Language.SingleOrDefault(b => b.LId == row.Id);
-
-                        if (existingrow == null)
-                        {
-                            LanguageDataEntity newrow = new LanguageDataEntity();
-                            newrow.LCode = row.Code;
-                            newrow.LDescr = row.Descr;
-                            newrow.IsDeleted = false;
-                            dbContext.Language.Add(newrow);
-                            hasChanges = true;
-                        }
-                        else if (existingrow != null)
-                        {
-
-                            existingrow.LCode = row.Code;
-                            existingrow.LDescr = row.Descr;
-                            existingrow.IsDeleted = row.IsDeleted;
-
-                            hasChanges = true;
-
-
-
-                        }
-
-
-                    }
-
-                    if (hasChanges)
-                    {
-                        dbContext.SaveChanges();
-                    }
-
-                    return true;
-                }
-            }
-            catch (Exception ex)
-            {
-                LogError(ex, "SaveLanguageData", "Notes");
-                return false;
-            }
-        }
-
-
-
-        #endregion
-
-        #region Airports
-        public int SaveAirportsData(AirportData flatData)
-        {
-            try
-            {
-                using (var dbContext = new ErpDbContext(options))
-                {
-                    // Separate query from execution
-                    int Id = flatData.Id;
-                    var existingQuery = dbContext.Airports.Where(c => c.AirportID == Id);
-                    var existing = existingQuery.SingleOrDefault();
-                    // Execute the query and get the result
-                    var CityQuery = dbContext.City.Where(c => c.CityId == flatData.City.CityId);
-                    var City = CityQuery.SingleOrDefault();
-
-                    if (existing != null)
-                    {
-
-
-                        // Update existing customer
-                        existing.AirportCode = flatData.Code;
-                        existing.AirportDescr = flatData.Descr;
-
-                        existing.CityId = City.CityId;
-
-                        existing.IsDeleted = flatData.IsDeleted;
-
-                        dbContext.SaveChanges();
-                        return 1;
-                    }
-                    else
-                    {
-                        return -1;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                LogError(ex, "SaveAirportsData", "Notes");
-                return -1;
-            }
-        }
-
-        public int AddAirportsData(AirportData flatData)
-        {
-            try
-            {
-                using (var dbContext = new ErpDbContext(options))
-                {
-                    // Separate query from execution
-                    var existingItemQuery = dbContext.Airports.Where(r => r.AirportCode == flatData.Code);
-                    var existingItem = existingItemQuery.SingleOrDefault();
-                    // Execute the query and get the result
-
-
-                    if (existingItem == null)
-                    {
-                        var newItem = new AirportsDataEntity();
-                        // Insert new item
-                        newItem.AirportCode = flatData.Code;
-                        newItem.AirportDescr = flatData.Descr;
-                        newItem.CityId = dbContext.City.FirstOrDefault().CityId;
-                        newItem.IsDeleted = false;
-
-                        dbContext.Airports.Add(newItem);
-
-                        dbContext.SaveChanges();
-                        return 0;
-                    }
-                    else
-                    {
-                        // Else Print messages
-                        return 1;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                LogError(ex, "AddAirportsData", "Notes");
-                return 2;
-
-            }
-        }
-
-        public AirportData GetAirportsChooserData(int Id, string Code)
-        {
-            AirportData FlatData = new AirportData();
-            string FilterStr = "";
-            try
-            {
-                using (var connection = GetConnection())
-                using (var command = new SqlCommand())
-                {
-                    connection.Open();
-                    command.Connection = connection;
-
-                    if (Id > 0)
-                    {
-                        command.Parameters.AddWithValue("@ID", Id);
-                        FilterStr = String.Format(@" and A.AirportID =@ID");
-
-                    }
-
-                    else if (!string.IsNullOrWhiteSpace(Code))
-                    {
-                        command.Parameters.AddWithValue("@Code", Code);
-                        FilterStr = String.Format(@" and A.AirportCode =@Code");
-
-                    }
-                    command.CommandText = string.Format(@"SELECT A.AirportID,A.AirportCode,A.AirportDescr,A.IsDeleted,
-City.CityId,City.CityCode,City.CityDescr
-FROM Airports AS A
-INNER JOIN City ON City.CityId = A.CityId
-                                              Where 1=1 {0}", FilterStr);
-                    using (var reader = command.ExecuteReader())
-                    {
-                        if (reader.Read())
-                        {
-                            AirportData data = new AirportData();
-                            data.City = new CityData();
-
-
-                            data.Id = int.Parse(reader["AirportID"].ToString());
-                            data.Code = reader["AirportCode"].ToString();
-                            data.Descr = reader["AirportDescr"].ToString();
-
-                            data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
-
-
-                            data.City.CityId = int.Parse(reader["CityId"].ToString());
-                            data.City.CityCode = reader["CityCode"].ToString();
-                            data.City.CityDescr = reader["CityDescr"].ToString();
-                        }
-                    }
-
-                    connection.Close();
-                }
-
-                return FlatData;
-            }
-            catch (Exception ex)
-            {
-                LogError(ex, "GetAirportsChooserData", "Notes");
-                return null;
-            }
-        }
-        public ObservableCollection<AirportData> GetAirportsData(bool ShowDeleted)
-        {
-            ObservableCollection<AirportData> DataList = new ObservableCollection<AirportData>();
-
-            string FilterStr = "";
-
-            using (var connection = GetConnection())
-            using (var command = new SqlCommand())
-            {
-                connection.Open();
-                command.Connection = connection;
-
-                if (ShowDeleted == false)
-                {
-                    command.Parameters.AddWithValue("@ShowDeleted", ShowDeleted);
-                    FilterStr = String.Format(@" and A.IsDeleted =@ShowDeleted");
-                }
-                command.CommandText = string.Format(@"SELECT A.AirportID,A.AirportCode,A.AirportDescr,A.IsDeleted,City.CityId,
-City.CityCode,City.CityDescr,Country.CountryCode ,Country.CountryDescr,Prefecture.PrefCode,Prefecture.PrefDescr 
-FROM Airports AS A
-INNER JOIN City ON City.CityId = A.CityId
-INNER JOIN Prefecture ON Prefecture.PrefId = City.PrefId 
-Inner JOIN Country on Prefecture.CountryId = Country.CountryId
-                                              Where 1=1 {0}", FilterStr);
-
-
-
-                using (var reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        AirportData data = new AirportData();
-                        data.City = new CityData();
-
-
-                        data.Id = int.Parse(reader["AirportID"].ToString());
-                        data.Code = reader["AirportCode"].ToString();
-                        data.Descr = reader["AirportDescr"].ToString();
-
-                        data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
-
-
-                        data.City.CityId = int.Parse(reader["CityId"].ToString());
-                        data.City.CityCode = reader["CityCode"].ToString();
-                        data.City.CityDescr = reader["CityDescr"].ToString();
-
-                        data.City.PrefCode = reader["PrefCode"].ToString();
-                        data.City.PrefDescr = reader["PrefDescr"].ToString();
-                        data.City.CountryCode = reader["CountryCode"].ToString();
-                        data.City.CountryDescr = reader["CountryDescr"].ToString();
-
-
-
-                        DataList.Add(data);
-                    }
-                }
-
-                connection.Close();
-            }
-
-            return DataList;
-        }
-        #endregion
-
-        #region ReqSchedule
-        public int SetMainSchedule(ReqScheduleInfoData FlatData)
-        {
-            try
-            {
-                using (var dbContext = new ErpDbContext(options))
-                {
-                    // Separate query from execution
-                    int ReqId = FlatData.ID;
-
-                    var selectedQuery = dbContext.ReqScheduleInfo.Where(r => r.ID == ReqId);
-                    var selectedSchedule= selectedQuery.SingleOrDefault();
-
-
-                    var MainSchedulequery = dbContext.ReqScheduleInfo.Where(r => r.MainSchedule == true);
-                    var MainSchedule = MainSchedulequery.SingleOrDefault();
-                    // Execute the query and get the result
-
-
-                    var result = System.Windows.MessageBox.Show($"The Schedule with Code {FlatData.ReqCode}  will be set as the Main Schedule  . Proceed?", "Confirmation", MessageBoxButton.YesNo);
-
-                    if (result == MessageBoxResult.Yes)
-                    {
-                        if (MainSchedule != null)
-                        {
-
-                            MainSchedule.MainSchedule = false;
-                            selectedSchedule.MainSchedule = true;
-
-
-                        }
-                        else
-                        {
-                            selectedSchedule.MainSchedule = true;
-                        }
-                        dbContext.SaveChanges();
-                        return 2;
-                    }
-                    else
-                    {
-                        return 1;
-                    }
-
-
-                }
-            }
-            catch (Exception ex)
-            {
-                LogError(ex, "SetMainSchedule", "Notes");
-                return -1;
-
-            }
-        }
-        public int SaveReqScheduleInfoData(ReqScheduleInfoData flatData)
-        {
-            try
-            {
-                using (var dbContext = new ErpDbContext(options))
-                {
-                    // Separate query from execution
-                    int ReqId = flatData.ID;
-                    var existingItemQuery = dbContext.ReqScheduleInfo.Where(r => r.ID == ReqId);
-                    var existingItem = existingItemQuery.SingleOrDefault();
-                    // Execute the query and get the result
-
-                    if (existingItem != null)
-                    {
-
-                        // Update existing item
-                        existingItem.ID = flatData.ID;
-                        existingItem.ReqCode = flatData.ReqCode;
-                        existingItem.ReqDescr = flatData.ReqDescr;
-                        existingItem.Notes = flatData.Notes;
-                        existingItem.DateFrom = flatData.DateFrom;
-                        existingItem.DateTo = flatData.DateTo;
-                        existingItem.DateTo = flatData.DateTo;
-                        existingItem.LimitLineFixed = flatData.LimitLineFixed;
-
-                        existingItem.IsDeleted = flatData.IsDeleted;
-                        existingItem.MainSchedule = flatData.MainSchedule;
-
-
-
-                        dbContext.SaveChanges();
-                        return 1;
-                    }
-                    else
-                    {
-                        return -1;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                LogError(ex, "SaveReqScheduleInfoData", "Notes");
-                return -1;
-
-            }
-        }
-        public int AddReqScheduleInfoData(ReqScheduleInfoData flatData)
-        {
-            try
-            {
-                using (var dbContext = new ErpDbContext(options))
-                {
-                    // Separate query from execution
-                    var existingItemQuery = dbContext.ReqScheduleInfo.Where(r => r.ReqCode == flatData.ReqCode);
-                    var existingItem = existingItemQuery.SingleOrDefault();
-                    // Execute the query and get the result
-
-
-                    if (existingItem == null)
-                    {
-                        var newItem = new ReqScheduleInfoDataEntity();
-                        // Insert new ForeCast
-                        newItem.ReqCode = flatData.ReqCode;
-                        newItem.ReqDescr = flatData.ReqDescr;
-                        newItem.Notes = flatData.Notes;
-                        newItem.DateFrom = flatData.DateFrom;
-                        newItem.DateTo = flatData.DateTo;
-                        newItem.LimitLineFixed = flatData.LimitLineFixed;
-                        newItem.IsDeleted = false;
-                        newItem.MainSchedule = false;
-
-                        dbContext.ReqScheduleInfo.Add(newItem);
-
-                        dbContext.SaveChanges();
-
-                        return 0;
-                    }
-                    else
-                    {
-                        return 1;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                LogError(ex, "AddReqScheduleInfoData", "Notes");
-                return 2;
-
-            }
-        }
-        public bool SaveReqScheduleRows(ReqScheduleInfoData FlatData)
-        {
-            try
-            {
-                using (var dbContext = new ErpDbContext(options))
-                {
-                    var ScheduleRows = FlatData.ReqScheduleRowsData;
-                    var ScheduleInfo = dbContext.ReqScheduleInfo.SingleOrDefault(r => r.ID == FlatData.ID);
-
-                    String ReqCode = ScheduleInfo.ReqCode.ToString();
-
-                    bool hasChanges = false;
-                    foreach (var row in ScheduleRows)
-                    {
-                        var DateStr = row.DateStr;
-
-                        var existingRows = dbContext.ReqScheduleRows.Where(b => b.ReqCode == ReqCode  && b.DateStr == row.DateStr
-                        && b.Position == row.Position.ToString());
-
-                        var existingrow = dbContext.ReqScheduleRows.FirstOrDefault(b => b.ReqCode == ReqCode && b.DateStr == row.DateStr 
-                        && b.Position == row.Position.ToString());
-
-                        if (existingrow == null)
-                        {
-                            dbContext.ReqScheduleRows.Add(new ReqScheduleRowsDataEntity
-                            {
-                                ReqCode = ReqCode,
-                                Position= row.Position.ToString(),
-                                Date = row.Date,
-                                DateStr = row.DateStr,
-                                LimitLine = row.LimitLine
-
-
-                            });
-                            hasChanges = true;
-                        }
-                        else if (existingrow != null)
-                        {
-
-                            if (existingrow.LimitLine != row.LimitLine)
-                            {
-                                existingrow.LimitLine = row.LimitLine;
-                                hasChanges = true;
-
-                            }
-
-
-                        }
-
-
-                    }
-
-                    if (hasChanges)
-                    {
-                        dbContext.SaveChanges();
-                    }
-
-                    return true;
-                }
-            }
-            catch (Exception ex)
-            {
-                LogError(ex, "SaveReqScheduleRows", "Notes");
-                return false;
-            }
-        }
-
-
-        public ObservableCollection<ReqScheduleRowsData> GetReqSchedulesRows(string ReqCode)
-        {
-            ObservableCollection<ReqScheduleRowsData> DataList = new ObservableCollection<ReqScheduleRowsData>();
-            using (var connection = GetConnection())
-            using (var command = new SqlCommand())
-            {
-                connection.Open();
-                command.Connection = connection;
-
-                command.Parameters.AddWithValue("@Code", ReqCode);
-
-                command.CommandText = string.Format(@"select REQID,REQCODE,POSITION,DATE,DATESTR,LIMITLINE
-FROM ReqSchedulerows
-Where ReqCode =@Code");
-
-                using (var reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-
-                        ReqScheduleRowsData data = new ReqScheduleRowsData();
-
-                        data.ReqCode = reader["REQCODE"].ToString();
-                        data.Position = (BasicEnums.EmployeeType)Enum.Parse(typeof(BasicEnums.EmployeeType), reader["POSITION"].ToString());
-                        data.LimitLine = int.Parse(reader["LIMITLINE"].ToString());
-                        data.Date = Convert.ToDateTime(reader["DATE"]);
-
-                        data.DateStr = reader["DATESTR"].ToString();
-
-
-                        DataList.Add(data);
-
-                    }
-                }
-
-                connection.Close();
-            }
-
-            return DataList;
-        }
-        public ObservableCollection<ReqScheduleRowsData> GetReqSchedulesRowsByEmpType(string ReqCode,BasicEnums.EmployeeType Position)
-        {
-            ObservableCollection<ReqScheduleRowsData> DataList = new ObservableCollection<ReqScheduleRowsData>();
-            string FilterStr = "";
-            using (var connection = GetConnection())
-            using (var command = new SqlCommand())
-            {
-                connection.Open();
-                command.Connection = connection;
-
-
-
-
-
-                command.Parameters.AddWithValue("@ReqCode", ReqCode);
-                command.Parameters.AddWithValue("@Position", Position.ToString());
-
-                FilterStr += @" and REQCODE = @ReqCode";
-                FilterStr += @" and POSITION = @Position";
-
-                command.CommandText = string.Format(@"select REQID,REQCODE,POSITION,
-DATE,DATESTR,LIMITLINE
-FROM ReqSchedulerows
-Where 1=1 {0}
-Order by Date", FilterStr);
-
-                using (var reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-
-                        ReqScheduleRowsData data = new ReqScheduleRowsData();
-
-                        data.ReqCode = reader["REQCODE"].ToString();
-                        data.Position = (BasicEnums.EmployeeType)Enum.Parse(typeof(BasicEnums.EmployeeType), reader["POSITION"].ToString());
-                        data.LimitLine = int.Parse(reader["LIMITLINE"].ToString());
-                        data.Date = Convert.ToDateTime(reader["DATE"]);
-
-                        data.DateStr = reader["DATESTR"].ToString();
-
-
-                        DataList.Add(data);
-
-                    }
-                }
-
-                connection.Close();
-            }
-
-            return DataList;
-        }
-        public ObservableCollection<ReqScheduleInfoData> GetReqScheduleInfoData(bool ShowDeleted)
-        {
-            ObservableCollection<ReqScheduleInfoData> DataList = new ObservableCollection<ReqScheduleInfoData>();
-
-
-            string FilterStr = "";
-
-
-            using (var connection = GetConnection())
-            using (var command = new SqlCommand())
-            {
-                connection.Open();
-                command.Connection = connection;
-
-                if (ShowDeleted == false)
-                {
-                    command.Parameters.AddWithValue("@ShowDeleted", ShowDeleted);
-                    FilterStr = String.Format(@"and IsDeleted = @ShowDeleted");
-
-                }
-
-                command.CommandText = string.Format(@"select ID,REQCODE,REQDESCR,NOTES,DATEFROM,DATETO,ISDELETED,MAINSCHEDULE,LimitLineFixed
-FROM ReqScheduleInfo
-Where  1=1 {0}", FilterStr);
-
-
-
-
-                using (var reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        ReqScheduleInfoData data = new ReqScheduleInfoData();
-
-                        data.ID = int.Parse(reader["ID"].ToString());
-                        data.ReqCode = reader["REQCODE"].ToString();
-                        data.ReqDescr = reader["REQDESCR"].ToString();
-                        data.LimitLineFixed = int.Parse(reader["LimitLineFixed"].ToString());
-                        data.DateFrom = Convert.ToDateTime(reader["DATEFROM"]);
-                        data.DateTo = Convert.ToDateTime(reader["DATETO"]);
-                        data.DateFromStr = data.DateFrom.ToString("dd/MM/yyyy"); 
-                        data.DateToStr = data.DateTo.ToString("dd/MM/yyyy");
-                        data.IsDeleted = bool.Parse(reader["ISDELETED"].ToString());
-                        data.MainSchedule = bool.Parse(reader["MAINSCHEDULE"].ToString());
-                        data.Notes = reader["NOTES"].ToString();
-
-
-                        DataList.Add(data);
-                    }
-                }
-
-                connection.Close();
-            }
-
-            return DataList;
-        }
-        public ReqScheduleInfoData GetReqScheduleInfoChooserData(int id, string Code)
-        {
-            ReqScheduleInfoData data = new ReqScheduleInfoData();
-
-            using (var connection = GetConnection())
-            using (var command = new SqlCommand())
-            {
-                connection.Open();
-                command.Connection = connection;
-
-                if (id > 0)
-                {
-                    command.Parameters.AddWithValue("@ID", id);
-
-                    command.CommandText = string.Format(@"select ID,REQCODE,REQDESCR,NOTES,DATEFROM,DATETO,ISDELETED,MAINSCHEDULE,LimitLineFixed
-                                                        FROM ReqScheduleInfo
-                                                        Where ID=@ID");
-                }
-                else if (!string.IsNullOrWhiteSpace(Code))
-                {
-                    command.Parameters.AddWithValue("@Code", Code); // Corrected variable name
-
-                    command.CommandText = string.Format(@"select ID,REQCODE,REQDESCR,NOTES,DATEFROM,DATETO,ISDELETED,MAINSCHEDULE,LimitLineFixed
-                                                        FROM ReqScheduleInfo
-                                                        Where REQCODE=@Code"); // Corrected parameter name
-                }
-
-
-
-                using (var reader = command.ExecuteReader())
-                {
-                    if (reader.Read())
-                    {
-                        data.ID = int.Parse(reader["ID"].ToString());
-                        data.ReqCode = reader["REQCODE"].ToString();
-                        data.ReqDescr = reader["REQDESCR"].ToString();
-                        data.DateFrom = Convert.ToDateTime(reader["DATEFROM"]);
-                        data.DateTo = Convert.ToDateTime(reader["DATETO"]);
-                        data.LimitLineFixed = int.Parse(reader["LimitLineFixed"].ToString());
-
-                        data.IsDeleted = bool.Parse(reader["ISDELETED"].ToString());
-                        data.MainSchedule = bool.Parse(reader["MAINSCHEDULE"].ToString());
-                        data.Notes = reader["NOTES"].ToString();
-
-
-                    }
-                }
-
-                connection.Close();
-            }
-
-            return data;
-        }
-        public ReqScheduleInfoData GetMainScheduleInfoData()
-        {
-            ReqScheduleInfoData data = new ReqScheduleInfoData();
-
-            using (var connection = GetConnection())
-            using (var command = new SqlCommand())
-            {
-                connection.Open();
-                command.Connection = connection;
-
-
-
-                command.CommandText = string.Format(@"select ID,REQCODE,REQDESCR,NOTES,DATEFROM,DATETO,ISDELETED,MAINSCHEDULE,LimitLineFixed
-                                                    FROM ReqScheduleInfo
-                                                    Where MAINSCHEDULE=1"); // Corrected parameter name
-
-
-
-
-                using (var reader = command.ExecuteReader())
-                {
-                    if (reader.Read())
-                    {
-                        data.ID = int.Parse(reader["ID"].ToString());
-                        data.ReqCode = reader["REQCODE"].ToString();
-                        data.ReqDescr = reader["REQDESCR"].ToString();
-                        data.DateFrom = Convert.ToDateTime(reader["DATEFROM"]);
-                        data.DateTo = Convert.ToDateTime(reader["DATETO"]);
-                        data.LimitLineFixed = int.Parse(reader["LimitLineFixed"].ToString());
-                        data.IsDeleted = bool.Parse(reader["ISDELETED"].ToString());
-                        data.MainSchedule = bool.Parse(reader["MAINSCHEDULE"].ToString());
-                        data.Notes = reader["NOTES"].ToString();
-
-
-                    }
-                }
-
-                connection.Close();
-            }
-
-            return data;
-        }
-
-        #endregion
-
-        #region Certification
-        public int SaveCertificationData(CertificationData flatData)
-        {
-            try
-            {
-                using (var dbContext = new ErpDbContext(options))
-                {
-                    // Separate query from execution
-                    int Id = flatData.Id;
-                    var existingQuery = dbContext.Certifications.Where(c => c.CertID == Id);
-                    var existing= existingQuery.SingleOrDefault();
-                    // Execute the query and get the result
-
-                    if (existing != null)
-                    {
-
-
-                        // Update existing customer
-                        existing.Code = flatData.Code;
-                        existing.Descr = flatData.Descr;
-                        existing.ValidityPeriod = flatData.ValidityPeriod;
-                        existing.CertPosition = flatData.CertPosition.ToString();
-                        existing.ValidityTimeBucket = flatData.ValidityTimeBucket.ToString();
-                        existing.DateFrom = flatData.DateFrom;
-                        existing.DateTo = flatData.DateTo;
-
-
-
-                        existing.IsDeleted = flatData.IsDeleted;
-
-                        dbContext.SaveChanges();
-                        return 1;
-                    }
-                    else
-                    {
-                        return -1;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                LogError(ex, "SaveCertificationData", "Notes");
-                return -1;
-            }
-        }
-        public int AddCertificationData(CertificationData flatData)
-        {
-            try
-            {
-                using (var dbContext = new ErpDbContext(options))
-                {
-                    // Separate query from execution
-                    var existingItemQuery = dbContext.Certifications.Where(r => r.Code == flatData.Code);
-                    var existingItem = existingItemQuery.SingleOrDefault();
-                    // Execute the query and get the result
-
-
-                    if (existingItem == null)
-                    {
-                        var newItem = new CertificationsDataEntity();
-                        // Insert new item
-                        newItem.Code = flatData.Code;
-                        newItem.Descr = flatData.Descr;
-                        newItem.ValidityPeriod = 1;
-                        newItem.CertPosition = BasicEnums.CertPosition.PNT.ToString();
-                        newItem.ValidityTimeBucket = BasicEnums.Timebucket.Yearly.ToString();
-                        newItem.DateFrom = DateTime.Now;
-                        newItem.DateTo = DateTime.Now.AddYears(1);
-
-
-
-                        newItem.IsDeleted = false;
-
-
-                        dbContext.Certifications.Add(newItem);
-
-                        dbContext.SaveChanges();
-                        return 0;
-                    }
-                    else
-                    {
-                        // Else Print messages
-                        return 1;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                LogError(ex, "AddCertificationData", "Notes");
-                return 2;
-
-            }
-        }
-
-        public CertificationData GetCertificationChooserData(int Id, string Code)
-        {
-            CertificationData FlatData = new CertificationData();
-            string FilterStr = "";
-            try
-            {
-                using (var connection = GetConnection())
-                using (var command = new SqlCommand())
-                {
-                    connection.Open();
-                    command.Connection = connection;
-
-                    if (Id > 0)
-                    {
-                        command.Parameters.AddWithValue("@ID", Id);
-                        FilterStr = String.Format(@" and Certifications.CertID =@ID");
-
-                    }
-
-                    else if (!string.IsNullOrWhiteSpace(Code))
-                    {
-                        command.Parameters.AddWithValue("@Code", Code);
-                        FilterStr = String.Format(@" and Certifications.Code =@Code");
-
-                    }
-                    command.CommandText = string.Format(@"select CertID,Code,Descr,ValidityPeriod,ValidityTimeBucket,DateFrom,
-                                              DateTo,CertPosition,IsDeleted
-                                              from Certifications
-                                              Where 1=1 {0}", FilterStr);
-                    using (var reader = command.ExecuteReader())
-                    {
-                        if (reader.Read())
-                        {
-                            CertificationData data = new CertificationData();
-
-                            data.Id = int.Parse(reader["CertId"].ToString());
-                            data.Code = reader["Code"].ToString();
-                            data.Descr = reader["Descr"].ToString();
-                            data.ValidityPeriod = int.Parse(reader["ValidityPeriod"].ToString());
-
-                            data.CertPosition = (BasicEnums.CertPosition)Enum.Parse(typeof(BasicEnums.CertPosition), reader["CertPosition"].ToString());
-                            data.ValidityTimeBucket = (BasicEnums.Timebucket)Enum.Parse(typeof(BasicEnums.Timebucket), reader["ValidityTimeBucket"].ToString());
-
-                            data.DateFrom = DateTime.Parse(reader["DateFrom"].ToString());
-                            data.DateTo = DateTime.Parse(reader["DateTo"].ToString());
-
-
-                            data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
-
-
-
-                        }
-                    }
-
-                    connection.Close();
-                }
-
-                return FlatData;
-            }
-            catch (Exception ex)
-            {
-                LogError(ex, "GetCertificationChooserData", "Notes");
-                return null;
-            }
-        }
-        public ObservableCollection<CertificationData> GetCertificationData(bool ShowDeleted)
-        {
-            ObservableCollection<CertificationData> DataList = new ObservableCollection<CertificationData>();
-
-            string FilterStr = "";
-
-            using (var connection = GetConnection())
-            using (var command = new SqlCommand())
-            {
-                connection.Open();
-                command.Connection = connection;
-
-                if (ShowDeleted == false)
-                {
-                    command.Parameters.AddWithValue("@ShowDeleted", ShowDeleted);
-                    FilterStr = String.Format(@" and Certifications.IsDeleted =@ShowDeleted");
-                }
-                command.CommandText = string.Format(@"select CertID,Code,Descr,ValidityPeriod,ValidityTimeBucket,DateFrom,
-                                              DateTo,CertPosition,IsDeleted
-                                              from Certifications
-                                              Where 1=1 {0}", FilterStr);
-
-                using (var reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        CertificationData data = new CertificationData();
-
-
-
-
-                        data.Id = int.Parse(reader["CertId"].ToString());
-                        data.Code = reader["Code"].ToString();
-                        data.Descr = reader["Descr"].ToString();
-                        data.ValidityPeriod = int.Parse(reader["ValidityPeriod"].ToString());
-
-                        data.CertPosition = (BasicEnums.CertPosition)Enum.Parse(typeof(BasicEnums.CertPosition), reader["CertPosition"].ToString());
-                        data.ValidityTimeBucket = (BasicEnums.Timebucket)Enum.Parse(typeof(BasicEnums.Timebucket), reader["ValidityTimeBucket"].ToString());
-
-                        data.DateFrom = DateTime.Parse(reader["DateFrom"].ToString());
-                        data.DateTo = DateTime.Parse(reader["DateTo"].ToString());
-
-
-                        data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
-
-
-
-
-                        DataList.Add(data);
-                    }
-                }
-
-                connection.Close();
-            }
-
-            return DataList;
-        }
-        #endregion
+        #region Vacation Planning File 
 
         #region Employee
 
@@ -1590,127 +108,171 @@ ORDER BY E.Seniority", FilterStr);
 
             return DataList;
         }
-
-        public int SaveEmployeeData(EmployeeData flatData)
+        public ObservableCollection<EmployeeData> GetEmployeesByTypeData_CS(BasicEnums.EmployeeType employeeType, bool ShowDeleted)
         {
-            try
+            ObservableCollection<EmployeeData> DataList = new ObservableCollection<EmployeeData>();
+
+            string FilterStr = "";
+
+            using (var connection = GetConnection())
+            using (var command = new SqlCommand())
             {
-                using (var dbContext = new ErpDbContext(options))
+                connection.Open();
+                command.Connection = connection;
+
+                if (ShowDeleted == false)
                 {
-                    // Separate query from execution
-                    int employeeId = flatData.EmployeeId;
-                    var existingQuery = dbContext.Employees.Where(c => c.EmployeeID == employeeId);
-                    var existing = existingQuery.SingleOrDefault();
-                    // Execute the query and get the result
-                    //var AirportQuery = dbContext.Airports.Where(c => c.AirportCode == flatData.BaseAirport.Code);
-                    //var Airport = AirportQuery.SingleOrDefault();
+                    command.Parameters.AddWithValue("@ShowDeleted", ShowDeleted);
+                    FilterStr = string.Concat(FilterStr, " AND E.IsDeleted = @ShowDeleted");
+                }
+                command.Parameters.AddWithValue("@Position", employeeType.ToString());
+                FilterStr = string.Concat(FilterStr, " AND E.Position = @Position");
 
-                    //var CertificationQuery = dbContext.Certifications.Where(c => c.Code == flatData.Certification.Code);
-                    //var Certification = AirportQuery.SingleOrDefault();
+                command.CommandText = string.Format(@"SELECT E.EmployeeID, E.Code, E.Descr, E.LowerBound, E.UpperBound,  
+E.Position,E.Seniority,E.IsDeleted
+,A.AirportID,A.AirportCode,A.AirportDescr
+FROM Employees AS E
+INNER JOIN Airports AS A ON E.BaseAirportId = A.AirportID
+WHERE 1=1 {0}
+ORDER BY E.Seniority", FilterStr);
 
-                    if (existing != null)
+
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
                     {
+                        EmployeeData data = new EmployeeData();
+                        data.EmpCrSettings = new EmployeeCR_Settings();
+                        data.Certification = new CertificationData();
+                        data.BaseAirport = new AirportData();
+                        data.BaseAirport.City = new CityData();
 
 
-                        // Update existing customer
-                        existing.Code = flatData.Code;
-                        existing.Descr = flatData.Descr;
-                        existing.FirstName = flatData.FirstName;
-                        existing.LastName = flatData.LastName;
-                        existing.Gender = flatData.Gender.ToString();
-                        existing.ContactNumber = flatData.ContactNumber;
-                        existing.Email = flatData.Email;
-                        existing.Address = flatData.Address;
-                        existing.Position = flatData.Position.ToString();
-                        existing.TotalFlightHours = flatData.TotalFlightHours;
-                        existing.Seniority = flatData.Seniority;
-                        existing.Language = flatData.Language; ;
+                        data.EmployeeId = int.Parse(reader["EmployeeID"].ToString());
+                        data.Code = reader["Code"].ToString();
+                        data.Descr = reader["Descr"].ToString();
+                        data.Position = (BasicEnums.EmployeeType)Enum.Parse(typeof(BasicEnums.EmployeeType), reader["Position"].ToString());
+                        data.Seniority = int.Parse(reader["Seniority"].ToString());
+                        data.EmpCrSettings.LowerBound = int.Parse(reader["LowerBound"].ToString());
+                        data.EmpCrSettings.UpperBound = int.Parse(reader["UpperBound"].ToString());
+                        data.BaseAirport.Code  = reader["AirportCode"].ToString();
+                        data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
 
-                        existing.DateOfBirth = DateTime.Now;
-                        existing.HireDate = DateTime.Now;
-                        existing.LowerBound = flatData.EmpCrSettings.LowerBound;
-                        existing.UpperBound = flatData.EmpCrSettings.UpperBound;
 
-                        existing.BaseAirportId = flatData.BaseAirport.Id;
-                        existing.CertificationID = flatData.Certification.Id;
 
-                        existing.IsDeleted = flatData.IsDeleted;
-
-                        dbContext.SaveChanges();
-                        return 1;
-                    }
-                    else
-                    {
-                        return -1;
+                        DataList.Add(data);
                     }
                 }
+
+                connection.Close();
             }
-            catch (Exception ex)
+
+            return DataList;
+        }
+
+
+public int SaveEmployeeData(EmployeeData flatData)
+{
+    try
+    {
+        using (var dbContext = new ErpDbContext(options))
+        {
+            // Separate query from execution
+            int employeeId = flatData.EmployeeId;
+            var existingQuery = dbContext.Employees.Where(c => c.EmployeeID == employeeId);
+            var existing = existingQuery.SingleOrDefault();;
+            if (existing != null)
             {
-                LogError(ex, "SaveEmployeeData", "Notes");
+                // Update existing customer
+                existing.Code = flatData.Code;
+                existing.Descr = flatData.Descr;
+                existing.FirstName = flatData.FirstName;
+                existing.LastName = flatData.LastName;
+                existing.Gender = flatData.Gender.ToString();
+                existing.ContactNumber = flatData.ContactNumber;
+                existing.Email = flatData.Email;
+                existing.Address = flatData.Address;
+                existing.Position = flatData.Position.ToString();
+                existing.TotalFlightHours = flatData.TotalFlightHours;
+                existing.Seniority = flatData.Seniority;
+                existing.Language = flatData.Language; ;
+                existing.DateOfBirth = DateTime.Now;
+                existing.HireDate = DateTime.Now;
+                existing.LowerBound = flatData.EmpCrSettings.LowerBound;
+                existing.UpperBound = flatData.EmpCrSettings.UpperBound;
+                existing.IsDeleted = flatData.IsDeleted;
+
+                existing.BaseAirportId = flatData.BaseAirport.Id;
+
+
+                dbContext.SaveChanges();
+                return 1;
+            }
+            else
+            {
                 return -1;
             }
         }
+    }
+    catch (Exception ex)
+    {
+        LogError(ex, "SaveEmployeeData", "Notes");
+        return -1;
+    }
+}
 
-        public int AddEmployeeData(EmployeeData flatData)
+public int AddEmployeeData(EmployeeData flatData)
+{
+    try
+    {
+        using (var dbContext = new ErpDbContext(options))
         {
-            try
+            // Separate query from execution
+            var existingItemQuery = dbContext.Employees.Where(r => r.Code == flatData.Code);
+            var existingItem = existingItemQuery.SingleOrDefault();
+            // Execute the query and get the result
+
+            if (existingItem == null)
             {
-                using (var dbContext = new ErpDbContext(options))
-                {
-                    // Separate query from execution
-                    var existingItemQuery = dbContext.Employees.Where(r => r.Code == flatData.Code);
-                    var existingItem = existingItemQuery.SingleOrDefault();
-                    // Execute the query and get the result
+                var newItem = new EmployeeDataEntity();
+                // Insert new item
+                newItem.Code = flatData.Code;
+                newItem.Descr = flatData.Descr;
+                newItem.FirstName = " ";
+                newItem.LastName = " ";
+                newItem.Gender = BasicEnums.Gender.Male.ToString();
+                newItem.ContactNumber = " ";
+                newItem.Email = " ";
+                newItem.Address = " ";
+                newItem.Position = BasicEnums.EmployeeType.Captain.ToString();
+                newItem.TotalFlightHours = 0;
+                newItem.Seniority = 0;
+                newItem.Language = 0;
+                newItem.LowerBound = 70;
+                newItem.UpperBound = 80;
+                newItem.DateOfBirth = DateTime.Now;
+                newItem.HireDate = DateTime.Now;
+                newItem.IsDeleted = false;
+                newItem.BaseAirportId = dbContext.Airports.FirstOrDefault().AirportID;
 
-
-                    if (existingItem == null)
-                    {
-                        var newItem = new EmployeeDataEntity();
-                        // Insert new item
-                        newItem.Code = flatData.Code;
-                        newItem.Descr = flatData.Descr;
-                        newItem.FirstName = " ";
-                        newItem.LastName = " ";
-                        newItem.Gender = BasicEnums.Gender.Male.ToString();
-                        newItem.ContactNumber = " ";
-                        newItem.Email = " ";
-                        newItem.Address = " ";
-                        newItem.Position = BasicEnums.EmployeeType.Captain.ToString();
-                        newItem.TotalFlightHours = 0;
-                        newItem.Seniority = 0;
-                        newItem.Language = 0;
-                        newItem.LowerBound = 70;
-                        newItem.UpperBound = 80;
-
-                        newItem.DateOfBirth = DateTime.Now;
-                        newItem.HireDate = DateTime.Now;
-
-                        newItem.BaseAirportId = dbContext.Airports.FirstOrDefault().AirportID;
-                        newItem.CertificationID = dbContext.Certifications.FirstOrDefault().CertID;
-
-                        newItem.IsDeleted = false;
-
-
-                        dbContext.Employees.Add(newItem);
-
-                        dbContext.SaveChanges();
-                        return 0;
-                    }
-                    else
-                    {
-                        // Else Print messages
-                        return 1;
-                    }
-                }
+                dbContext.Employees.Add(newItem);
+                dbContext.SaveChanges();
+                return 0;
             }
-            catch (Exception ex)
+            else
             {
-                LogError(ex, "AddEmployeeData", "Notes");
-                return 2;
-
+                        
+                return 1;
             }
         }
+    }
+    catch (Exception ex)
+    {
+        LogError(ex, "AddEmployeeData", "Notes");
+        return 2;
+
+    }
+}
 
         public EmployeeData GetEmployeeChooserData(int Id, string Code)
         {
@@ -1801,7 +363,7 @@ INNER JOIN Airports AS A ON Employees.BaseAirportId = A.AirportID
                     connection.Close();
                 }
 
-                
+
                 return FlatData;
             }
             catch (Exception ex)
@@ -1901,7 +463,365 @@ INNER JOIN Airports AS A ON Employees.BaseAirportId = A.AirportID
 
         #endregion
 
-        #region 2ndTab Languages
+        #region 2ndTab LeaveBids
+
+        public ObservableCollection<LeaveBidsDataStatic> GetLeaveBids(string EmployeeCode, string ScheduleCode)
+        {
+            ObservableCollection<LeaveBidsDataStatic> DataList = new ObservableCollection<LeaveBidsDataStatic>();
+            using (var connection = GetConnection())
+            using (var command = new SqlCommand())
+            {
+                connection.Open();
+                command.Connection = connection;
+
+                command.Parameters.AddWithValue("@EmpCode", EmployeeCode);
+                command.Parameters.AddWithValue("@ScheduleCode", ScheduleCode);
+
+
+                command.CommandText = string.Format(@"SELECT L.BidId, L.BidCode, L.PriorityLevel, L.BidType, L.DateFrom, L.DateTo, L.DateFromStr, L.DateToStr,
+    L.NumberOfDays, L.NumberOfDaysMin, L.NumberOfDaysMax, L.IsDeleted,
+    E.EmployeeID, E.Code AS EMPCode,
+    R.ReqCode
+FROM LeaveBids AS L
+INNER JOIN Employees AS E ON E.EmployeeID = L.EmpId
+INNER JOIN ReqScheduleInfo AS R ON R.ID = L.SceduleId
+WHERE E.Code = @EmpCode AND R.ReqCode = @ScheduleCode
+ORDER BY L.PriorityLevel");
+
+
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+
+                        LeaveBidsDataStatic data = new LeaveBidsDataStatic();
+                        data.Employee = new EmployeeData();
+                        data.Schedule = new ReqScheduleInfoData();
+
+                        data.BidCode = reader["BidCode"].ToString();
+
+                        data.PriorityLevel = int.Parse(reader["PriorityLevel"].ToString());
+
+                        data.BidType = (BasicEnums.BidType)Enum.Parse(typeof(BasicEnums.BidType), reader["BidType"].ToString());
+
+                        data.DateFrom = Convert.ToDateTime(reader["Datefrom"]);
+                        data.DateTo = Convert.ToDateTime(reader["DateTo"]);
+
+
+                        data.DateFromStr = data.DateFrom.ToString("dd/MM/yyyy");
+                        data.DateToStr = data.DateTo.ToString("dd/MM/yyyy");
+
+
+                        data.DateTo = Convert.ToDateTime(reader["DateTo"]);
+                        data.NumberOfDays = int.Parse(reader["NumberOfDays"].ToString());
+                        data.NumberOfDaysMin = int.Parse(reader["NumberOfDaysMin"].ToString());
+                        data.NumberOfDaysMax = int.Parse(reader["NumberOfDaysMax"].ToString());
+
+                        data.Employee.Code = reader["EMPCode"].ToString();
+                        data.Schedule.ReqCode = reader["ReqCode"].ToString();
+                        data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
+                        data.ExistingFlag = true;
+                        data.NewBidFlag = false;
+                        data.Bidflag = true;
+                        DataList.Add(data);
+
+                    }
+                }
+
+                connection.Close();
+            }
+
+            return DataList;
+        }
+
+        public bool SaveLeaveBidsData(ObservableCollection<LeaveBidsDataStatic> Data, string EmployeeCode, string ScheduleCode)
+        {
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
+                    // Retrieve the final item from the Rmaster table
+                    var employee = dbContext.Employees.SingleOrDefault(r => r.Code == EmployeeCode);
+                    var schedule = dbContext.ReqScheduleInfo.SingleOrDefault(r => r.ReqCode == ScheduleCode);
+
+                    if (employee == null)
+                    {
+                        // Final item not found
+                        return false;
+                    }
+
+                    int EmployeeId = employee.EmployeeID;
+                    int scheduleId = schedule.ID;
+
+                    int result = 0;
+                    foreach (var row in Data)
+                    {
+                        string OldBidCode = row.OldBidCode;
+
+
+                        if (row.ExistingFlag == false && row.Bidflag == true && row.NewBidFlag == true)
+                        {
+                            // Insert new bom
+                            LeaveBidsDataEntity newBid = new LeaveBidsDataEntity
+                            {
+                                EmpId = EmployeeId,
+                                SceduleId = scheduleId,
+                                BidCode = row.BidCode,
+                                PriorityLevel = row.PriorityLevel,
+                                BidType = row.BidType.ToString(),
+                                DateFrom = row.DateFrom,
+                                DateTo = row.DateTo,
+                                DateFromStr = row.DateFrom.ToString(),
+                                DateToStr = row.DateTo.ToString(),
+                                NumberOfDays = row.NumberOfDays,
+                                NumberOfDaysMin = row.NumberOfDaysMin,
+                                NumberOfDaysMax = row.NumberOfDaysMax
+
+                            };
+
+                            dbContext.LeaveBids.Add(newBid);
+                            result += 1;
+
+                        }
+                        else if (row.ExistingFlag == true && row.Bidflag == false)
+                        {
+                            var existingBid = dbContext.LeaveBids.SingleOrDefault(b => b.EmpId == EmployeeId && b.BidCode == row.BidCode);
+                            dbContext.LeaveBids.Remove(existingBid);
+
+                        }
+                        else if (row.ExistingFlag == true && row.Bidflag == true && row.Modify == true)
+                        {
+                            if (row.OldBidCode != row.BidCode)
+                            {
+                                var existingBid = dbContext.LeaveBids.SingleOrDefault(b => b.EmpId == EmployeeId && b.BidCode == row.OldBidCode);
+                                // Update existing bom
+                                existingBid.BidCode = row.BidCode;
+                                existingBid.PriorityLevel = row.PriorityLevel;
+                                existingBid.BidType = row.BidType.ToString();
+                                existingBid.DateFrom = row.DateFrom;
+                                existingBid.DateTo = row.DateTo;
+                                existingBid.DateFromStr = row.DateFrom.ToString();
+                                existingBid.DateToStr = row.DateTo.ToString();
+                                existingBid.NumberOfDays = row.NumberOfDays;
+                                existingBid.NumberOfDaysMin = row.NumberOfDaysMin;
+                                existingBid.NumberOfDaysMax = row.NumberOfDaysMax;
+                            }
+                            else
+                            {
+                                var existingBid = dbContext.LeaveBids.SingleOrDefault(b => b.EmpId == EmployeeId && b.BidCode == row.BidCode);
+                                // Update existing bom
+                                existingBid.BidCode = row.BidCode;
+                                existingBid.PriorityLevel = row.PriorityLevel;
+                                existingBid.BidType = row.BidType.ToString();
+                                existingBid.DateFrom = row.DateFrom;
+                                existingBid.DateTo = row.DateTo;
+                                existingBid.DateFromStr = row.DateFrom.ToString();
+                                existingBid.DateToStr = row.DateTo.ToString();
+                                existingBid.NumberOfDays = row.NumberOfDays;
+                                existingBid.NumberOfDaysMin = row.NumberOfDaysMin;
+                                existingBid.NumberOfDaysMax = row.NumberOfDaysMax;
+                            }
+
+
+                        }
+
+
+                    }
+
+                    dbContext.SaveChanges();
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "SaveLeaveBidsData", "Notes");
+                return false;
+            }
+        }
+
+        //public bool SaveLeaveBidsRows(ObservableCollection<LeaveBidRowData> Data)
+        //{
+        //    try
+        //    {
+        //        using (var dbContext = new ErpDbContext(options))
+        //        {
+        //            // Retrieve the final item from the Rmaster table
+
+
+        //            foreach (var row in Data)
+        //            {
+
+        //                // Insert new bom
+        //                LeaveBidRowsDataEntity newRow = new LeaveBidRowsDataEntity();
+
+        //                var BidId = dbContext.LeaveBids.SingleOrDefault(b => b.BidCode == row.LeaveBid.BidCode).BidId;
+        //                newRow.BidId = BidId;
+        //                newRow.EmpId = row.EmpId;
+        //                newRow.ScheduleId = row.ScheduleId;
+        //                newRow.Date = row.Date;
+        //                newRow.DateStr = row.DateStr;
+
+
+        //                dbContext.LeaveBidsRows.Add(newRow);
+
+        //            }
+
+        //            dbContext.SaveChanges();
+        //            return true;
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        LogError(ex, "SaveLeaveBidsRows", "Notes");
+        //        return false;
+        //    }
+        //}
+
+        public int DeleteLeaveBidData(LeaveBidsData Data)
+        {
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
+                    string BidCode = Data.BidCode;
+                    var existingBid = dbContext.LeaveBids.SingleOrDefault(b => b.BidCode == Data.BidCode);
+
+                    // Check if the bid exists
+                    if (existingBid == null)
+                    {
+                        // Bid does not exist in the database
+                        return 1;
+                    }
+
+                    dbContext.LeaveBids.Remove(existingBid);
+                    dbContext.SaveChanges();
+                    return 2; // Indicating successful deletion
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "DeleteLeaveBidData", "Notes");
+                return 0; // Indicating failure due to an exception
+            }
+        }
+
+
+        #endregion
+
+        #region 2ndTab LeaveStatus
+        public int SaveLeaveStatusData(EmployeeData flatData)
+        {
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
+                    // Separate query from execution
+                    int employeeId = flatData.EmployeeId;
+                    var existingQuery = dbContext.LeaveStatus.Where(c => c.EmpId == employeeId);
+                    var existing = existingQuery.SingleOrDefault();
+
+                    if (existing != null)
+                    {
+
+
+                        // Update existing customer
+                        existing.Total = flatData.LeaveStatus.Total;
+                        existing.Used = flatData.LeaveStatus.Used;
+                        existing.CurrentBalance = flatData.LeaveStatus.CurrentBalance;
+                        existing.ProjectedBalance = flatData.LeaveStatus.ProjectedBalance;
+                        existing.EmpId = employeeId;
+                        dbContext.SaveChanges();
+
+                        return 1;
+                    }
+                    else
+                    {
+                        var newItem = new LeaveStatusDataEntity();
+                        // Insert new item
+                        newItem.Total = flatData.LeaveStatus.Total;
+                        newItem.Used = flatData.LeaveStatus.Used;
+                        newItem.CurrentBalance = flatData.LeaveStatus.CurrentBalance;
+                        newItem.ProjectedBalance = flatData.LeaveStatus.ProjectedBalance;
+                        newItem.EmpId = employeeId;
+
+                        dbContext.LeaveStatus.Add(newItem);
+                        dbContext.SaveChanges();
+                        return 1;
+
+                    }
+
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "SaveLeaveStatusData", "Notes");
+                return -1;
+            }
+        }
+
+        public LeaveStatusData GetLeaveStatusChooserData(int Id, string Code)
+        {
+            LeaveStatusData FlatData = new LeaveStatusData();
+            string FilterStr = "";
+            try
+            {
+                using (var connection = GetConnection())
+                using (var command = new SqlCommand())
+                {
+                    connection.Open();
+                    command.Connection = connection;
+
+                    if (Id > 0)
+                    {
+                        command.Parameters.AddWithValue("@ID", Id);
+                        FilterStr = String.Format(@" and E.EmployeeID =@ID");
+
+                    }
+
+                    else if (!string.IsNullOrWhiteSpace(Code))
+                    {
+                        command.Parameters.AddWithValue("@Code", Code);
+                        FilterStr = String.Format(@" and E.Code =@Code");
+
+                    }
+                    command.CommandText = string.Format(@"select L.LSId,L.Total,L.Used,L.CurrentBalance,L.ProjectedBalance,E.EmployeeID,E.Code
+from LeaveStatus as L
+INNER JOIN Employees as E ON E.EmployeeID =L.EmpId
+                                              Where 1=1 {0}", FilterStr);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            LeaveStatusData data = new LeaveStatusData();
+
+
+
+                            data.Total = int.Parse(reader["Total"].ToString());
+                            data.Used = int.Parse(reader["Used"].ToString());
+                            data.ProjectedBalance = int.Parse(reader["ProjectedBalance"].ToString());
+
+
+                            FlatData = data;
+                        }
+                    }
+
+                    connection.Close();
+                }
+
+
+                return FlatData;
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "GetLeaveStatusChooserData", "Notes");
+                return null;
+            }
+        }
+        #endregion
+
+        #region Extra
+
+        #region 3dTab Languages
         public ObservableCollection<EMPLanguageData> GetEMPLanguageData(string finalEmployeeCode, bool addLanguageFlag)
         {
             ObservableCollection<EMPLanguageData> data = new ObservableCollection<EMPLanguageData>();
@@ -2052,68 +972,351 @@ AND L.isDeleted = 0";
             }
         }
 
-        #endregion
+        #region Language
 
-        #region 3dTab LeaveBids
-
-        public ObservableCollection<LeaveBidsDataStatic> GetLeaveBids(string EmployeeCode,string ScheduleCode)
+        public ObservableCollection<LanguageData> GetLanguageData(bool ShowDeleted)
         {
-            ObservableCollection<LeaveBidsDataStatic> DataList = new ObservableCollection<LeaveBidsDataStatic>();
+            ObservableCollection<LanguageData> DataList = new ObservableCollection<LanguageData>();
+
+            string FilterStr = "";
+
             using (var connection = GetConnection())
             using (var command = new SqlCommand())
             {
                 connection.Open();
                 command.Connection = connection;
 
-                command.Parameters.AddWithValue("@EmpCode", EmployeeCode);
-                command.Parameters.AddWithValue("@ScheduleCode", ScheduleCode);
+                if (ShowDeleted == false)
+                {
+                    command.Parameters.AddWithValue("@ShowDeleted", ShowDeleted);
+                    FilterStr = String.Format(@" and IsDeleted =@ShowDeleted");
+                }
+                command.CommandText = string.Format(@"select LId,LCode,LDescr,IsDeleted from Language Where 1=1 {0}", FilterStr);
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        LanguageData data = new LanguageData();
+
+                        data.Id = int.Parse(reader["LId"].ToString());
+                        data.Code = reader["LCode"].ToString();
+                        data.Descr = reader["LDescr"].ToString();
+                        data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
+
+                        DataList.Add(data);
+                    }
+                }
+
+                connection.Close();
+
+            }
+
+            return DataList;
+        }
 
 
-                command.CommandText = string.Format(@"SELECT L.BidId, L.BidCode, L.PriorityLevel, L.BidType, L.DateFrom, L.DateTo, L.DateFromStr, L.DateToStr,
-    L.NumberOfDays, L.NumberOfDaysMin, L.NumberOfDaysMax, L.IsDeleted,
-    E.EmployeeID, E.Code AS EMPCode,
-    R.ReqCode
-FROM LeaveBids AS L
-INNER JOIN Employees AS E ON E.EmployeeID = L.EmpId
-INNER JOIN ReqScheduleInfo AS R ON R.ID = L.SceduleId
-WHERE E.Code = @EmpCode AND R.ReqCode = @ScheduleCode
-ORDER BY L.PriorityLevel");
+        public bool SaveLanguageData(ObservableCollection<LanguageData> Data)
+        {
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
 
+
+                    bool hasChanges = false;
+                    foreach (var row in Data)
+                    {
+                        var existingrow = dbContext.Language.SingleOrDefault(b => b.LId == row.Id);
+
+                        if (existingrow == null)
+                        {
+                            LanguageDataEntity newrow = new LanguageDataEntity();
+                            newrow.LCode = row.Code;
+                            newrow.LDescr = row.Descr;
+                            newrow.IsDeleted = false;
+                            dbContext.Language.Add(newrow);
+                            hasChanges = true;
+                        }
+                        else if (existingrow != null)
+                        {
+
+                            existingrow.LCode = row.Code;
+                            existingrow.LDescr = row.Descr;
+                            existingrow.IsDeleted = row.IsDeleted;
+
+                            hasChanges = true;
+
+
+
+                        }
+
+
+                    }
+
+                    if (hasChanges)
+                    {
+                        dbContext.SaveChanges();
+                    }
+
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "SaveLanguageData", "Notes");
+                return false;
+            }
+        }
+
+
+
+        #endregion
+
+        #endregion
+        #endregion
+        #endregion
+
+        #region ReqSchedule
+        public int SetMainSchedule(ReqScheduleInfoData FlatData)
+        {
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
+                    // Separate query from execution
+                    int ReqId = FlatData.ID;
+
+                    var selectedQuery = dbContext.ReqScheduleInfo.Where(r => r.ID == ReqId);
+                    var selectedSchedule = selectedQuery.SingleOrDefault();
+
+
+                    var MainSchedulequery = dbContext.ReqScheduleInfo.Where(r => r.MainSchedule == true);
+                    var MainSchedule = MainSchedulequery.SingleOrDefault();
+                    // Execute the query and get the result
+
+
+                    var result = System.Windows.MessageBox.Show($"The Schedule with Code {FlatData.ReqCode}  will be set as the Main Schedule  . Proceed?", "Confirmation", MessageBoxButton.YesNo);
+
+                    if (result == MessageBoxResult.Yes)
+                    {
+                        if (MainSchedule != null)
+                        {
+
+                            MainSchedule.MainSchedule = false;
+                            selectedSchedule.MainSchedule = true;
+
+
+                        }
+                        else
+                        {
+                            selectedSchedule.MainSchedule = true;
+                        }
+                        dbContext.SaveChanges();
+                        return 2;
+                    }
+                    else
+                    {
+                        return 1;
+                    }
+
+
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "SetMainSchedule", "Notes");
+                return -1;
+
+            }
+        }
+        public int SaveReqScheduleInfoData(ReqScheduleInfoData flatData)
+        {
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
+                    // Separate query from execution
+                    int ReqId = flatData.ID;
+                    var existingItemQuery = dbContext.ReqScheduleInfo.Where(r => r.ID == ReqId);
+                    var existingItem = existingItemQuery.SingleOrDefault();
+                    // Execute the query and get the result
+
+                    if (existingItem != null)
+                    {
+
+                        // Update existing item
+                        existingItem.ID = flatData.ID;
+                        existingItem.ReqCode = flatData.ReqCode;
+                        existingItem.ReqDescr = flatData.ReqDescr;
+                        existingItem.Notes = flatData.Notes;
+                        existingItem.DateFrom = flatData.DateFrom;
+                        existingItem.DateTo = flatData.DateTo;
+                        existingItem.DateTo = flatData.DateTo;
+                        existingItem.LimitLineFixed = flatData.LimitLineFixed;
+
+                        existingItem.IsDeleted = flatData.IsDeleted;
+                        existingItem.MainSchedule = flatData.MainSchedule;
+
+
+
+                        dbContext.SaveChanges();
+                        return 1;
+                    }
+                    else
+                    {
+                        return -1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "SaveReqScheduleInfoData", "Notes");
+                return -1;
+
+            }
+        }
+        public int AddReqScheduleInfoData(ReqScheduleInfoData flatData)
+        {
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
+                    // Separate query from execution
+                    var existingItemQuery = dbContext.ReqScheduleInfo.Where(r => r.ReqCode == flatData.ReqCode);
+                    var existingItem = existingItemQuery.SingleOrDefault();
+                    // Execute the query and get the result
+
+
+                    if (existingItem == null)
+                    {
+                        var newItem = new ReqScheduleInfoDataEntity();
+                        // Insert new ForeCast
+                        newItem.ReqCode = flatData.ReqCode;
+                        newItem.ReqDescr = flatData.ReqDescr;
+                        newItem.Notes = flatData.Notes;
+                        newItem.DateFrom = flatData.DateFrom;
+                        newItem.DateTo = flatData.DateTo;
+                        newItem.LimitLineFixed = flatData.LimitLineFixed;
+                        newItem.IsDeleted = false;
+                        newItem.MainSchedule = false;
+
+                        dbContext.ReqScheduleInfo.Add(newItem);
+
+                        dbContext.SaveChanges();
+
+                        return 0;
+                    }
+                    else
+                    {
+                        return 1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "AddReqScheduleInfoData", "Notes");
+                return 2;
+
+            }
+        }
+        public bool SaveReqScheduleRows(ReqScheduleInfoData FlatData)
+        {
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
+                    var ScheduleRows = FlatData.ReqScheduleRowsData;
+                    var ScheduleInfo = dbContext.ReqScheduleInfo.SingleOrDefault(r => r.ID == FlatData.ID);
+
+                    String ReqCode = ScheduleInfo.ReqCode.ToString();
+
+                    bool hasChanges = false;
+                    foreach (var row in ScheduleRows)
+                    {
+                        var DateStr = row.DateStr;
+
+                        var existingRows = dbContext.ReqScheduleRows.Where(b => b.ReqCode == ReqCode && b.DateStr == row.DateStr
+                        && b.Position == row.Position.ToString());
+
+                        var existingrow = dbContext.ReqScheduleRows.FirstOrDefault(b => b.ReqCode == ReqCode && b.DateStr == row.DateStr
+                        && b.Position == row.Position.ToString());
+
+                        if (existingrow == null)
+                        {
+                            dbContext.ReqScheduleRows.Add(new ReqScheduleRowsDataEntity
+                            {
+                                ReqCode = ReqCode,
+                                Position = row.Position.ToString(),
+                                Date = row.Date,
+                                DateStr = row.DateStr,
+                                LimitLine = row.LimitLine
+
+
+                            });
+                            hasChanges = true;
+                        }
+                        else if (existingrow != null)
+                        {
+
+                            if (existingrow.LimitLine != row.LimitLine)
+                            {
+                                existingrow.LimitLine = row.LimitLine;
+                                hasChanges = true;
+
+                            }
+
+
+                        }
+
+
+                    }
+
+                    if (hasChanges)
+                    {
+                        dbContext.SaveChanges();
+                    }
+
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "SaveReqScheduleRows", "Notes");
+                return false;
+            }
+        }
+
+
+        public ObservableCollection<ReqScheduleRowsData> GetReqSchedulesRows(string ReqCode)
+        {
+            ObservableCollection<ReqScheduleRowsData> DataList = new ObservableCollection<ReqScheduleRowsData>();
+            using (var connection = GetConnection())
+            using (var command = new SqlCommand())
+            {
+                connection.Open();
+                command.Connection = connection;
+
+                command.Parameters.AddWithValue("@Code", ReqCode);
+
+                command.CommandText = string.Format(@"select REQID,REQCODE,POSITION,DATE,DATESTR,LIMITLINE
+FROM ReqSchedulerows
+Where ReqCode =@Code");
 
                 using (var reader = command.ExecuteReader())
                 {
                     while (reader.Read())
                     {
 
-                        LeaveBidsDataStatic data = new LeaveBidsDataStatic();
-                        data.Employee = new EmployeeData();
-                        data.Schedule = new ReqScheduleInfoData();
+                        ReqScheduleRowsData data = new ReqScheduleRowsData();
 
-                        data.BidCode = reader["BidCode"].ToString();
+                        data.ReqCode = reader["REQCODE"].ToString();
+                        data.Position = (BasicEnums.EmployeeType)Enum.Parse(typeof(BasicEnums.EmployeeType), reader["POSITION"].ToString());
+                        data.LimitLine = int.Parse(reader["LIMITLINE"].ToString());
+                        data.Date = Convert.ToDateTime(reader["DATE"]);
 
-                        data.PriorityLevel = int.Parse(reader["PriorityLevel"].ToString());
-
-                        data.BidType= (BasicEnums.BidType)Enum.Parse(typeof(BasicEnums.BidType), reader["BidType"].ToString());
-
-                        data.DateFrom = Convert.ToDateTime(reader["Datefrom"]);
-                        data.DateTo = Convert.ToDateTime(reader["DateTo"]);
+                        data.DateStr = reader["DATESTR"].ToString();
 
 
-                        data.DateFromStr = data.DateFrom.ToString("dd/MM/yyyy"); 
-                        data.DateToStr = data.DateTo.ToString("dd/MM/yyyy"); 
-
-
-                        data.DateTo = Convert.ToDateTime(reader["DateTo"]);
-                        data.NumberOfDays = int.Parse(reader["NumberOfDays"].ToString());
-                        data.NumberOfDaysMin = int.Parse(reader["NumberOfDaysMin"].ToString());
-                        data.NumberOfDaysMax = int.Parse(reader["NumberOfDaysMax"].ToString());
-
-                        data.Employee.Code = reader["EMPCode"].ToString();
-                        data.Schedule.ReqCode = reader["ReqCode"].ToString();
-                        data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
-                        data.ExistingFlag = true;
-                        data.NewBidFlag = false;
-                        data.Bidflag = true;
                         DataList.Add(data);
 
                     }
@@ -2124,291 +1327,208 @@ ORDER BY L.PriorityLevel");
 
             return DataList;
         }
-
-        public bool SaveLeaveBidsData(ObservableCollection<LeaveBidsDataStatic> Data, string EmployeeCode, string ScheduleCode)
+        public ObservableCollection<ReqScheduleRowsData> GetReqSchedulesRowsByEmpType(string ReqCode, BasicEnums.EmployeeType Position)
         {
-            try
-            {
-                using (var dbContext = new ErpDbContext(options))
-                {
-                    // Retrieve the final item from the Rmaster table
-                    var employee = dbContext.Employees.SingleOrDefault(r => r.Code == EmployeeCode);
-                    var schedule = dbContext.ReqScheduleInfo.SingleOrDefault(r => r.ReqCode == ScheduleCode);
-
-                    if (employee == null)
-                    {
-                        // Final item not found
-                        return false;
-                    }
-
-                    int EmployeeId = employee.EmployeeID;
-                    int scheduleId = schedule.ID;
-
-                    int result = 0;
-                    foreach (var row in Data)
-                    {
-                        string OldBidCode = row.OldBidCode;
-
-
-                        if (row.ExistingFlag == false && row.Bidflag == true && row.NewBidFlag == true)
-                        {
-                            // Insert new bom
-                            LeaveBidsDataEntity newBid = new LeaveBidsDataEntity
-                            {
-                                EmpId = EmployeeId,
-                                SceduleId = scheduleId,
-                                BidCode = row.BidCode,
-                                PriorityLevel = row.PriorityLevel,
-                                BidType = row.BidType.ToString(),
-                                DateFrom = row.DateFrom,
-                                DateTo = row.DateTo,
-                                DateFromStr = row.DateFrom.ToString(),
-                                DateToStr = row.DateTo.ToString(),
-                                NumberOfDays = row.NumberOfDays,
-                                NumberOfDaysMin = row.NumberOfDaysMin,
-                                NumberOfDaysMax = row.NumberOfDaysMax
-
-                            };
-
-                            dbContext.LeaveBids.Add(newBid);
-                            result += 1;
-
-                        }
-                        else if (row.ExistingFlag == true && row.Bidflag == false)
-                        {
-                            var existingBid = dbContext.LeaveBids.SingleOrDefault(b => b.EmpId == EmployeeId && b.BidCode == row.BidCode);
-                            dbContext.LeaveBids.Remove(existingBid);
-
-                        }
-                        else if (row.ExistingFlag == true && row.Bidflag == true && row.Modify == true)
-                        {
-                            if(row.OldBidCode != row.BidCode)
-                            {
-                                var existingBid = dbContext.LeaveBids.SingleOrDefault(b => b.EmpId == EmployeeId && b.BidCode == row.OldBidCode);
-                                // Update existing bom
-                                existingBid.BidCode = row.BidCode;
-                                existingBid.PriorityLevel = row.PriorityLevel;
-                                existingBid.BidType = row.BidType.ToString();
-                                existingBid.DateFrom = row.DateFrom;
-                                existingBid.DateTo = row.DateTo;
-                                existingBid.DateFromStr = row.DateFrom.ToString();
-                                existingBid.DateToStr = row.DateTo.ToString();
-                                existingBid.NumberOfDays = row.NumberOfDays;
-                                existingBid.NumberOfDaysMin = row.NumberOfDaysMin;
-                                existingBid.NumberOfDaysMax = row.NumberOfDaysMax;
-                            }
-                            else
-                            {
-                                var existingBid = dbContext.LeaveBids.SingleOrDefault(b => b.EmpId == EmployeeId && b.BidCode == row.BidCode);
-                                // Update existing bom
-                                existingBid.BidCode = row.BidCode;
-                                existingBid.PriorityLevel = row.PriorityLevel;
-                                existingBid.BidType = row.BidType.ToString();
-                                existingBid.DateFrom = row.DateFrom;
-                                existingBid.DateTo = row.DateTo;
-                                existingBid.DateFromStr = row.DateFrom.ToString();
-                                existingBid.DateToStr = row.DateTo.ToString();
-                                existingBid.NumberOfDays = row.NumberOfDays;
-                                existingBid.NumberOfDaysMin = row.NumberOfDaysMin;
-                                existingBid.NumberOfDaysMax = row.NumberOfDaysMax;
-                            }
-
-
-                        }
-
-
-                        }
-
-                    dbContext.SaveChanges();
-                    return true;
-                }
-            }
-            catch (Exception ex)
-            {
-                LogError(ex, "SaveLeaveBidsData", "Notes");
-                return false;
-            }
-        }
-
-        //public bool SaveLeaveBidsRows(ObservableCollection<LeaveBidRowData> Data)
-        //{
-        //    try
-        //    {
-        //        using (var dbContext = new ErpDbContext(options))
-        //        {
-        //            // Retrieve the final item from the Rmaster table
-
-
-        //            foreach (var row in Data)
-        //            {
-
-        //                // Insert new bom
-        //                LeaveBidRowsDataEntity newRow = new LeaveBidRowsDataEntity();
-
-        //                var BidId = dbContext.LeaveBids.SingleOrDefault(b => b.BidCode == row.LeaveBid.BidCode).BidId;
-        //                newRow.BidId = BidId;
-        //                newRow.EmpId = row.EmpId;
-        //                newRow.ScheduleId = row.ScheduleId;
-        //                newRow.Date = row.Date;
-        //                newRow.DateStr = row.DateStr;
-
-
-        //                dbContext.LeaveBidsRows.Add(newRow);
-
-        //            }
-
-        //            dbContext.SaveChanges();
-        //            return true;
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        LogError(ex, "SaveLeaveBidsRows", "Notes");
-        //        return false;
-        //    }
-        //}
-
-        public int DeleteLeaveBidData(LeaveBidsData Data)
-        {
-            try
-            {
-                using (var dbContext = new ErpDbContext(options))
-                {
-                    string BidCode = Data.BidCode;
-                    var existingBid = dbContext.LeaveBids.SingleOrDefault(b => b.BidCode == Data.BidCode);
-
-                    // Check if the bid exists
-                    if (existingBid == null)
-                    {
-                        // Bid does not exist in the database
-                        return 1;
-                    }
-
-                    dbContext.LeaveBids.Remove(existingBid);
-                    dbContext.SaveChanges();
-                    return 2; // Indicating successful deletion
-                }
-            }
-            catch (Exception ex)
-            {
-                LogError(ex, "DeleteLeaveBidData", "Notes");
-                return 0; // Indicating failure due to an exception
-            }
-        }
-
-
-        #endregion
-
-        #region 3dTab LeaveStatus
-        public int SaveLeaveStatusData(EmployeeData flatData)
-        {
-            try
-            {
-                using (var dbContext = new ErpDbContext(options))
-                {
-                    // Separate query from execution
-                    int employeeId = flatData.EmployeeId;
-                    var existingQuery = dbContext.LeaveStatus.Where(c => c.EmpId == employeeId);
-                    var existing = existingQuery.SingleOrDefault();
-
-                    if (existing != null)
-                    {
-
-
-                        // Update existing customer
-                        existing.Total = flatData.LeaveStatus.Total;
-                        existing.Used = flatData.LeaveStatus.Used;
-                        existing.CurrentBalance = flatData.LeaveStatus.CurrentBalance;
-                        existing.ProjectedBalance = flatData.LeaveStatus.ProjectedBalance;
-                        existing.EmpId = employeeId;
-                        dbContext.SaveChanges();
-
-                        return 1;
-                    }
-                    else
-                    {
-                        var newItem = new LeaveStatusDataEntity();
-                        // Insert new item
-                        newItem.Total = flatData.LeaveStatus.Total;
-                        newItem.Used = flatData.LeaveStatus.Used;
-                        newItem.CurrentBalance = flatData.LeaveStatus.CurrentBalance;
-                        newItem.ProjectedBalance = flatData.LeaveStatus.ProjectedBalance;
-                        newItem.EmpId = employeeId;
-
-                        dbContext.LeaveStatus.Add(newItem);
-                        dbContext.SaveChanges();
-                        return 1;
-
-                    }
-
-                }
-            }
-            catch (Exception ex)
-            {
-                LogError(ex, "SaveLeaveStatusData", "Notes");
-                return -1;
-            }
-        }
-
-        public LeaveStatusData GetLeaveStatusChooserData(int Id, string Code)
-        {
-            LeaveStatusData FlatData = new LeaveStatusData();
+            ObservableCollection<ReqScheduleRowsData> DataList = new ObservableCollection<ReqScheduleRowsData>();
             string FilterStr = "";
-            try
+            using (var connection = GetConnection())
+            using (var command = new SqlCommand())
             {
-                using (var connection = GetConnection())
-                using (var command = new SqlCommand())
+                connection.Open();
+                command.Connection = connection;
+
+
+
+
+
+                command.Parameters.AddWithValue("@ReqCode", ReqCode);
+                command.Parameters.AddWithValue("@Position", Position.ToString());
+
+                FilterStr += @" and REQCODE = @ReqCode";
+                FilterStr += @" and POSITION = @Position";
+
+                command.CommandText = string.Format(@"select REQID,REQCODE,POSITION,
+DATE,DATESTR,LIMITLINE
+FROM ReqSchedulerows
+Where 1=1 {0}
+Order by Date", FilterStr);
+
+                using (var reader = command.ExecuteReader())
                 {
-                    connection.Open();
-                    command.Connection = connection;
-
-                    if (Id > 0)
+                    while (reader.Read())
                     {
-                        command.Parameters.AddWithValue("@ID", Id);
-                        FilterStr = String.Format(@" and E.EmployeeID =@ID");
+
+                        ReqScheduleRowsData data = new ReqScheduleRowsData();
+
+                        data.ReqCode = reader["REQCODE"].ToString();
+                        data.Position = (BasicEnums.EmployeeType)Enum.Parse(typeof(BasicEnums.EmployeeType), reader["POSITION"].ToString());
+                        data.LimitLine = int.Parse(reader["LIMITLINE"].ToString());
+                        data.Date = Convert.ToDateTime(reader["DATE"]);
+
+                        data.DateStr = reader["DATESTR"].ToString();
+
+
+                        DataList.Add(data);
 
                     }
+                }
 
-                    else if (!string.IsNullOrWhiteSpace(Code))
+                connection.Close();
+            }
+
+            return DataList;
+        }
+        public ObservableCollection<ReqScheduleInfoData> GetReqScheduleInfoData(bool ShowDeleted)
+        {
+            ObservableCollection<ReqScheduleInfoData> DataList = new ObservableCollection<ReqScheduleInfoData>();
+
+
+            string FilterStr = "";
+
+
+            using (var connection = GetConnection())
+            using (var command = new SqlCommand())
+            {
+                connection.Open();
+                command.Connection = connection;
+
+                if (ShowDeleted == false)
+                {
+                    command.Parameters.AddWithValue("@ShowDeleted", ShowDeleted);
+                    FilterStr = String.Format(@"and IsDeleted = @ShowDeleted");
+
+                }
+
+                command.CommandText = string.Format(@"select ID,REQCODE,REQDESCR,NOTES,DATEFROM,DATETO,ISDELETED,MAINSCHEDULE,LimitLineFixed
+FROM ReqScheduleInfo
+Where  1=1 {0}", FilterStr);
+
+
+
+
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
                     {
-                        command.Parameters.AddWithValue("@Code", Code);
-                        FilterStr = String.Format(@" and E.Code =@Code");
+                        ReqScheduleInfoData data = new ReqScheduleInfoData();
 
+                        data.ID = int.Parse(reader["ID"].ToString());
+                        data.ReqCode = reader["REQCODE"].ToString();
+                        data.ReqDescr = reader["REQDESCR"].ToString();
+                        data.LimitLineFixed = int.Parse(reader["LimitLineFixed"].ToString());
+                        data.DateFrom = Convert.ToDateTime(reader["DATEFROM"]);
+                        data.DateTo = Convert.ToDateTime(reader["DATETO"]);
+                        data.DateFromStr = data.DateFrom.ToString("dd/MM/yyyy");
+                        data.DateToStr = data.DateTo.ToString("dd/MM/yyyy");
+                        data.IsDeleted = bool.Parse(reader["ISDELETED"].ToString());
+                        data.MainSchedule = bool.Parse(reader["MAINSCHEDULE"].ToString());
+                        data.Notes = reader["NOTES"].ToString();
+
+
+                        DataList.Add(data);
                     }
-                    command.CommandText = string.Format(@"select L.LSId,L.Total,L.Used,L.CurrentBalance,L.ProjectedBalance,E.EmployeeID,E.Code
-from LeaveStatus as L
-INNER JOIN Employees as E ON E.EmployeeID =L.EmpId
-                                              Where 1=1 {0}", FilterStr);
-                    using (var reader = command.ExecuteReader())
-                    {
-                        if (reader.Read())
-                        {
-                            LeaveStatusData data = new LeaveStatusData();
+                }
 
+                connection.Close();
+            }
 
+            return DataList;
+        }
+        public ReqScheduleInfoData GetReqScheduleInfoChooserData(int id, string Code)
+        {
+            ReqScheduleInfoData data = new ReqScheduleInfoData();
 
-                            data.Total = int.Parse(reader["Total"].ToString());
-                            data.Used = int.Parse(reader["Used"].ToString());
-                            data.ProjectedBalance = int.Parse(reader["ProjectedBalance"].ToString());
+            using (var connection = GetConnection())
+            using (var command = new SqlCommand())
+            {
+                connection.Open();
+                command.Connection = connection;
 
+                if (id > 0)
+                {
+                    command.Parameters.AddWithValue("@ID", id);
 
-                            FlatData = data;
-                        }
-                    }
+                    command.CommandText = string.Format(@"select ID,REQCODE,REQDESCR,NOTES,DATEFROM,DATETO,ISDELETED,MAINSCHEDULE,LimitLineFixed
+                                                        FROM ReqScheduleInfo
+                                                        Where ID=@ID");
+                }
+                else if (!string.IsNullOrWhiteSpace(Code))
+                {
+                    command.Parameters.AddWithValue("@Code", Code); // Corrected variable name
 
-                    connection.Close();
+                    command.CommandText = string.Format(@"select ID,REQCODE,REQDESCR,NOTES,DATEFROM,DATETO,ISDELETED,MAINSCHEDULE,LimitLineFixed
+                                                        FROM ReqScheduleInfo
+                                                        Where REQCODE=@Code"); // Corrected parameter name
                 }
 
 
-                return FlatData;
+
+                using (var reader = command.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        data.ID = int.Parse(reader["ID"].ToString());
+                        data.ReqCode = reader["REQCODE"].ToString();
+                        data.ReqDescr = reader["REQDESCR"].ToString();
+                        data.DateFrom = Convert.ToDateTime(reader["DATEFROM"]);
+                        data.DateTo = Convert.ToDateTime(reader["DATETO"]);
+                        data.LimitLineFixed = int.Parse(reader["LimitLineFixed"].ToString());
+
+                        data.IsDeleted = bool.Parse(reader["ISDELETED"].ToString());
+                        data.MainSchedule = bool.Parse(reader["MAINSCHEDULE"].ToString());
+                        data.Notes = reader["NOTES"].ToString();
+
+
+                    }
+                }
+
+                connection.Close();
             }
-            catch (Exception ex)
-            {
-                LogError(ex, "GetLeaveStatusChooserData", "Notes");
-                return null;
-            }
+
+            return data;
         }
-        #endregion
+        public ReqScheduleInfoData GetMainScheduleInfoData()
+        {
+            ReqScheduleInfoData data = new ReqScheduleInfoData();
+
+            using (var connection = GetConnection())
+            using (var command = new SqlCommand())
+            {
+                connection.Open();
+                command.Connection = connection;
+
+
+
+                command.CommandText = string.Format(@"select ID,REQCODE,REQDESCR,NOTES,DATEFROM,DATETO,ISDELETED,MAINSCHEDULE,LimitLineFixed
+                                                    FROM ReqScheduleInfo
+                                                    Where MAINSCHEDULE=1"); // Corrected parameter name
+
+
+
+
+                using (var reader = command.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        data.ID = int.Parse(reader["ID"].ToString());
+                        data.ReqCode = reader["REQCODE"].ToString();
+                        data.ReqDescr = reader["REQDESCR"].ToString();
+                        data.DateFrom = Convert.ToDateTime(reader["DATEFROM"]);
+                        data.DateTo = Convert.ToDateTime(reader["DATETO"]);
+                        data.LimitLineFixed = int.Parse(reader["LimitLineFixed"].ToString());
+                        data.IsDeleted = bool.Parse(reader["ISDELETED"].ToString());
+                        data.MainSchedule = bool.Parse(reader["MAINSCHEDULE"].ToString());
+                        data.Notes = reader["NOTES"].ToString();
+
+
+                    }
+                }
+
+                connection.Close();
+            }
+
+            return data;
+        }
 
         #endregion
 
@@ -2437,8 +1557,8 @@ INNER JOIN Employees as E ON E.EmployeeID =L.EmpId
                         // Update existing customer
                         existing.VPCODE = flatData.VPCode;
                         existing.VPDESCR = flatData.VPDescr;
-                        existing.MaxSatisfiedBids = flatData.MaxSatisfiedBids;
-                        existing.SeparValue = flatData.SeparValue;
+                        existing.MaxSatisfiedBids = flatData.Bmax;
+                        existing.SeparValue = flatData.Se;
 
                         existing.EMPLOYEETYPE = flatData.EmployeeType.ToString();
                         existing.VPLOGICTYPE = flatData.VPLogicType.ToString();
@@ -2551,8 +1671,8 @@ Where 1=1 {0}", FilterStr);
                         data.VPId = int.Parse(reader["VPID"].ToString());
                         data.VPCode = reader["VPCODE"].ToString();
                         data.VPDescr = reader["VPDESCR"].ToString();
-                        data.MaxSatisfiedBids = int.Parse(reader["MaxSatisfiedBids"].ToString());
-                        data.SeparValue = int.Parse(reader["SeparValue"].ToString());
+                        data.Bmax = int.Parse(reader["MaxSatisfiedBids"].ToString());
+                        data.Se = int.Parse(reader["SeparValue"].ToString());
 
                         data.EmployeeType = (BasicEnums.EmployeeType)Enum.Parse(typeof(BasicEnums.EmployeeType), reader["EMPLOYEETYPE"].ToString());
                         data.VPLogicType = (BasicEnums.VPLogicType)Enum.Parse(typeof(BasicEnums.VPLogicType), reader["VPLogicType"].ToString());
@@ -2624,8 +1744,8 @@ Where 1=1 {0}", FilterStr);
                         Data.VPDescr = reader["VPDESCR"].ToString();
                         Data.EmployeeType = (BasicEnums.EmployeeType)Enum.Parse(typeof(BasicEnums.EmployeeType), reader["EMPLOYEETYPE"].ToString());
                         Data.VPLogicType = (BasicEnums.VPLogicType)Enum.Parse(typeof(BasicEnums.VPLogicType), reader["VPLogicType"].ToString());
-                        Data.MaxSatisfiedBids = int.Parse(reader["MaxSatisfiedBids"].ToString());
-                        Data.SeparValue = int.Parse(reader["SeparValue"].ToString());
+                        Data.Bmax = int.Parse(reader["MaxSatisfiedBids"].ToString());
+                        Data.Se = int.Parse(reader["SeparValue"].ToString());
 
                         Data.IsDeleted = bool.Parse(reader["ISDELETED"].ToString());
 
@@ -3538,9 +2658,10 @@ Where 1=1 {0}", FilterStr);
 
             VacationPlanningOutputData Data = new VacationPlanningOutputData();
             Data.VPYijResultsDataGrid = new ObservableCollection<VPYijResultsData>();
-            Data.VPYijzResultsDataGrid = new ObservableCollection<VPYijResultsData>();
-            Data.VPXijResultsDataGrid = new ObservableCollection<VPXijResultsData>();
-            Data.VPXiResultsDataGrid = new ObservableCollection<VPXiResultData>();
+            Data.VPYijrzResultsDataGrid = new ObservableCollection<VPYijResultsData>();
+            Data.VPXitResultsDataGrid = new ObservableCollection<VPXijResultsData>();
+            Data.VPLLiResultsDataGrid = new ObservableCollection<VPXiResultData>();
+
             Data.EmpLeaveStatusData = new ObservableCollection<EmployeeData>();
 
             List<string> rows = new List<string>();
@@ -3554,8 +2675,8 @@ Where 1=1 {0}", FilterStr);
 
                 #region Optimization paramaters
 
-                int MaxSatisfiedBids = InputData.MaxSatisfiedBids; //Max αριθμος ικανοποιημένων Bids ανα υπάλληλο
-                int SeparValue = InputData.SeparValue; // Seperation Value
+                int MaxSatisfiedBids = InputData.Bmax; //Max αριθμος ικανοποιημένων Bids ανα υπάλληλο
+                int SeparValue = InputData.Se; // Seperation Value
 
                 string[] Employees = InputData.Employees.Select(d => d.Code).ToArray(); //Πινακας με τους Κωδικους Υπαλληλων
                 string[] Dates = InputData.DatesStr; //Πινακας με τα Dates
@@ -4351,7 +3472,7 @@ Where 1=1 {0}", FilterStr);
                                                     #endregion
 
                                                     #endregion
-                                                    Data.VPYijzResultsDataGrid.Add(yijzDataRecord);
+                                                    Data.VPYijrzResultsDataGrid.Add(yijzDataRecord);
 
 
 
@@ -4388,8 +3509,8 @@ Where 1=1 {0}", FilterStr);
                                             VPXijResultsData singleDataRecord = new VPXijResultsData();
 
 
-                                            singleDataRecord.Xij = $"X{(Array.IndexOf(Employees, employee) + 1)}{(Array.IndexOf(Dates, date) + 1)}";
-                                            singleDataRecord.XijFlag = xValue;
+                                            singleDataRecord.Xit = $"X{(Array.IndexOf(Employees, employee) + 1)}{(Array.IndexOf(Dates, date) + 1)}";
+                                            singleDataRecord.XitFlag = xValue;
                                             singleDataRecord.Date = date;
 
 
@@ -4398,7 +3519,7 @@ Where 1=1 {0}", FilterStr);
                                             var SpecificEmployee = InputData.Employees.FirstOrDefault(emp => emp.Code == employee);
                                             singleDataRecord.Employee = SpecificEmployee;
 
-                                            Data.VPXijResultsDataGrid.Add(singleDataRecord);
+                                            Data.VPXitResultsDataGrid.Add(singleDataRecord);
                                             #endregion
                                         }
 
@@ -4483,7 +3604,7 @@ Where 1=1 {0}", FilterStr);
                 using (var dbContext = new ErpDbContext(options))
                 {
 
-                    foreach (var row in Data.VPYijzResultsDataGrid)
+                    foreach (var row in Data.VPYijrzResultsDataGrid)
                     {
                         VPYijzResultsDataEntity newRow = new VPYijzResultsDataEntity();
 
@@ -4530,7 +3651,7 @@ Where 1=1 {0}", FilterStr);
             }
         }
 
-        public int GetNextId(int aId, bool accept, int N, int[] NextBid, int[] NrOfBids,int FinishedEmpIds, BasicEnums.VPLogicType VPLogicType)
+        public int GetNextId(int aId, bool accept, int N, int[] NextBid, int[] NrOfBids, int FinishedEmpIds, BasicEnums.VPLogicType VPLogicType)
         {
             try
             {
@@ -4588,9 +3709,9 @@ Where 1=1 {0}", FilterStr);
             string[] Employees = InputData.Employees.Select(d => d.Code).ToArray();
 
             int MaxLeaveBids = InputData.MaxLeaveBids;
-            int MaxSatisfiedBids = InputData.MaxSatisfiedBids;
+            int MaxSatisfiedBids = InputData.Bmax;
             string[] Dates = InputData.DatesStr;
-            int SeparValue = InputData.SeparValue;
+            int SeparValue = InputData.Se;
             int LimitLineFixed = InputData.Schedule.LimitLineFixed;
             int numOfEmployes = InputData.Employees.Count;
 
@@ -4607,7 +3728,7 @@ Where 1=1 {0}", FilterStr);
 
             #region Python Insert Entiltements,NubmerOfBids
             var i = 0;
-            foreach(var emp in InputData.Employees)
+            foreach (var emp in InputData.Employees)
             {
                 entitlementstxt[i] = emp.LeaveStatus.CurrentBalance;
                 NumberOfBidstxt[i] = emp.LeaveBidDataGridStatic.Count; //ALAGH
@@ -4738,8 +3859,8 @@ Where 1=1 {0}", FilterStr);
                 #region Optimization paramaters
 
                 string[] Dates = InputData.Dates; //Πινακας με τα Dates
-                Dictionary<int, int> LeaveDays = InputData.LeaveDays;
-                Dictionary<int, int> LLiDict = InputData.LLiDict;
+                Dictionary<int, int> LeaveDays = InputData.Re_Dict;
+                Dictionary<int, int> LLiDict = InputData.RLLt_Dict;
 
                 #endregion
 
@@ -4766,7 +3887,7 @@ Where 1=1 {0}", FilterStr);
 
                 for (int i = 0; i < LeaveDays.Count; i++)
                 {
-                    int Multiplier = LeaveDays[i+1] * 1000;
+                    int Multiplier = LeaveDays[i + 1] * 1000;
                     objective.AddTerm(Multiplier, X[i]);
                 }
 
@@ -4792,7 +3913,7 @@ Where 1=1 {0}", FilterStr);
                     GRBLinExpr expr = 0;
 
 
-                    model.AddConstr(expr >= 0, "Day_" + (t+1));
+                    model.AddConstr(expr >= 0, "Day_" + (t + 1));
                     //model.AddConstr(expr >= 0, "Day_" + Dates[t]);
 
                 }
@@ -4805,8 +3926,8 @@ Where 1=1 {0}", FilterStr);
 
 
 
-                   model.AddConstr(expr <= LLiDict[t+1], "LimitLine_" + (t + 1));
-                    
+                    model.AddConstr(expr <= LLiDict[t + 1], "LimitLine_" + (t + 1));
+
                 }
                 #endregion
 
@@ -4820,7 +3941,7 @@ Where 1=1 {0}", FilterStr);
                 {
                     Data.ObjValue = model.ObjVal;
                     model.Update();
-                    string relativePath = Path.Combine("OptimizationResults", "Gurobi", "Thesis","VP_Column_Generation");
+                    string relativePath = Path.Combine("OptimizationResults", "Gurobi", "Thesis", "VP_Column_Generation");
                     Directory.CreateDirectory(relativePath);
 
                     // Save the files
@@ -4843,6 +3964,1252 @@ Where 1=1 {0}", FilterStr);
         }
         #endregion
 
+        #endregion
+
+        #region Extra
+
+        #region Certification
+        public int SaveCertificationData(CertificationData flatData)
+        {
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
+                    // Separate query from execution
+                    int Id = flatData.Id;
+                    var existingQuery = dbContext.Certifications.Where(c => c.CertID == Id);
+                    var existing = existingQuery.SingleOrDefault();
+                    // Execute the query and get the result
+
+                    if (existing != null)
+                    {
+
+
+                        // Update existing customer
+                        existing.Code = flatData.Code;
+                        existing.Descr = flatData.Descr;
+                        existing.ValidityPeriod = flatData.ValidityPeriod;
+                        existing.CertPosition = flatData.CertPosition.ToString();
+                        existing.ValidityTimeBucket = flatData.ValidityTimeBucket.ToString();
+                        existing.DateFrom = flatData.DateFrom;
+                        existing.DateTo = flatData.DateTo;
+
+
+
+                        existing.IsDeleted = flatData.IsDeleted;
+
+                        dbContext.SaveChanges();
+                        return 1;
+                    }
+                    else
+                    {
+                        return -1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "SaveCertificationData", "Notes");
+                return -1;
+            }
+        }
+        public int AddCertificationData(CertificationData flatData)
+        {
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
+                    // Separate query from execution
+                    var existingItemQuery = dbContext.Certifications.Where(r => r.Code == flatData.Code);
+                    var existingItem = existingItemQuery.SingleOrDefault();
+                    // Execute the query and get the result
+
+
+                    if (existingItem == null)
+                    {
+                        var newItem = new CertificationsDataEntity();
+                        // Insert new item
+                        newItem.Code = flatData.Code;
+                        newItem.Descr = flatData.Descr;
+                        newItem.ValidityPeriod = 1;
+                        newItem.CertPosition = BasicEnums.CertPosition.PNT.ToString();
+                        newItem.ValidityTimeBucket = BasicEnums.Timebucket.Yearly.ToString();
+                        newItem.DateFrom = DateTime.Now;
+                        newItem.DateTo = DateTime.Now.AddYears(1);
+
+
+
+                        newItem.IsDeleted = false;
+
+
+                        dbContext.Certifications.Add(newItem);
+
+                        dbContext.SaveChanges();
+                        return 0;
+                    }
+                    else
+                    {
+                        // Else Print messages
+                        return 1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "AddCertificationData", "Notes");
+                return 2;
+
+            }
+        }
+
+        public CertificationData GetCertificationChooserData(int Id, string Code)
+        {
+            CertificationData FlatData = new CertificationData();
+            string FilterStr = "";
+            try
+            {
+                using (var connection = GetConnection())
+                using (var command = new SqlCommand())
+                {
+                    connection.Open();
+                    command.Connection = connection;
+
+                    if (Id > 0)
+                    {
+                        command.Parameters.AddWithValue("@ID", Id);
+                        FilterStr = String.Format(@" and Certifications.CertID =@ID");
+
+                    }
+
+                    else if (!string.IsNullOrWhiteSpace(Code))
+                    {
+                        command.Parameters.AddWithValue("@Code", Code);
+                        FilterStr = String.Format(@" and Certifications.Code =@Code");
+
+                    }
+                    command.CommandText = string.Format(@"select CertID,Code,Descr,ValidityPeriod,ValidityTimeBucket,DateFrom,
+                                              DateTo,CertPosition,IsDeleted
+                                              from Certifications
+                                              Where 1=1 {0}", FilterStr);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            CertificationData data = new CertificationData();
+
+                            data.Id = int.Parse(reader["CertId"].ToString());
+                            data.Code = reader["Code"].ToString();
+                            data.Descr = reader["Descr"].ToString();
+                            data.ValidityPeriod = int.Parse(reader["ValidityPeriod"].ToString());
+
+                            data.CertPosition = (BasicEnums.CertPosition)Enum.Parse(typeof(BasicEnums.CertPosition), reader["CertPosition"].ToString());
+                            data.ValidityTimeBucket = (BasicEnums.Timebucket)Enum.Parse(typeof(BasicEnums.Timebucket), reader["ValidityTimeBucket"].ToString());
+
+                            data.DateFrom = DateTime.Parse(reader["DateFrom"].ToString());
+                            data.DateTo = DateTime.Parse(reader["DateTo"].ToString());
+
+
+                            data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
+
+
+
+                        }
+                    }
+
+                    connection.Close();
+                }
+
+                return FlatData;
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "GetCertificationChooserData", "Notes");
+                return null;
+            }
+        }
+        public ObservableCollection<CertificationData> GetCertificationData(bool ShowDeleted)
+        {
+            ObservableCollection<CertificationData> DataList = new ObservableCollection<CertificationData>();
+
+            string FilterStr = "";
+
+            using (var connection = GetConnection())
+            using (var command = new SqlCommand())
+            {
+                connection.Open();
+                command.Connection = connection;
+
+                if (ShowDeleted == false)
+                {
+                    command.Parameters.AddWithValue("@ShowDeleted", ShowDeleted);
+                    FilterStr = String.Format(@" and Certifications.IsDeleted =@ShowDeleted");
+                }
+                command.CommandText = string.Format(@"select CertID,Code,Descr,ValidityPeriod,ValidityTimeBucket,DateFrom,
+                                              DateTo,CertPosition,IsDeleted
+                                              from Certifications
+                                              Where 1=1 {0}", FilterStr);
+
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        CertificationData data = new CertificationData();
+
+
+
+
+                        data.Id = int.Parse(reader["CertId"].ToString());
+                        data.Code = reader["Code"].ToString();
+                        data.Descr = reader["Descr"].ToString();
+                        data.ValidityPeriod = int.Parse(reader["ValidityPeriod"].ToString());
+
+                        data.CertPosition = (BasicEnums.CertPosition)Enum.Parse(typeof(BasicEnums.CertPosition), reader["CertPosition"].ToString());
+                        data.ValidityTimeBucket = (BasicEnums.Timebucket)Enum.Parse(typeof(BasicEnums.Timebucket), reader["ValidityTimeBucket"].ToString());
+
+                        data.DateFrom = DateTime.Parse(reader["DateFrom"].ToString());
+                        data.DateTo = DateTime.Parse(reader["DateTo"].ToString());
+
+
+                        data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
+
+
+
+
+                        DataList.Add(data);
+                    }
+                }
+
+                connection.Close();
+            }
+
+            return DataList;
+        }
+        #endregion
+        #endregion
+
+        #endregion
+
+        #region Crew Scheduling File 
+
+        #region Country
+
+        public ObservableCollection<CountryData> GetCountryData(bool ShowDeleted)
+        {
+            ObservableCollection<CountryData> DataList = new ObservableCollection<CountryData>();
+
+            string FilterStr = "";
+
+            using (var connection = GetConnection())
+            using (var command = new SqlCommand())
+            {
+                connection.Open();
+                command.Connection = connection;
+
+                if (ShowDeleted == false)
+                {
+                    command.Parameters.AddWithValue("@ShowDeleted", ShowDeleted);
+                    FilterStr = String.Format(@" and IsDeleted =@ShowDeleted");
+                }
+                command.CommandText = string.Format(@"select CountryId,CountryCode,CountryDescr,IsDeleted from Country Where 1=1 {0}", FilterStr);
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        CountryData data = new CountryData();
+
+                        data.CountryId = int.Parse(reader["CountryId"].ToString());
+                        data.CountryCode = reader["CountryCode"].ToString();
+                        data.CountryDescr = reader["CountryDescr"].ToString();
+                        data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
+
+                        DataList.Add(data);
+                    }
+                }
+
+                connection.Close();
+
+            }
+
+            return DataList;
+        }
+
+
+        public bool SaveCountryData(ObservableCollection<CountryData> Data)
+        {
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
+
+
+                    bool hasChanges = false;
+                    foreach (var row in Data)
+                    {
+                        var existingrow = dbContext.Country.SingleOrDefault(b => b.CountryId == row.CountryId);
+
+                        if (existingrow == null)
+                        {
+                            CountryDataEntity newrow = new CountryDataEntity();
+                            newrow.CountryCode = row.CountryCode;
+                            newrow.CountryDescr = row.CountryDescr;
+                            newrow.IsDeleted = false;
+                            dbContext.Country.Add(newrow);
+                            hasChanges = true;
+                        }
+                        else if (existingrow != null)
+                        {
+
+                            existingrow.CountryCode = row.CountryCode;
+                            existingrow.CountryDescr = row.CountryDescr;
+                            existingrow.IsDeleted = row.IsDeleted;
+
+                            hasChanges = true;
+
+
+
+                        }
+
+
+                    }
+
+                    if (hasChanges)
+                    {
+                        dbContext.SaveChanges();
+                    }
+
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "SaveDemandForecast", "Notes");
+                return false;
+            }
+        }
+
+
+
+        #endregion
+
+        #region Prefecture
+        public ObservableCollection<PrefectureData> GetPrefectureData()
+        {
+            ObservableCollection<PrefectureData> DataList = new ObservableCollection<PrefectureData>();
+
+            using (var connection = GetConnection())
+            using (var command = new SqlCommand())
+            {
+                connection.Open();
+                command.Connection = connection;
+                command.CommandText = string.Format(@"select Prefecture.PrefId,Prefecture.PrefCode,Prefecture.PrefDescr ,Country.CountryCode,Country.CountryId,Country.CountryDescr
+                                                      from Prefecture 
+                                                      Inner JOIN  Country on Prefecture.CountryId = Country.CountryId");
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        PrefectureData data = new PrefectureData();
+                        data.PrefId = int.Parse(reader["PrefId"].ToString());
+                        data.PrefCode = reader["PrefCode"].ToString();
+                        data.PrefDescr = reader["PrefDescr"].ToString();
+
+                        data.CountryId = int.Parse(reader["CountryId"].ToString());
+                        data.CountryCode = reader["CountryCode"].ToString();
+
+                        DataList.Add(data);
+                    }
+                }
+
+                connection.Close();
+
+            }
+
+            return DataList;
+        }
+
+        public bool SavePrefectureData(ObservableCollection<PrefectureData> Data)
+        {
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
+
+
+                    bool hasChanges = false;
+                    foreach (var row in Data)
+                    {
+                        var existingrow = dbContext.Prefecture.SingleOrDefault(b => b.PrefId == row.PrefId);
+
+                        if (existingrow == null)
+                        {
+                            dbContext.Prefecture.Add(new PrefectureEntity
+                            {
+                                PrefCode = row.PrefCode,
+                                PrefDescr = row.PrefDescr,
+                                CountryId = dbContext.Country.SingleOrDefault(b => b.CountryCode == row.CountryCode).CountryId,
+                                IsDeleted = false
+
+
+                            });
+                            hasChanges = true;
+                        }
+                        else if (existingrow != null)
+                        {
+                            existingrow.PrefCode = row.PrefCode;
+                            existingrow.PrefDescr = row.PrefDescr;
+                            existingrow.IsDeleted = row.IsDeleted;
+
+                            int CountryId = dbContext.Country.SingleOrDefault(b => b.CountryCode == row.CountryCode).CountryId;
+
+                            existingrow.CountryId = CountryId;
+                            hasChanges = true;
+
+
+
+                        }
+
+
+                    }
+
+                    if (hasChanges)
+                    {
+                        dbContext.SaveChanges();
+                    }
+
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "SaveDemandForecast", "Notes");
+                return false;
+            }
+        }
+        #endregion
+
+        #region City
+        public ObservableCollection<CityData> GetCityData(bool ShowDeleted)
+        {
+            ObservableCollection<CityData> DataList = new ObservableCollection<CityData>();
+
+            string FilterStr = "";
+
+            using (var connection = GetConnection())
+            using (var command = new SqlCommand())
+            {
+                connection.Open();
+                command.Connection = connection;
+
+                if (ShowDeleted == false)
+                {
+                    command.Parameters.AddWithValue("@ShowDeleted", ShowDeleted);
+                    FilterStr = String.Format(@" and City.IsDeleted =@ShowDeleted");
+                }
+                command.CommandText = string.Format(@"select City.CityId,City.CityCode,City.CityDescr ,Prefecture.PrefId,Prefecture.PrefCode,Prefecture.PrefDescr ,Country.CountryId,Country.CountryCode ,Country.CountryDescr,City.Longitude,
+City.Latitude,City.Population,City.IsDeleted
+                                                    from City 
+                                                    Inner Join Prefecture on CiTY.PrefId = Prefecture.PrefId
+                                                    Inner JOIN  Country on Prefecture.CountryId = Country.CountryId Where 1=1 {0}", FilterStr);
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        CityData data = new CityData();
+                        data.CityId = int.Parse(reader["CityId"].ToString());
+                        data.PrefId = int.Parse(reader["PrefId"].ToString());
+                        data.CountryId = int.Parse(reader["CountryId"].ToString());
+
+
+                        data.CityCode = reader["CityCode"].ToString();
+                        data.CityDescr = reader["CityDescr"].ToString();
+
+                        data.PrefCode = reader["PrefCode"].ToString();
+                        data.PrefDescr = reader["PrefDescr"].ToString();
+                        data.CountryCode = reader["CountryCode"].ToString();
+                        data.CountryDescr = reader["CountryDescr"].ToString();
+                        data.Longitude = float.Parse(reader["Longitude"].ToString());
+                        data.Latitude = float.Parse(reader["Latitude"].ToString());
+                        data.Longitude = (float)Math.Round(data.Longitude, 4);
+                        data.Latitude = (float)Math.Round(data.Latitude, 4);
+                        data.Population = int.Parse(reader["Population"].ToString());
+                        data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
+
+
+                        DataList.Add(data);
+                    }
+                }
+
+                connection.Close();
+
+            }
+
+            return DataList;
+        }
+
+        public bool SaveCityData(ObservableCollection<CityData> Data)
+        {
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
+                    // Get list of CityIds from the database
+
+                    foreach (var row in Data)
+                    {
+                        var existingrow = dbContext.City.SingleOrDefault(b => b.CityId == row.CityId);
+
+
+
+
+                        if (existingrow == null)
+                        {
+                            // Insert new city
+                            CityDataEntity newCity = new CityDataEntity
+                            {
+                                CityCode = row.CityCode,
+                                CityDescr = row.CityDescr,
+                                PrefId = row.PrefId,
+                                Longitude = row.Longitude,
+                                Latitude = row.Latitude,
+                                Population = row.Population,
+                                IsDeleted = false
+
+                            };
+
+                            dbContext.City.Add(newCity);
+                        }
+                        else if (existingrow != null)
+                        {
+                            // Update existing city
+                            var existingCity = dbContext.City.Single(c => c.CityId == row.CityId);
+
+                            existingCity.CityCode = row.CityCode;
+                            existingCity.CityDescr = row.CityDescr;
+                            existingCity.PrefId = row.PrefId;
+                            existingCity.Longitude = row.Longitude;
+                            existingCity.Latitude = row.Latitude;
+                            existingCity.Population = row.Population;
+                            existingCity.IsDeleted = row.IsDeleted;
+
+                        }
+                    }
+
+
+                    dbContext.SaveChanges();
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "SaveCityData");
+                return false;
+            }
+        }
+        #endregion
+
+        #region Airports
+        public int SaveAirportsData(AirportData flatData)
+        {
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
+                    // Separate query from execution
+                    int Id = flatData.Id;
+                    var existingQuery = dbContext.Airports.Where(c => c.AirportID == Id);
+                    var existing = existingQuery.SingleOrDefault();
+                    // Execute the query and get the result
+                    var CityQuery = dbContext.City.Where(c => c.CityId == flatData.City.CityId);
+                    var City = CityQuery.SingleOrDefault();
+
+                    if (existing != null)
+                    {
+
+
+                        // Update existing customer
+                        existing.AirportCode = flatData.Code;
+                        existing.AirportDescr = flatData.Descr;
+
+                        existing.CityId = City.CityId;
+
+                        existing.IsDeleted = flatData.IsDeleted;
+
+                        dbContext.SaveChanges();
+                        return 1;
+                    }
+                    else
+                    {
+                        return -1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "SaveAirportsData", "Notes");
+                return -1;
+            }
+        }
+
+        public int AddAirportsData(AirportData flatData)
+        {
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
+                    // Separate query from execution
+                    var existingItemQuery = dbContext.Airports.Where(r => r.AirportCode == flatData.Code);
+                    var existingItem = existingItemQuery.SingleOrDefault();
+                    // Execute the query and get the result
+
+
+                    if (existingItem == null)
+                    {
+                        var newItem = new AirportsDataEntity();
+                        // Insert new item
+                        newItem.AirportCode = flatData.Code;
+                        newItem.AirportDescr = flatData.Descr;
+                        newItem.CityId = dbContext.City.FirstOrDefault().CityId;
+                        newItem.IsDeleted = false;
+
+                        dbContext.Airports.Add(newItem);
+
+                        dbContext.SaveChanges();
+                        return 0;
+                    }
+                    else
+                    {
+                        // Else Print messages
+                        return 1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "AddAirportsData", "Notes");
+                return 2;
+
+            }
+        }
+
+        public AirportData GetAirportsChooserData(int Id, string Code)
+        {
+            AirportData FlatData = new AirportData();
+            string FilterStr = "";
+            try
+            {
+                using (var connection = GetConnection())
+                using (var command = new SqlCommand())
+                {
+                    connection.Open();
+                    command.Connection = connection;
+
+                    if (Id > 0)
+                    {
+                        command.Parameters.AddWithValue("@ID", Id);
+                        FilterStr = String.Format(@" and A.AirportID =@ID");
+
+                    }
+
+                    else if (!string.IsNullOrWhiteSpace(Code))
+                    {
+                        command.Parameters.AddWithValue("@Code", Code);
+                        FilterStr = String.Format(@" and A.AirportCode =@Code");
+
+                    }
+                    command.CommandText = string.Format(@"SELECT A.AirportID,A.AirportCode,A.AirportDescr,A.IsDeleted,
+City.CityId,City.CityCode,City.CityDescr
+FROM Airports AS A
+INNER JOIN City ON City.CityId = A.CityId
+                                              Where 1=1 {0}", FilterStr);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            AirportData data = new AirportData();
+                            data.City = new CityData();
+
+
+                            data.Id = int.Parse(reader["AirportID"].ToString());
+                            data.Code = reader["AirportCode"].ToString();
+                            data.Descr = reader["AirportDescr"].ToString();
+
+                            data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
+
+
+                            data.City.CityId = int.Parse(reader["CityId"].ToString());
+                            data.City.CityCode = reader["CityCode"].ToString();
+                            data.City.CityDescr = reader["CityDescr"].ToString();
+                        }
+                    }
+
+                    connection.Close();
+                }
+
+                return FlatData;
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "GetAirportsChooserData", "Notes");
+                return null;
+            }
+        }
+        public ObservableCollection<AirportData> GetAirportsData(bool ShowDeleted)
+        {
+            ObservableCollection<AirportData> DataList = new ObservableCollection<AirportData>();
+
+            string FilterStr = "";
+
+            using (var connection = GetConnection())
+            using (var command = new SqlCommand())
+            {
+                connection.Open();
+                command.Connection = connection;
+
+                if (ShowDeleted == false)
+                {
+                    command.Parameters.AddWithValue("@ShowDeleted", ShowDeleted);
+                    FilterStr = String.Format(@" and A.IsDeleted =@ShowDeleted");
+                }
+                command.CommandText = string.Format(@"SELECT A.AirportID,A.AirportCode,A.AirportDescr,A.IsDeleted,City.CityId,
+City.CityCode,City.CityDescr,Country.CountryCode ,Country.CountryDescr,Prefecture.PrefCode,Prefecture.PrefDescr 
+FROM Airports AS A
+INNER JOIN City ON City.CityId = A.CityId
+INNER JOIN Prefecture ON Prefecture.PrefId = City.PrefId 
+Inner JOIN Country on Prefecture.CountryId = Country.CountryId
+                                              Where 1=1 {0}", FilterStr);
+
+
+
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        AirportData data = new AirportData();
+                        data.City = new CityData();
+
+
+                        data.Id = int.Parse(reader["AirportID"].ToString());
+                        data.Code = reader["AirportCode"].ToString();
+                        data.Descr = reader["AirportDescr"].ToString();
+
+                        data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
+
+
+                        data.City.CityId = int.Parse(reader["CityId"].ToString());
+                        data.City.CityCode = reader["CityCode"].ToString();
+                        data.City.CityDescr = reader["CityDescr"].ToString();
+
+                        data.City.PrefCode = reader["PrefCode"].ToString();
+                        data.City.PrefDescr = reader["PrefDescr"].ToString();
+                        data.City.CountryCode = reader["CountryCode"].ToString();
+                        data.City.CountryDescr = reader["CountryDescr"].ToString();
+
+
+
+                        DataList.Add(data);
+                    }
+                }
+
+                connection.Close();
+            }
+
+            return DataList;
+        }
+        #endregion
+
+        #region FlightLegs
+        public int SaveFlightLegsData(FlightLegsData flatData)
+        {
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
+                    // Separate query from execution
+                    int Id = flatData.FlightLegId;
+                    var existingQuery = dbContext.FlightLegs.Where(c => c.FlightLegId == Id);
+                    var existing = existingQuery.SingleOrDefault();
+                    // Execute the query and get the result
+                    var AirportFromQuery = dbContext.Airports.Where(c => c.AirportID == flatData.AirportDataFrom.Id);
+                    var AirportToQuery = dbContext.Airports.Where(c => c.AirportID == flatData.AirportDataTo.Id);
+
+                    var AirportFrom = AirportFromQuery.SingleOrDefault();
+                    var AirportTo = AirportToQuery.SingleOrDefault();
+
+                    if (existing != null)
+                    {
+
+
+                        // Update existing customer
+                        existing.Code = flatData.Code;
+                        existing.Descr = flatData.Descr;
+
+                        existing.AirportFrom = AirportFrom.AirportID;
+                        existing.AirportTo = AirportTo.AirportID;
+                        existing.StartDate = flatData.StartDate;
+                        existing.EndDate = flatData.EndDate;
+                        existing.FlightTime = flatData.FlightTime;
+                        existing.IsDeleted = flatData.IsDeleted;
+
+                        dbContext.SaveChanges();
+                        return 1;
+                    }
+                    else
+                    {
+                        return -1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "SaveFlightLegsData", "Notes");
+                return -1;
+            }
+        }
+
+        public int AddFlightLegsData(FlightLegsData flatData)
+        {
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
+                    // Separate query from execution
+                    var existingQuery = dbContext.FlightLegs.Where(r => r.Code == flatData.Code);
+                    var existing = existingQuery.SingleOrDefault();
+                    // Execute the query and get the result
+
+
+                    if (existing == null)
+                    {
+                        var newItem = new FlightLegsDataEntity();
+                        // Insert new item
+                        newItem.Code = flatData.Code;
+                        newItem.Descr = flatData.Descr;
+
+                        newItem.AirportFrom = dbContext.Airports.FirstOrDefault().AirportID;
+                        newItem.AirportTo = dbContext.Airports.Skip(1).FirstOrDefault().AirportID;
+                        newItem.StartDate = DateTime.Now;
+                        newItem.EndDate = DateTime.Now.AddDays(1);
+                        newItem.FlightTime = (float)(newItem.EndDate - newItem.StartDate).Value.TotalHours;
+                        newItem.IsDeleted = flatData.IsDeleted;
+                        newItem.IsDeleted = false;
+
+                        dbContext.FlightLegs.Add(newItem);
+
+                        dbContext.SaveChanges();
+                        return 0;
+                    }
+                    else
+                    {
+                        // Else Print messages
+                        return 1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "AddFlightLegsData", "Notes");
+                return 2;
+
+            }
+        }
+
+        public FlightLegsData GetFlightLegsChooserData(int Id, string Code)
+        {
+            FlightLegsData data = new FlightLegsData();
+            string FilterStr = "";
+            try
+            {
+                using (var connection = GetConnection())
+                using (var command = new SqlCommand())
+                {
+                    connection.Open();
+                    command.Connection = connection;
+
+                    if (Id > 0)
+                    {
+                        command.Parameters.AddWithValue("@ID", Id);
+                        FilterStr = String.Format(@" and F.FlightLegId =@ID");
+
+                    }
+
+                    else if (!string.IsNullOrWhiteSpace(Code))
+                    {
+                        command.Parameters.AddWithValue("@Code", Code);
+                        FilterStr = String.Format(@" and F.Code =@Code");
+
+                    }
+                    command.CommandText = string.Format(@"select F.FlightLegId,F.Code,F.Descr,F.StartDate,F.EndDate,F.FlightTime,F.IsDeleted,
+AFrom.AirportID as AFId,AFrom.AirportCode as AFCode,AFrom.AirportDescr as AFDescr,
+ATo.AirportID as ATId,ATo.AirportCode as ATCode,ATo.AirportDescr  as ATDescr
+From FlightLegs as F
+Inner Join Airports as AFrom on AFrom.AirportID = F.AirportFrom
+Inner Join Airports as ATo on ATo.AirportID = F.AirportTo
+                                              Where 1=1 {0}", FilterStr);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            data.AirportDataFrom = new AirportData();
+                            data.AirportDataTo = new AirportData();
+
+
+                            data.FlightLegId = int.Parse(reader["FlightLegId"].ToString());
+                            data.Code = reader["Code"].ToString();
+                            data.Descr = reader["Descr"].ToString();
+                            data.StartDate = DateTime.Parse(reader["StartDate"].ToString());
+                            data.EndDate = DateTime.Parse(reader["EndDate"].ToString());
+
+                            data.StartDate_String = data.StartDate.ToString("dd/MM/yyyy HH:mm");
+                            data.EndDate_String = data.EndDate.ToString("dd/MM/yyyy HH:mm");
+
+                            data.FlightTime = float.Parse(reader["FlightTime"].ToString());
+
+                            data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
+
+
+                            data.AirportDataFrom.Id = int.Parse(reader["AFId"].ToString());
+                            data.AirportDataFrom.Code = reader["AFCode"].ToString();
+                            data.AirportDataFrom.Descr = reader["AFDescr"].ToString();
+
+                            data.AirportDataTo.Id = int.Parse(reader["ATId"].ToString());
+                            data.AirportDataTo.Code = reader["ATCode"].ToString();
+                            data.AirportDataTo.Descr = reader["ATDescr"].ToString();
+                        }
+                    }
+
+                    connection.Close();
+                }
+
+                return data;
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "GetFlightLegsChooserData", "Notes");
+                return data;
+            }
+        }
+        public ObservableCollection<FlightLegsData> GetFlightLegsData(bool ShowDeleted)
+        {
+            ObservableCollection<FlightLegsData> DataList = new ObservableCollection<FlightLegsData>();
+
+            string FilterStr = "";
+
+            using (var connection = GetConnection())
+            using (var command = new SqlCommand())
+            {
+                connection.Open();
+                command.Connection = connection;
+
+                if (ShowDeleted == false)
+                {
+                    command.Parameters.AddWithValue("@ShowDeleted", ShowDeleted);
+                    FilterStr = String.Format(@" and F.IsDeleted =@ShowDeleted");
+                }
+                command.CommandText = string.Format(@"select F.FlightLegId,F.Code,F.Descr,F.StartDate,F.EndDate,F.FlightTime,F.IsDeleted,
+AFrom.AirportID as AFId,AFrom.AirportCode as AFCode,AFrom.AirportDescr as AFDescr,
+ATo.AirportID as ATId,ATo.AirportCode as ATCode,ATo.AirportDescr  as ATDescr
+From FlightLegs as F
+Inner Join Airports as AFrom on AFrom.AirportID = F.AirportFrom
+Inner Join Airports as ATo on ATo.AirportID = F.AirportTo
+                                              Where 1=1 {0}", FilterStr);
+
+
+
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        FlightLegsData data = new FlightLegsData();
+                        data.AirportDataFrom = new AirportData();
+                        data.AirportDataTo = new AirportData();
+
+
+                        data.FlightLegId = int.Parse(reader["FlightLegId"].ToString());
+                        data.Code = reader["Code"].ToString();
+                        data.Descr = reader["Descr"].ToString();
+                        data.StartDate = DateTime.Parse(reader["StartDate"].ToString());
+                        data.EndDate = DateTime.Parse(reader["EndDate"].ToString());
+
+                        data.StartDate_String = data.StartDate.ToString("dd/MM/yyyy HH:mm");
+                        data.EndDate_String = data.EndDate.ToString("dd/MM/yyyy HH:mm");
+
+                        data.FlightTime = float.Parse(reader["FlightTime"].ToString());
+
+                        data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
+
+
+                        data.AirportDataFrom.Id = int.Parse(reader["AFId"].ToString());
+                        data.AirportDataFrom.Code = reader["AFCode"].ToString();
+                        data.AirportDataFrom.Descr = reader["AFDescr"].ToString();
+
+                        data.AirportDataTo.Id = int.Parse(reader["ATId"].ToString());
+                        data.AirportDataTo.Code = reader["ATCode"].ToString();
+                        data.AirportDataTo.Descr = reader["ATDescr"].ToString();
+
+
+
+                        DataList.Add(data);
+                    }
+                }
+
+                connection.Close();
+            }
+
+            return DataList;
+        }
+        #endregion
+
+        #region FlightRoutes
+        public int SaveFlightRoutesData(FlightRoutesData flatData)
+        {
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
+                    // Separate query from execution
+                    int Id = flatData.FlightRouteId;
+                    var existingQuery = dbContext.FlightRoutes.Where(c => c.FlightRouteId == Id);
+                    var existing = existingQuery.SingleOrDefault();
+                    // Execute the query and get the result
+                    var AirportQuery = dbContext.Airports.Where(c => c.AirportID == flatData.Airport.Id);
+
+                    var Airport = AirportQuery.SingleOrDefault();
+
+                    if (existing != null)
+                    {
+
+
+                        // Update existing customer
+                        existing.Code = flatData.Code;
+                        existing.Descr = flatData.Descr;
+
+                        existing.AirportId = Airport.AirportID;
+                        existing.StartDate = flatData.StartDate;
+                        existing.EndDate = flatData.EndDate;
+                        existing.FlightTime = (float)Math.Round(flatData.FlightTime, 2);
+                        existing.GroundTime = (float)Math.Round(flatData.GroundTime, 2);
+                        existing.TotalTime = (float)Math.Round(flatData.TotalTime, 2);
+                        existing.Complement_Captain = flatData.Complement_Captain;
+                        existing.Complement_FO = flatData.Complement_FO;
+                        existing.Complement_Cabin_Manager = flatData.Complement_Cabin_Manager;
+                        existing.Complement_Flight_Attendant = flatData.Complement_Flight_Attendant;
+                        existing.FlightTime = flatData.FlightTime;
+                        existing.IsDeleted = flatData.IsDeleted;
+
+                        dbContext.SaveChanges();
+                        return 1;
+                    }
+                    else
+                    {
+                        return -1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "SaveFlightRoutesData", "Notes");
+                return -1;
+            }
+        }
+
+        public int AddFlightRoutesData(FlightRoutesData flatData)
+        {
+            try
+            {
+                using (var dbContext = new ErpDbContext(options))
+                {
+                    // Separate query from execution
+                    var existingQuery = dbContext.FlightRoutes.Where(r => r.Code == flatData.Code);
+                    var existing = existingQuery.SingleOrDefault();
+                    // Execute the query and get the result
+
+
+                    if (existing == null)
+                    {
+                        var newItem = new FlightRoutesDataEntity();
+                        newItem.Code = flatData.Code;
+                        newItem.Descr = flatData.Descr;
+
+                        newItem.AirportId = dbContext.Airports.FirstOrDefault().AirportID;
+                        newItem.StartDate = DateTime.Now;
+                        newItem.EndDate = DateTime.Now.AddDays(2);
+                        newItem.TotalTime = (float)Math.Round((newItem.EndDate - newItem.StartDate).Value.TotalHours, 2);
+                        var TotalTime = (float)newItem.TotalTime;
+                        newItem.FlightTime = (float)Math.Round(TotalTime * 0.7, 2);
+                        newItem.GroundTime = newItem.TotalTime - newItem.FlightTime;
+                        newItem.Complement_Captain = 1;
+                        newItem.Complement_FO = 1;
+                        newItem.Complement_Cabin_Manager = 1;
+                        newItem.Complement_Flight_Attendant = 3;
+                        newItem.IsDeleted = false;
+
+
+                        dbContext.FlightRoutes.Add(newItem);
+
+                        dbContext.SaveChanges();
+                        return 0;
+                    }
+                    else
+                    {
+                        // Else Print messages
+                        return 1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "AddFlightLegsData", "Notes");
+                return 2;
+
+            }
+        }
+
+        public FlightRoutesData GetFlightRoutesChooserData(int Id, string Code)
+        {
+            FlightRoutesData data = new FlightRoutesData();
+            string FilterStr = "";
+            try
+            {
+                using (var connection = GetConnection())
+                using (var command = new SqlCommand())
+                {
+                    connection.Open();
+                    command.Connection = connection;
+
+                    if (Id > 0)
+                    {
+                        command.Parameters.AddWithValue("@ID", Id);
+                        FilterStr = String.Format(@" and F.FlightRouteId =@ID");
+
+                    }
+
+                    else if (!string.IsNullOrWhiteSpace(Code))
+                    {
+                        command.Parameters.AddWithValue("@Code", Code);
+                        FilterStr = String.Format(@" and F.Code =@Code");
+
+                    }
+                    command.CommandText = string.Format(@"select F.FlightRouteId,F.Code,F.Descr,F.StartDate,F.EndDate,F.FlightTime,F.GroundTime,F.TotalTime,F.IsDeleted,
+F.Complement_Captain AS CCA,F.Complement_FO AS CFO, F.Complement_Flight_Attendant AS CFA, F.Complement_Cabin_Manager AS CCM, 
+A.AirportID ,A.AirportCode,A.AirportDescr
+From FlightRoutes as F
+Inner Join Airports as A on A.AirportID = F.AirportId
+                                              Where 1=1 {0}", FilterStr);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            data.Airport = new AirportData();
+
+
+                            data.FlightRouteId = int.Parse(reader["FlightRouteId"].ToString());
+                            data.Code = reader["Code"].ToString();
+                            data.Descr = reader["Descr"].ToString();
+                            data.StartDate = DateTime.Parse(reader["StartDate"].ToString());
+                            data.EndDate = DateTime.Parse(reader["EndDate"].ToString());
+
+                            data.StartDate_String = data.StartDate.ToString("dd/MM/yyyy HH:mm");
+                            data.EndDate_String = data.EndDate.ToString("dd/MM/yyyy HH:mm");
+
+                            data.TotalTime = float.Parse(reader["TotalTime"].ToString());
+                            data.FlightTime = float.Parse(reader["FlightTime"].ToString());
+                            data.GroundTime = float.Parse(reader["GroundTime"].ToString());
+
+                            data.Complement_Captain = int.Parse(reader["CCA"].ToString());
+                            data.Complement_FO = int.Parse(reader["CFO"].ToString());
+                            data.Complement_Flight_Attendant = int.Parse(reader["CFA"].ToString());
+                            data.Complement_Cabin_Manager = int.Parse(reader["CCM"].ToString());
+
+                            data.Airport.Id = int.Parse(reader["AirportID"].ToString());
+                            data.Airport.Code = reader["AirportCode"].ToString();
+                            data.Airport.Descr = reader["AirportDescr"].ToString();
+
+                            data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
+
+
+                        }
+                    }
+
+                    connection.Close();
+                }
+
+                return data;
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "GetFlightRoutesChooserData", "Notes");
+                return data;
+            }
+        }
+        public ObservableCollection<FlightRoutesData> GetFlightRoutesData(bool ShowDeleted)
+        {
+            ObservableCollection<FlightRoutesData> DataList = new ObservableCollection<FlightRoutesData>();
+
+            string FilterStr = "";
+
+            using (var connection = GetConnection())
+            using (var command = new SqlCommand())
+            {
+                connection.Open();
+                command.Connection = connection;
+
+                if (ShowDeleted == false)
+                {
+                    command.Parameters.AddWithValue("@ShowDeleted", ShowDeleted);
+                    FilterStr = String.Format(@" and F.IsDeleted =@ShowDeleted");
+                }
+                command.CommandText = string.Format(@"select F.FlightRouteId,F.Code,F.Descr,F.StartDate,F.EndDate,F.FlightTime,F.GroundTime,F.TotalTime,F.IsDeleted,
+F.Complement_Captain AS CCA,F.Complement_FO AS CFO, F.Complement_Flight_Attendant AS CFA, F.Complement_Cabin_Manager AS CCM, 
+A.AirportID ,A.AirportCode,A.AirportDescr
+From FlightRoutes as F
+Inner Join Airports as A on A.AirportID = F.AirportId
+                                              Where 1=1 {0}", FilterStr);
+
+
+
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        FlightRoutesData data = new FlightRoutesData();
+                        data.Airport = new AirportData();
+
+
+                        data.FlightRouteId = int.Parse(reader["FlightRouteId"].ToString());
+                        data.Code = reader["Code"].ToString();
+                        data.Descr = reader["Descr"].ToString();
+                        data.StartDate = DateTime.Parse(reader["StartDate"].ToString());
+                        data.EndDate = DateTime.Parse(reader["EndDate"].ToString());
+
+                        data.StartDate_String = data.StartDate.ToString("dd/MM/yyyy HH:mm");
+                        data.EndDate_String = data.EndDate.ToString("dd/MM/yyyy HH:mm");
+
+                        data.TotalTime = float.Parse(reader["TotalTime"].ToString());
+                        data.FlightTime = float.Parse(reader["FlightTime"].ToString());
+                        data.GroundTime = float.Parse(reader["GroundTime"].ToString());
+
+                        data.Complement_Captain = int.Parse(reader["CCA"].ToString());
+                        data.Complement_FO = int.Parse(reader["CFO"].ToString());
+                        data.Complement_Flight_Attendant = int.Parse(reader["CFA"].ToString());
+                        data.Complement_Cabin_Manager = int.Parse(reader["CCM"].ToString());
+
+                        data.Airport.Id = int.Parse(reader["AirportID"].ToString());
+                        data.Airport.Code = reader["AirportCode"].ToString();
+                        data.Airport.Descr = reader["AirportDescr"].ToString();
+
+                        data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
+
+
+
+                        DataList.Add(data);
+                    }
+                }
+
+                connection.Close();
+            }
+
+            return DataList;
+        }
         #endregion
 
         #region Crew Scheduling
@@ -4982,6 +5349,8 @@ Where 1=1 {0}", FilterStr);
                         data.BoundsPenalty = int.Parse(reader["BoundsPenalty"].ToString());
 
                         data.Position = (BasicEnums.EmployeeType)Enum.Parse(typeof(BasicEnums.EmployeeType), reader["EMPLOYEETYPE"].ToString());
+                        data.CSType = BasicEnums.CSType.Set_Partition;
+
                         data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
 
                         data.DateFrom_Str = data.DateFrom.ToString("dd/MM/yyyy HH:mm");
@@ -5045,6 +5414,8 @@ Where 1=1 {0}", FilterStr);
                         Data.BoundsPenalty = int.Parse(reader["BoundsPenalty"].ToString());
 
                         Data.Position = (BasicEnums.EmployeeType)Enum.Parse(typeof(BasicEnums.EmployeeType), reader["EMPLOYEETYPE"].ToString());
+                        Data.CSType = BasicEnums.CSType.Set_Partition;
+
                         Data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
                     }
                 }
@@ -5142,139 +5513,21 @@ Inner JOIN Country as Co on Co.CountryId = P.CountryId
         #endregion
 
         #region Optimisation
-        public CSOutputData CalculateCrewScheduling_Init_GB(CSInputData InputData)
-        {
-            GRBEnv env = new GRBEnv("cslogfile.log");
-            string relativePath = Path.Combine("OptimizationResults", "Gurobi", "Thesis", "Crew_Scheduling");
-            Directory.CreateDirectory(relativePath);
-            GRBModel model = new GRBModel(env);
-            GRBEnv finalenv = new GRBEnv("cslogfile_final.log");
-            CSOutputData Data = new CSOutputData();
-            //Data.VPYijResultsDataGrid = new ObservableCollection<VPYijResultsData>();
-            //Data.VPYijzResultsDataGrid = new ObservableCollection<VPYijResultsData>();
 
-
-
-            try
-            {
-                #region Optimization
-
-                #region Optimization paramaters
-
-                var T = InputData.T; // Planning Horizon
-                var I = InputData.I; // Number Of Employees Empty Schedules
-                var F = InputData.F; // Number Of Routes
-
-                var DatesIndexMap = InputData.DatesIndexMap;
-                var EmployeesIndexMap = InputData.EmployeesIndexMap;
-                var RoutesIndexMap = InputData.RoutesIndexMap;
-
-                var RoutesDates_Dict = InputData.RoutesDates_Dict;
-                var RoutesDay_Dict = InputData.RoutesDay_Dict;
-                var RoutesTime_Dict = InputData.RoutesTime_Dict;
-
-                var EmpBounds_Dict = InputData.EmpBounds_Dict;
-
-                #endregion
-
-                #region Decision Variables
-                // Decision variables
-
-                GRBVar[] X = new GRBVar[F+I];
-
-                for (int i = 0; i < F+I; i++)
-                {
-                    // Define the variable name
-                    string varNameX = $"X{i + 1}";
-
-                    // Create the binary variable with a name
-                    X[i] = model.AddVar(0.0, 1.0, 0.0, GRB.BINARY, varNameX);
-                }
-
-                #endregion
-
-                #region Objective Function
-
-                GRBLinExpr objective = 0;
-
-                for (int i = 0; i < F; i++)
-                {
-                    int RoutesPenalty = InputData.RoutesPenalty;
-                    objective.AddTerm(RoutesPenalty, X[i]);
-                }
-
-                //var NumberOfSchedules = 0;
-                //for (int i = N; i < NumberOfSchedules; i++)
-                //{
-                //    int PenaltyPerDay = InputData.BoundsPenalty;
-                //    int TotalPenantly = PenaltyPerDay;
-                //    objective.AddTerm(TotalPenantly, X[i]);
-                //}
-
-                model.SetObjective(objective, GRB.MINIMIZE);
-
-                #endregion
-
-                #region Constrains
-
-                // #1. C1 -> C40 , X174-> X213 ROUTES 
-                for (int i = F; i < F+I; i++)
-                {
-                    GRBLinExpr expr = 0;
-                    expr.AddTerm(1, X[i]);
-                    model.AddConstr(expr, GRB.EQUAL, 1, "C_" + (i-F + 1));
-                }
-
-                // #2. C41 -> C213 , X1-> X173 ROUTES 
-                for (int i = 0; i < F; i++)
-                {
-                    GRBLinExpr expr = 0;
-                    expr.AddTerm(1, X[i]);
-                    model.AddConstr(expr, GRB.EQUAL, 1, "C_" + (i + F + 1));
-                }
-
-                #endregion
-
-                model.Update();
-                model.Optimize();
-                bool solution = (model.Status == GRB.Status.OPTIMAL);
-                if (solution)
-                {
-                    Data.ObjValue = model.ObjVal;
-                    model.Update();
-
-
-
-                    // Save the files
-                    model.Write(Path.Combine(relativePath, "CS.mst"));
-                    model.Write(Path.Combine(relativePath, "CS.sol"));
-                    model.Write(Path.Combine(relativePath, "CS.lp"));
-                    model.Write(Path.Combine(relativePath, "CS.mps"));
-
-
-                }
-                return Data;
-                #endregion
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("An error occurred: " + ex.Message);
-                return Data;
-            }
-
-        }
         public CSOutputData CalculateCrewScheduling_SetCover_GB(CSInputData InputData)
         {
+            #region Model,Data,FilePath Initialization
+
             GRBEnv env = new GRBEnv("cslogfile.log");
-            string relativePath = Path.Combine("OptimizationResults", "Gurobi", "Thesis", "Crew_Scheduling","Set_Cover");
-            Directory.CreateDirectory(relativePath);
             GRBModel model = new GRBModel(env);
-            GRBEnv finalenv = new GRBEnv("cslogfile_final.log");
+            GRBEnv finalenv = new GRBEnv("cslogfile_final.log"); // !!!TO VLEPOUME BOREI NA FUGEI
+
+            string relativePath = Path.Combine("OptimizationResults", "Gurobi", "Thesis", "CS_Set_Cover");
+            Directory.CreateDirectory(relativePath);
+
             CSOutputData Data = new CSOutputData();
-            //Data.VPYijResultsDataGrid = new ObservableCollection<VPYijResultsData>();
-            //Data.VPYijzResultsDataGrid = new ObservableCollection<VPYijResultsData>();
 
-
+            #endregion
 
             try
             {
@@ -5282,164 +5535,49 @@ Inner JOIN Country as Co on Co.CountryId = P.CountryId
 
                 #region Optimization paramaters
 
-                var T = InputData.T; // Planning Horizon
-                var I = InputData.I; // Number Of Employees Empty Schedules
-                var F = InputData.F; // Number Of Routes
-
-                var DatesIndexMap = InputData.DatesIndexMap;
-                var EmployeesIndexMap = InputData.EmployeesIndexMap;
-                var RoutesIndexMap = InputData.RoutesIndexMap;
-
-                var RoutesDates_Dict = InputData.RoutesDates_Dict;
-                var RoutesDay_Dict = InputData.RoutesDay_Dict;
-                var RoutesTime_Dict = InputData.RoutesTime_Dict;
-
-                var EmpBounds_Dict = InputData.EmpBounds_Dict;
-
+                #region Indexes
+                int T = InputData.T; // Planning Horizon
+                int I = InputData.I; // Number Of Employees Empty Schedules
+                int F = InputData.F; // Number Of Routes
                 #endregion
 
-                #region Decision Variables
-                // Decision variables
+                #region Dictionaries
+                Dictionary<int, List<int>> Ri = InputData.Ri;
+                Dictionary<(int, int), double> Cij_Hours = InputData.Cij_Hours;
+                Dictionary<(int, int, int), int> Aijf = InputData.Aijf;
 
-                GRBVar[] X = new GRBVar[F + I];
-
-                for (int i = 0; i < F + I; i++)
-                {
-                    // Define the variable name
-                    string varNameX = $"X{i + 1}";
-
-                    // Create the binary variable with a name
-                    X[i] = model.AddVar(0.0, 1.0, 0.0, GRB.BINARY, varNameX);
-                }
-
-                #endregion
-
-                #region Objective Function
-
-                GRBLinExpr objective = 0;
-
-                for (int i = 0; i < F; i++)
-                {
-                    int RoutesPenalty = InputData.RoutesPenalty;
-                    objective.AddTerm(RoutesPenalty, X[i]);
-                }
-
-                //var NumberOfSchedules = 0;
-                //for (int i = N; i < NumberOfSchedules; i++)
-                //{
-                //    int PenaltyPerDay = InputData.BoundsPenalty;
-                //    int TotalPenantly = PenaltyPerDay;
-                //    objective.AddTerm(TotalPenantly, X[i]);
-                //}
-
-                model.SetObjective(objective, GRB.MINIMIZE);
-
-                #endregion
-
-                #region Constrains
-
-                // #1. C1 -> C40 , X174-> X213 ROUTES 
-                for (int i = F; i < F + I; i++)
-                {
-                    GRBLinExpr expr = 0;
-                    expr.AddTerm(1, X[i]);
-                    model.AddConstr(expr, GRB.EQUAL, 1, "C_" + (i - F + 1));
-                }
-
-                // #2. C41 -> C213 , X1-> X173 ROUTES 
-                for (int i = 0; i < F; i++)
-                {
-                    GRBLinExpr expr = 0;
-                    expr.AddTerm(1, X[i]);
-                    model.AddConstr(expr, GRB.EQUAL, 1, "C_" + (i + F + 1));
-                }
-
-                #endregion
-
-                model.Update();
-                model.Optimize();
-                bool solution = (model.Status == GRB.Status.OPTIMAL);
-                if (solution)
-                {
-                    Data.ObjValue = model.ObjVal;
-                    model.Update();
-
-
-
-                    // Save the files
-                    model.Write(Path.Combine(relativePath, "CS.mst"));
-                    model.Write(Path.Combine(relativePath, "CS.sol"));
-                    model.Write(Path.Combine(relativePath, "CS.lp"));
-                    model.Write(Path.Combine(relativePath, "CS.mps"));
-
-
-                }
-                return Data;
-                #endregion
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("An error occurred: " + ex.Message);
-                return Data;
-            }
-
-        }
-        public CSOutputData CalculateCrewScheduling_SetPartition_GB(CSInputData InputData)
-        {
-            GRBEnv env = new GRBEnv("cslogfile.log");
-            string relativePath = Path.Combine("OptimizationResults", "Gurobi", "Thesis", "Crew_Scheduling","Set_Partition");
-            Directory.CreateDirectory(relativePath);
-            GRBModel model = new GRBModel(env);
-            GRBEnv finalenv = new GRBEnv("cslogfile_final.log");
-            CSOutputData Data = new CSOutputData();
-            //Data.VPYijResultsDataGrid = new ObservableCollection<VPYijResultsData>();
-            //Data.VPYijzResultsDataGrid = new ObservableCollection<VPYijResultsData>();
-
-
-
-            try
-            {
-                #region Optimization
-
-                #region Optimization paramaters
-
-                var T = InputData.T; // Planning Horizon
-                var I = InputData.I; // Number Of Employees Empty Schedules
-                var F = InputData.F; // Number Of Routes
-                var Ri = InputData.Ri;
+                Dictionary<int, int> Bf = InputData.RoutesCompl_Dict;
+                //We need RiMax for the declaration of Model Variables
                 int RiMax = InputData.Ri.Values.Max(list => list.Count);
 
-                var DatesIndexMap = InputData.DatesIndexMap;
-                var EmployeesIndexMap = InputData.EmployeesIndexMap;
-                var RoutesIndexMap = InputData.RoutesIndexMap;
+                #endregion
 
-                var RoutesDates_Dict = InputData.RoutesDates_Dict;
-                var RoutesDay_Dict = InputData.RoutesDay_Dict;
-                var RoutesTime_Dict = InputData.RoutesTime_Dict;
-
-                var EmpBounds_Dict = InputData.EmpBounds_Dict;
+                #region Penalty Cost
 
                 var h = InputData.RoutesPenalty;
                 var c = InputData.BoundsPenalty;
+
+                #endregion
+
                 #endregion
 
                 #region Decision Variables
                 // Decision variables
 
-                GRBVar[,] X = new GRBVar[I , RiMax];
+                GRBVar[,] X = new GRBVar[I, RiMax];
                 GRBVar[] Y = new GRBVar[F];
 
-                for (int i = 0; i <  I; i++)
+                for (int i = 0; i < I; i++)
                 {
-                    List<int> routesInI = Ri.TryGetValue(i, out var productList) ? productList : new List<int>();
+                    List<int> RosterPerEmployee_List = Ri.TryGetValue(i, out var productList) ? productList : new List<int>();
 
-                    foreach (int j in routesInI)
+                    foreach (int j in RosterPerEmployee_List)
                     {
                         // Define the variable name
                         string varNameX = $"X{i + 1}_{j + 1}";
 
                         // Create the binary variable with a name
-                        X[i,j] = model.AddVar(0.0, 1.0, 0.0, GRB.BINARY, varNameX);
+                        X[i, j] = model.AddVar(0.0, 1.0, 0.0, GRB.BINARY, varNameX);
                     }
 
                 }
@@ -5460,12 +5598,12 @@ Inner JOIN Country as Co on Co.CountryId = P.CountryId
 
                 for (int i = 0; i < I; i++)
                 {
-                    List<int> routesInI = Ri.TryGetValue(i, out var productList) ? productList : new List<int>();
+                    List<int> RosterPerEmployee_List = Ri.TryGetValue(i, out var productList) ? productList : new List<int>();
 
-                    foreach (int j in routesInI)
+                    foreach (int j in RosterPerEmployee_List)
                     {
-                        var Cij = InputData.Cij_Hours[(i,j)] *c;
-                        objective.AddTerm(Cij, X[i,j]);
+                        var Cij_Cost = Cij_Hours[(i, j)] * c;
+                        objective.AddTerm(Cij_Cost, X[i, j]);
 
                     }
 
@@ -5485,38 +5623,41 @@ Inner JOIN Country as Co on Co.CountryId = P.CountryId
                 for (int i = 0; i < I; i++)
                 {
                     GRBLinExpr expr = 0;
-                    List<int> routesInI = Ri.TryGetValue(i, out var productList) ? productList : new List<int>();
+                    List<int> RosterPerEmployee_List = Ri.TryGetValue(i, out var productList) ? productList : new List<int>();
 
-                    foreach (int j in routesInI)
+                    foreach (int j in RosterPerEmployee_List)
                     {
                         expr.AddTerm(1, X[i, j]);
                     }
-                    model.AddConstr(expr, GRB.EQUAL, 1, "CON2_" + (i+1));
+                    model.AddConstr(expr, GRB.EQUAL, 1, "CON2_" + (i + 1));
 
 
                 }
                 for (int f = 0; f < F; f++)
                 {
                     GRBLinExpr expr = 0;
-                    var bf = 1;
+
                     expr.AddTerm(1, Y[f]);
 
                     for (int i = 0; i < I; i++)
                     {
-                        List<int> routesInI = Ri.TryGetValue(i, out var productList) ? productList : new List<int>();
+                        List<int> RosterPerEmployee_List = Ri.TryGetValue(i, out var productList) ? productList : new List<int>();
 
-                        foreach (int j in routesInI)
+                        foreach (int j in RosterPerEmployee_List)
                         {
-                            expr.AddTerm(1, X[i, j]);
+                            expr.AddTerm(Aijf[(i, j, f)], X[i, j]);
 
                         }
                     }
 
-                    model.AddConstr(expr, GRB.EQUAL, bf, "CON3_" + ( F + 1));
+                    model.AddConstr(expr, GRB.GREATER_EQUAL, Bf[f], "CON3_" + (F + 1));
 
                 }
 
                 #endregion
+
+                #endregion
+                #region Retrieve Model,Solution
 
                 model.Update();
                 model.Optimize();
@@ -5526,7 +5667,177 @@ Inner JOIN Country as Co on Co.CountryId = P.CountryId
                     Data.ObjValue = model.ObjVal;
                     model.Update();
 
+                    // Save the files
+                    model.Write(Path.Combine(relativePath, "CS_SetCover.mst"));
+                    model.Write(Path.Combine(relativePath, "CS_SetCover.sol"));
+                    model.Write(Path.Combine(relativePath, "CS_SetCover.lp"));
+                    model.Write(Path.Combine(relativePath, "CS_SetCover.mps"));
 
+
+                }
+                return Data;
+
+                #endregion
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("An error occurred: " + ex.Message);
+                return Data;
+            }
+
+        }
+        public CSOutputData CalculateCrewScheduling_SetPartition_GB(CSInputData InputData)
+        {
+            #region Model,Data,FilePath Initialization
+
+            GRBEnv env = new GRBEnv("cslogfile.log");
+            GRBModel model = new GRBModel(env);
+            GRBEnv finalenv = new GRBEnv("cslogfile_final.log"); // !!!TO VLEPOUME BOREI NA FUGEI
+
+            string relativePath = Path.Combine("OptimizationResults", "Gurobi", "Thesis", "CS_Set_Partition");
+            Directory.CreateDirectory(relativePath);
+
+            CSOutputData Data = new CSOutputData();
+
+            #endregion
+
+            try
+            {
+                #region Optimization
+
+                #region Optimization paramaters
+
+                #region Indexes
+                int T = InputData.T; // Planning Horizon
+                int I = InputData.I; // Number Of Employees Empty Schedules
+                int F = InputData.F; // Number Of Routes
+                #endregion
+
+                #region Dictionaries
+                Dictionary<int, List<int>> Ri = InputData.Ri;
+                Dictionary<(int, int), double> Cij_Hours = InputData.Cij_Hours;
+                Dictionary<(int, int, int), int> Aijf = InputData.Aijf;
+
+                Dictionary<int, int> Bf = InputData.RoutesCompl_Dict;
+                //We need RiMax for the declaration of Model Variables
+                int RiMax = InputData.Ri.Values.Max(list => list.Count);
+
+                #endregion
+
+                #region Penalty Cost
+
+                var h = InputData.RoutesPenalty;
+                var c = InputData.BoundsPenalty;
+
+                #endregion
+
+                #endregion
+
+                #region Decision Variables
+                // Decision variables
+
+                GRBVar[,] X = new GRBVar[I, RiMax];
+                GRBVar[] Y = new GRBVar[F];
+
+                for (int i = 0; i < I; i++)
+                {
+                    List<int> RosterPerEmployee_List = Ri.TryGetValue(i, out var productList) ? productList : new List<int>();
+
+                    foreach (int j in RosterPerEmployee_List)
+                    {
+                        // Define the variable name
+                        string varNameX = $"X{i + 1}_{j + 1}";
+
+                        // Create the binary variable with a name
+                        X[i, j] = model.AddVar(0.0, 1.0, 0.0, GRB.BINARY, varNameX);
+                    }
+
+                }
+
+                for (int f = 0; f < F; f++)
+                {
+                    string varNameY = $"Y{f + 1}";
+
+                    // Create the binary variable with a name
+                    Y[f] = model.AddVar(0.0, 1.0, 0.0, GRB.INTEGER, varNameY);
+
+                }
+                #endregion
+
+                #region Objective Function
+
+                GRBLinExpr objective = 0;
+
+                for (int i = 0; i < I; i++)
+                {
+                    List<int> RosterPerEmployee_List = Ri.TryGetValue(i, out var productList) ? productList : new List<int>();
+
+                    foreach (int j in RosterPerEmployee_List)
+                    {
+                        var Cij_Cost = Cij_Hours[(i, j)] * c;
+                        objective.AddTerm(Cij_Cost, X[i, j]);
+
+                    }
+
+                }
+
+                for (int f = 0; f < F; f++)
+                {
+                    objective.AddTerm(h, Y[f]);
+                }
+
+                model.SetObjective(objective, GRB.MINIMIZE);
+
+                #endregion
+
+                #region Constrains
+
+                for (int i = 0; i < I; i++)
+                {
+                    GRBLinExpr expr = 0;
+                    List<int> RosterPerEmployee_List = Ri.TryGetValue(i, out var productList) ? productList : new List<int>();
+
+                    foreach (int j in RosterPerEmployee_List)
+                    {
+                        expr.AddTerm(1, X[i, j]);
+                    }
+                    model.AddConstr(expr, GRB.EQUAL, 1, "CON2_" + (i + 1));
+
+
+                }
+                for (int f = 0; f < F; f++)
+                {
+                    GRBLinExpr expr = 0;
+
+                    expr.AddTerm(1, Y[f]);
+
+                    for (int i = 0; i < I; i++)
+                    {
+                        List<int> RosterPerEmployee_List = Ri.TryGetValue(i, out var productList) ? productList : new List<int>();
+
+                        foreach (int j in RosterPerEmployee_List)
+                        {
+                            expr.AddTerm(Aijf[(i,j,f)], X[i, j]);
+
+                        }
+                    }
+
+                    model.AddConstr(expr, GRB.EQUAL, Bf[f], "CON3_" + (F + 1));
+
+                }
+
+                #endregion
+
+                #endregion
+                #region Retrieve Model,Solution
+
+                model.Update();
+                model.Optimize();
+                bool solution = (model.Status == GRB.Status.OPTIMAL);
+                if (solution)
+                {
+                    Data.ObjValue = model.ObjVal;
+                    model.Update();
 
                     // Save the files
                     model.Write(Path.Combine(relativePath, "CS_SetPartition.mst"));
@@ -5537,6 +5848,7 @@ Inner JOIN Country as Co on Co.CountryId = P.CountryId
 
                 }
                 return Data;
+
                 #endregion
             }
             catch (Exception ex)
@@ -5550,12 +5862,11 @@ Inner JOIN Country as Co on Co.CountryId = P.CountryId
 
         #endregion
 
-        #region Crud Commands
         #endregion
 
         #endregion
 
-
+        #region Extra
         #region ERP Factory Program
 
         #region BasicFiles
@@ -5655,7 +5966,7 @@ FROM
 INNER JOIN LotPolicy AS L ON L.LotPolicyId = R.LotPolicyId
 WHERE 
     R.ItemCode = @ItemCode
-    AND L.MainPolicy = 1 {0}", FilterStr); 
+    AND L.MainPolicy = 1 {0}", FilterStr);
 
                     using (var reader = command.ExecuteReader())
                     {
@@ -5715,7 +6026,7 @@ WHERE
         {
             ObservableCollection<ItemData> DataList = new ObservableCollection<ItemData>();
 
-             string FilterStr = "";
+            string FilterStr = "";
             using (var connection = GetConnection())
             using (var command = new SqlCommand())
             {
@@ -5897,12 +6208,12 @@ WHERE
                         existingItem.ItemType = flatData.ItemType.ToString();
                         existingItem.Assembly = flatData.Assembly.ToString();
 
-                        if(flatData.Assembly == BasicEnums.Assembly.Finished)
+                        if (flatData.Assembly == BasicEnums.Assembly.Finished)
                         {
                             existingItem.AssemblyNumber = 2;
 
                         }
-                        else if(flatData.Assembly == BasicEnums.Assembly.SemiFinished)
+                        else if (flatData.Assembly == BasicEnums.Assembly.SemiFinished)
                         {
                             existingItem.AssemblyNumber = 1;
 
@@ -6059,7 +6370,7 @@ WHERE
 FROM 
     LotPolicy AS L
 Inner JOIN Rmaster AS R ON L.ItemId = R.ItemId  Where 1=1 {0}
-",FilterStr);
+", FilterStr);
                 using (var reader = command.ExecuteReader())
                 {
                     while (reader.Read())
@@ -6248,7 +6559,7 @@ WHERE HasSales = 1;");
                 {
                     command.Parameters.Clear();
                     command.Parameters.AddWithValue("@FinalItemId", finalItemId);
-                  
+
                     command.CommandText = @"
 SELECT Rmaster.ItemId AS CompItemId, Rmaster.ItemCode, Rmaster.ItemDescr, Rmaster.ItemType,
 Rmaster.Assembly, Rmaster.MesUnit
@@ -6524,323 +6835,7 @@ WHERE
         #endregion
         #endregion
 
-        #region Country
 
-        public ObservableCollection<CountryData> GetCountryData(bool ShowDeleted)
-        {
-            ObservableCollection<CountryData> DataList = new ObservableCollection<CountryData>();
-
-            string FilterStr = "";
-
-            using (var connection = GetConnection())
-            using (var command = new SqlCommand())
-            {
-                connection.Open();
-                command.Connection = connection;
-
-                if (ShowDeleted == false)
-                {
-                    command.Parameters.AddWithValue("@ShowDeleted", ShowDeleted);
-                    FilterStr = String.Format(@" and IsDeleted =@ShowDeleted");
-                }
-                command.CommandText = string.Format(@"select CountryId,CountryCode,CountryDescr,IsDeleted from Country Where 1=1 {0}",FilterStr);
-                using (var reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        CountryData data = new CountryData();
-
-                        data.CountryId = int.Parse(reader["CountryId"].ToString()); 
-                        data.CountryCode = reader["CountryCode"].ToString();
-                        data.CountryDescr = reader["CountryDescr"].ToString();
-                        data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
-
-                        DataList.Add(data);
-                    }
-                }
-
-                connection.Close();
-
-            }
-
-            return DataList;
-        }
-
-
-        public bool SaveCountryData(ObservableCollection<CountryData> Data)
-        {
-            try
-            {
-                using (var dbContext = new ErpDbContext(options))
-                {
-
-
-                    bool hasChanges = false;
-                    foreach (var row in Data)
-                    {
-                        var existingrow = dbContext.Country.SingleOrDefault(b => b.CountryId == row.CountryId);
-
-                        if (existingrow == null)
-                        {
-                            CountryDataEntity newrow = new CountryDataEntity();
-                            newrow.CountryCode = row.CountryCode;
-                            newrow.CountryDescr = row.CountryDescr;
-                            newrow.IsDeleted = false;
-                            dbContext.Country.Add(newrow);
-                            hasChanges = true;
-                        }
-                        else if (existingrow != null)
-                        {
-                            
-                            existingrow.CountryCode = row.CountryCode;
-                            existingrow.CountryDescr = row.CountryDescr;
-                            existingrow.IsDeleted = row.IsDeleted;
-
-                            hasChanges = true;
-
-
-
-                        }
-
-
-                    }
-
-                    if (hasChanges)
-                    {
-                        dbContext.SaveChanges();
-                    }
-
-                    return true;
-                }
-            }
-            catch (Exception ex)
-            {
-                LogError(ex, "SaveDemandForecast", "Notes");
-                return false;
-            }
-        }
-
-
-
-        #endregion
-
-        #region Prefecture
-
-        public ObservableCollection<PrefectureData> GetPrefectureData()
-        {
-            ObservableCollection<PrefectureData> DataList = new ObservableCollection<PrefectureData>();
-
-            using (var connection = GetConnection())
-            using (var command = new SqlCommand())
-            {
-                connection.Open();
-                command.Connection = connection;
-                command.CommandText = string.Format(@"select Prefecture.PrefId,Prefecture.PrefCode,Prefecture.PrefDescr ,Country.CountryCode,Country.CountryId,Country.CountryDescr
-                                                      from Prefecture 
-                                                      Inner JOIN  Country on Prefecture.CountryId = Country.CountryId");
-                using (var reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        PrefectureData data = new PrefectureData();
-                        data.PrefId = int.Parse(reader["PrefId"].ToString()); 
-                        data.PrefCode = reader["PrefCode"].ToString();
-                        data.PrefDescr = reader["PrefDescr"].ToString();
-
-                        data.CountryId = int.Parse(reader["CountryId"].ToString());
-                        data.CountryCode = reader["CountryCode"].ToString();
-
-                        DataList.Add(data);
-                    }
-                }
-
-                connection.Close();
-
-            }
-
-            return DataList;
-        }
-
-
-        public bool SavePrefectureData(ObservableCollection<PrefectureData> Data)
-        {
-            try
-            {
-                using (var dbContext = new ErpDbContext(options))
-                {
-
-
-                    bool hasChanges = false;
-                    foreach (var row in Data)
-                    {
-                        var existingrow = dbContext.Prefecture.SingleOrDefault(b => b.PrefId == row.PrefId);
-
-                        if (existingrow == null)
-                        {
-                            dbContext.Prefecture.Add(new PrefectureEntity
-                            {
-                                PrefCode = row.PrefCode,
-                                PrefDescr = row.PrefDescr,
-                                CountryId = dbContext.Country.SingleOrDefault(b => b.CountryCode == row.CountryCode).CountryId,
-                                IsDeleted = false
-
-
-                            }); 
-                            hasChanges = true;
-                        }
-                        else if (existingrow != null)
-                        {
-                            existingrow.PrefCode = row.PrefCode;
-                            existingrow.PrefDescr = row.PrefDescr;
-                            existingrow.IsDeleted = row.IsDeleted;
-
-                            int CountryId = dbContext.Country.SingleOrDefault(b => b.CountryCode == row.CountryCode).CountryId;
-
-                            existingrow.CountryId = CountryId;
-                            hasChanges = true;
-
-
-
-                        }
-
-
-                    }
-
-                    if (hasChanges)
-                    {
-                        dbContext.SaveChanges();
-                    }
-
-                    return true;
-                }
-            }
-            catch (Exception ex)
-            {
-                LogError(ex, "SaveDemandForecast", "Notes");
-                return false;
-            }
-        }
-        #endregion
-
-        #region City
-        public ObservableCollection<CityData> GetCityData(bool ShowDeleted)
-        {
-            ObservableCollection<CityData> DataList = new ObservableCollection<CityData>();
-
-            string FilterStr = "";
-
-            using (var connection = GetConnection())
-            using (var command = new SqlCommand())
-            {
-                connection.Open();
-                command.Connection = connection;
-
-                if (ShowDeleted == false)
-                {
-                    command.Parameters.AddWithValue("@ShowDeleted", ShowDeleted);
-                    FilterStr = String.Format(@" and City.IsDeleted =@ShowDeleted");
-                }
-                command.CommandText = string.Format(@"select City.CityId,City.CityCode,City.CityDescr ,Prefecture.PrefId,Prefecture.PrefCode,Prefecture.PrefDescr ,Country.CountryId,Country.CountryCode ,Country.CountryDescr,City.Longitude,
-City.Latitude,City.Population,City.IsDeleted
-                                                    from City 
-                                                    Inner Join Prefecture on CiTY.PrefId = Prefecture.PrefId
-                                                    Inner JOIN  Country on Prefecture.CountryId = Country.CountryId Where 1=1 {0}",FilterStr);
-                using (var reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        CityData data = new CityData();
-                        data.CityId = int.Parse(reader["CityId"].ToString());
-                        data.PrefId = int.Parse(reader["PrefId"].ToString());
-                        data.CountryId = int.Parse(reader["CountryId"].ToString());
-
-
-                        data.CityCode = reader["CityCode"].ToString();
-                        data.CityDescr = reader["CityDescr"].ToString();
-
-                        data.PrefCode = reader["PrefCode"].ToString();
-                        data.PrefDescr = reader["PrefDescr"].ToString();
-                        data.CountryCode = reader["CountryCode"].ToString();
-                        data.CountryDescr = reader["CountryDescr"].ToString();
-                        data.Longitude = float.Parse(reader["Longitude"].ToString());
-                        data.Latitude = float.Parse(reader["Latitude"].ToString());
-                        data.Longitude = (float)Math.Round(data.Longitude, 4);
-                        data.Latitude = (float)Math.Round(data.Latitude, 4);
-                        data.Population = int.Parse(reader["Population"].ToString());
-                        data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
-
-
-                        DataList.Add(data);
-                    }
-                }
-
-                connection.Close();
-
-            }
-
-            return DataList;
-        }
-
-        public bool SaveCityData(ObservableCollection<CityData> Data)
-        {
-            try
-            {
-                using (var dbContext = new ErpDbContext(options))
-                {
-                    // Get list of CityIds from the database
-
-                    foreach (var row in Data)
-                    {
-                        var existingrow = dbContext.City.SingleOrDefault(b => b.CityId == row.CityId);
-
-
-
-
-                        if (existingrow == null)
-                        {
-                            // Insert new city
-                            CityDataEntity newCity = new CityDataEntity
-                            {
-                                CityCode = row.CityCode,
-                                CityDescr = row.CityDescr,
-                                PrefId = row.PrefId,
-                                Longitude = row.Longitude,
-                                Latitude = row.Latitude,
-                                Population = row.Population,
-                                IsDeleted = false
-                                
-                            };
-
-                            dbContext.City.Add(newCity);
-                        }
-                        else if (existingrow !=null)
-                        {
-                            // Update existing city
-                            var existingCity = dbContext.City.Single(c => c.CityId == row.CityId);
-
-                            existingCity.CityCode = row.CityCode;
-                            existingCity.CityDescr = row.CityDescr;
-                            existingCity.PrefId = row.PrefId;
-                            existingCity.Longitude = row.Longitude;
-                            existingCity.Latitude = row.Latitude;
-                            existingCity.Population = row.Population;
-                            existingCity.IsDeleted = row.IsDeleted;
-
-                        }
-                    }
-
-
-                    dbContext.SaveChanges();
-                    return true;
-                }
-            }
-            catch (Exception ex)
-            {
-                LogError(ex, "SaveCityData");
-                return false;
-            }
-        }
-        #endregion
 
         #region Routes
 
@@ -6930,7 +6925,7 @@ City.Latitude,City.Population,City.IsDeleted
                                                inner join City as CityTo on Routes.CityTo = CityTo.CityId
                                                inner join Prefecture as PrefTo on CityTo.PrefId = PrefTo.PrefId
                                                inner join Country as CountryTo on PrefTo.CountryId = CountryTo.CountryId
-Where 1=1 {0}",FilterStr);
+Where 1=1 {0}", FilterStr);
 
                 using (var reader = command.ExecuteReader())
                 {
@@ -7084,7 +7079,7 @@ Where 1=1 {0}",FilterStr);
 
 
 
-        public int SaveCustomerInfoData(CustomerData flatData) 
+        public int SaveCustomerInfoData(CustomerData flatData)
         {
             try
             {
@@ -7182,7 +7177,7 @@ Where 1=1 {0}",FilterStr);
             }
         }
 
-        public CustomerData GetCustomerChooserData(int Id ,string Code)
+        public CustomerData GetCustomerChooserData(int Id, string Code)
         {
             CustomerData FlatData = new CustomerData();
             string FilterStr = "";
@@ -7216,7 +7211,7 @@ Where 1=1 {0}",FilterStr);
                                                   INNER JOIN Prefecture ON City.PrefId = Prefecture.PrefId
                                                   INNER JOIN Country ON Prefecture.CountryId = Country.CountryId
                                                   FULL JOIN CPriceList ON CPriceList.PriceListId = Customer.PriceListId
-                                                  WHERE 1=1 {0}",FilterStr);
+                                                  WHERE 1=1 {0}", FilterStr);
                     using (var reader = command.ExecuteReader())
                     {
                         if (reader.Read())
@@ -7300,7 +7295,7 @@ Where 1=1 {0}",FilterStr);
                                               INNER JOIN Prefecture ON City.PrefId = Prefecture.PrefId
                                               INNER JOIN Country ON Prefecture.CountryId = Country.CountryId
                                               INNER JOIN CPriceList ON CPriceList.PriceListId = Customer.PriceListId
-                                              Where 1=1 {0}",FilterStr);
+                                              Where 1=1 {0}", FilterStr);
 
                 using (var reader = command.ExecuteReader())
                 {
@@ -7580,7 +7575,7 @@ Where 1=1 ", str);
         {
             ObservableCollection<PriceListData> DataList = new ObservableCollection<PriceListData>();
 
-            string FilterStr= "";
+            string FilterStr = "";
 
             using (var connection = GetConnection())
             using (var command = new SqlCommand())
@@ -8023,7 +8018,7 @@ Inner Join CPriceList as Pr on Cust.PriceListId = Pr.PriceListId
 Inner Join City on Cust.CityId = City.CityId
 iNNER JOIN PREFECTURE AS PREF ON PREF.PrefId = CITY.PrefId	
 INNER JOIN COUNTRY ON PREF.CountryId = Country.CountryId
-Where 1=1 {0} ",FilterStr);
+Where 1=1 {0} ", FilterStr);
                 using (var reader = command.ExecuteReader())
                 {
                     while (reader.Read())
@@ -8835,7 +8830,7 @@ Where Sup.SupCode =@SupplierCode and SupRmaster.ItemId =@ItemId2");
                 {
                     // Separate query from execution
                     var existingInvQuery = dbContext.Inventory.Where(r => r.InvCode == flatData.InvCode);
-                    var existingInv= existingInvQuery.SingleOrDefault();
+                    var existingInv = existingInvQuery.SingleOrDefault();
                     // Execute the query and get the result
 
 
@@ -8945,7 +8940,7 @@ Where Sup.SupCode =@SupplierCode and SupRmaster.ItemId =@ItemId2");
                 }
 
                 command.CommandText = string.Format(@"select InvId,InvCode,InvDescr,Location,Capacity,IsDeleted from Inventory 
-Where 1=1 {0}",FilterStr);
+Where 1=1 {0}", FilterStr);
                 using (var reader = command.ExecuteReader())
                 {
                     while (reader.Read())
@@ -9188,7 +9183,7 @@ Where Lot.MainPolicy = 1 and Stock.InvId = @InvId");
                         itemData.Assembly = (BasicEnums.Assembly)Enum.Parse(typeof(BasicEnums.Assembly), reader["Assembly"].ToString());
                         itemData.ItemType = (BasicEnums.ItemType)Enum.Parse(typeof(BasicEnums.ItemType), reader["ItemType"].ToString());
                         itemData.LotPolicy.Code = reader["LotPolicyCode"].ToString();
-                        itemData.LotPolicy.LeadTime =double.Parse(reader["LeadTime"].ToString());
+                        itemData.LotPolicy.LeadTime = double.Parse(reader["LeadTime"].ToString());
                         itemData.LotPolicy.BatchSize = double.Parse(reader["BatchSize"].ToString());
 
 
@@ -9572,38 +9567,38 @@ Where iDay Between  @DateStart AND @DateEnd and ItemId=@ItemId and InventoryId=@
                     foreach (var row in DemandForecast)
                     {
 
-                            var currentItemId = row.Item.ItemId;
-                            var DateStr = row.DateStr;
+                        var currentItemId = row.Item.ItemId;
+                        var DateStr = row.DateStr;
 
-                            var existingRows = dbContext.DemandForecast.Where(b => b.ForCode == ForCode && b.ItemId == currentItemId && b.DateStr == row.DateStr);
+                        var existingRows = dbContext.DemandForecast.Where(b => b.ForCode == ForCode && b.ItemId == currentItemId && b.DateStr == row.DateStr);
 
-                            var existingrow = dbContext.DemandForecast.FirstOrDefault(b => b.ForCode == ForCode && b.ItemId == currentItemId && b.DateStr == row.DateStr);
+                        var existingrow = dbContext.DemandForecast.FirstOrDefault(b => b.ForCode == ForCode && b.ItemId == currentItemId && b.DateStr == row.DateStr);
 
-                            if (existingrow == null && row.Selected == true )
+                        if (existingrow == null && row.Selected == true)
+                        {
+                            dbContext.DemandForecast.Add(new DemandForecastEntity
                             {
-                                dbContext.DemandForecast.Add(new DemandForecastEntity
-                                {
-                                    ForCode = ForCode,
-                                    ItemId = row.Item.ItemId,
-                                    Date = row.Date,
-                                    DateStr = row.DateStr,
+                                ForCode = ForCode,
+                                ItemId = row.Item.ItemId,
+                                Date = row.Date,
+                                DateStr = row.DateStr,
 
-                                    Demand = row.Demand
+                                Demand = row.Demand
 
 
-                                });
+                            });
+                            hasChanges = true;
+                        }
+                        else if (existingrow != null)
+                        {
+
+                            if (existingrow.Demand != row.Demand && row.Selected == true)
+                            {
+                                existingrow.Demand = row.Demand;
                                 hasChanges = true;
+
                             }
-                            else if (existingrow != null)
-                            {
-
-                                if (existingrow.Demand != row.Demand && row.Selected == true)
-                                {
-                                    existingrow.Demand = row.Demand;
-                                    hasChanges = true;
-
-                                }
-                                else if(row.Selected == false)
+                            else if (row.Selected == false)
                             {
                                 dbContext.DemandForecast.Remove(existingrow);
                                 hasChanges = true;
@@ -9611,8 +9606,8 @@ Where iDay Between  @DateStart AND @DateEnd and ItemId=@ItemId and InventoryId=@
 
 
                         }
-                      
-                       
+
+
 
 
                     }
@@ -9862,7 +9857,6 @@ Where ForCode =@Code");
         #endregion
 
         #endregion
-        
 
         #region Manufacture
 
@@ -9881,12 +9875,12 @@ Where ForCode =@Code");
                         var matchingRows = dbContext.NumberOfRepairsOnlyMPS.Where(b => b.MPSId == Data.MPSId).ToList();
                         bool HasRows = matchingRows.Count > 0;
 
-                        foreach(var Machine in Data.PrimaryMachines)
+                        foreach (var Machine in Data.PrimaryMachines)
                         {
                             var databaseRow = dbContext.NumberOfRepairsOnlyMPS.SingleOrDefault(b => b.MPSId == Data.MPSId && b.MachId == Machine.MachID);
                             var currentRow = Data.MachRepairOnlyData.SingleOrDefault(b => b.MPSId == Data.MPSId && b.Mach.MachID == Machine.MachID);
-                           
-                            if(currentRow!= null)
+
+                            if (currentRow != null)
                             {
                                 if (databaseRow == null && currentRow.NumberOfRepairsMPS != 0)
                                 {
@@ -9945,33 +9939,33 @@ Where ForCode =@Code");
                         foreach (var Machine in Data.PrimaryMachines)
                         {
                             foreach (var SelectedDateStr in Data.DatesStr)
-                            { 
-
-                            var databaseRow = dbContext.NumberDatesOfRepairsMPS.SingleOrDefault(b => b.MPSId == Data.MPSId && b.MachId == Machine.MachID
-                                                                                               && b.RepairDateStr == SelectedDateStr);
-                            var currentRow = Data.MachRepairDateData.SingleOrDefault(b => b.MPSId == Data.MPSId && b.Mach.MachID == Machine.MachID && b.RepairDateStr == SelectedDateStr);
-                            if (databaseRow == null && currentRow.NumberOfRepairsMPS !=0)
                             {
-                                NumberDatesOfRepairsMPSEntity newRow = new NumberDatesOfRepairsMPSEntity();
-                                newRow.MPSId = Data.MPSId;
-                                newRow.MachId = Machine.MachID;
-                                newRow.RepairDateStr = SelectedDateStr;
-                                newRow.RepairDate = DateTime.Now;
 
-                                newRow.NumberOfRepairs = (int)currentRow.NumberOfRepairsMPS;
+                                var databaseRow = dbContext.NumberDatesOfRepairsMPS.SingleOrDefault(b => b.MPSId == Data.MPSId && b.MachId == Machine.MachID
+                                                                                                   && b.RepairDateStr == SelectedDateStr);
+                                var currentRow = Data.MachRepairDateData.SingleOrDefault(b => b.MPSId == Data.MPSId && b.Mach.MachID == Machine.MachID && b.RepairDateStr == SelectedDateStr);
+                                if (databaseRow == null && currentRow.NumberOfRepairsMPS != 0)
+                                {
+                                    NumberDatesOfRepairsMPSEntity newRow = new NumberDatesOfRepairsMPSEntity();
+                                    newRow.MPSId = Data.MPSId;
+                                    newRow.MachId = Machine.MachID;
+                                    newRow.RepairDateStr = SelectedDateStr;
+                                    newRow.RepairDate = DateTime.Now;
+
+                                    newRow.NumberOfRepairs = (int)currentRow.NumberOfRepairsMPS;
 
 
-                                dbContext.NumberDatesOfRepairsMPS.Add(newRow);
+                                    dbContext.NumberDatesOfRepairsMPS.Add(newRow);
+                                }
+                                else if (databaseRow != null && currentRow.NumberOfRepairsMPS == 0)
+                                {
+                                    dbContext.NumberDatesOfRepairsMPS.Remove(databaseRow);
+                                }
+                                else if (databaseRow != null && databaseRow.NumberOfRepairs != currentRow.NumberOfRepairsMPS && currentRow.NumberOfRepairsMPS != 0)
+                                {
+                                    databaseRow.NumberOfRepairs = currentRow.NumberOfRepairsMPS;
+                                }
                             }
-                            else if (databaseRow != null && currentRow.NumberOfRepairsMPS == 0)
-                            {
-                                dbContext.NumberDatesOfRepairsMPS.Remove(databaseRow);
-                            }
-                            else if(databaseRow != null && databaseRow.NumberOfRepairs != currentRow.NumberOfRepairsMPS && currentRow.NumberOfRepairsMPS != 0)
-                            {
-                                databaseRow.NumberOfRepairs = currentRow.NumberOfRepairsMPS;
-                            }
-                         }
                         }
 
 
@@ -9999,7 +9993,7 @@ Where ForCode =@Code");
                 using (var dbContext = new ErpDbContext(options))
                 {
                     // Separate query from execution
-                    int mpsId= flatData.MPSId;
+                    int mpsId = flatData.MPSId;
                     var existingMPSQuery = dbContext.MPSInput.Where(c => c.MPSID == mpsId);
                     var existingMPS = existingMPSQuery.SingleOrDefault();
 
@@ -10030,11 +10024,11 @@ Where ForCode =@Code");
                         existingMPS.PriceListId = flatData.PriceList.Id;
 
                         #region MachineRepairsSave
-                        if(flatData.NumberOfRepairsOnly == true)
+                        if (flatData.NumberOfRepairsOnly == true)
                         {
                             var a = SaveMachRepairOnlyData(flatData);
                         }
-                        else if(flatData.NumberDatesOfRepairs == true)
+                        else if (flatData.NumberDatesOfRepairs == true)
                         {
                             var b = SaveMachRepairDateData(flatData);
                         }
@@ -10186,7 +10180,7 @@ Where 1=1 {0}", FilterStr);
             return DataList;
         }
 
-        public MPSInputData GetMPSChooserData(int MPSId,string MPSCode,MPSInputData Data)
+        public MPSInputData GetMPSChooserData(int MPSId, string MPSCode, MPSInputData Data)
         {
 
             string FilterStr = "";
@@ -10256,7 +10250,7 @@ Where 1=1 {0}", FilterStr);
 
                 connection.Close();
             }
-            if(Data.NumberOfRepairsOnly == true || Data.NumberDatesOfRepairs == true)
+            if (Data.NumberOfRepairsOnly == true || Data.NumberDatesOfRepairs == true)
             {
                 Data.MachRepairOnlyData = GetMPSMachRepairData(Data);
             }
@@ -10269,78 +10263,78 @@ Where 1=1 {0}", FilterStr);
             try
             {
                 using (var connection = GetConnection())
-            using (var command = new SqlCommand())
-            {
-                connection.Open();
-                command.Connection = connection;
-
-                command.Parameters.AddWithValue("@MPSId", InputData.MPSId);
-                if (InputData.NumberOfRepairsOnly == true)
+                using (var command = new SqlCommand())
                 {
-                    command.CommandText = @"
+                    connection.Open();
+                    command.Connection = connection;
+
+                    command.Parameters.AddWithValue("@MPSId", InputData.MPSId);
+                    if (InputData.NumberOfRepairsOnly == true)
+                    {
+                        command.CommandText = @"
                         select A.Id,A.MPSId,A.NumberOfRepairs,M.MachId,M.MachCode,M.MachDescr
                         from NumberOfRepairsOnlyMPS as A
 						Inner Join Machines as M on A.MachId = M.MachID
                         Where MPSId = @MPSId";
 
-                    using (var reader = command.ExecuteReader())
-                    {
-                        while (reader.Read())
+                        using (var reader = command.ExecuteReader())
                         {
-                            MachineRepairData repairData = new MachineRepairData();
-                            MachineData machData = new MachineData();
-                            repairData.Id = int.Parse(reader["Id"].ToString());
-                            repairData.MPSId = int.Parse(reader["MPSId"].ToString());
-                            repairData.NumberOfRepairsMPS = int.Parse(reader["NumberOfRepairs"].ToString());
+                            while (reader.Read())
+                            {
+                                MachineRepairData repairData = new MachineRepairData();
+                                MachineData machData = new MachineData();
+                                repairData.Id = int.Parse(reader["Id"].ToString());
+                                repairData.MPSId = int.Parse(reader["MPSId"].ToString());
+                                repairData.NumberOfRepairsMPS = int.Parse(reader["NumberOfRepairs"].ToString());
 
-                            machData.MachID = int.Parse(reader["MachID"].ToString());
-                            machData.MachCode = reader["MachCode"].ToString();
-                            machData.MachDescr = reader["MachDescr"].ToString();
+                                machData.MachID = int.Parse(reader["MachID"].ToString());
+                                machData.MachCode = reader["MachCode"].ToString();
+                                machData.MachDescr = reader["MachDescr"].ToString();
 
-                            repairData.Mach = machData;
+                                repairData.Mach = machData;
 
 
-                            data.Add(repairData);
+                                data.Add(repairData);
+                            }
                         }
                     }
-                }
-                else if (InputData.NumberDatesOfRepairs == true)
-                {
-                    command.CommandText = @"
+                    else if (InputData.NumberDatesOfRepairs == true)
+                    {
+                        command.CommandText = @"
                     select A.Id,A.MPSId,A.NumberOfRepairs,A.RepairDate,A.RepairDateStr,M.MachId,M.MachCode,M.MachDescr
                     from NumberDatesOfRepairsMPS as A
                     Inner Join Machines as M on A.MachId = M.MachID
                     Where MPSId = @MPSId";
 
-                    using (var reader = command.ExecuteReader())
-                    {
-                        while (reader.Read())
+                        using (var reader = command.ExecuteReader())
                         {
-                            MachineRepairData repairData = new MachineRepairData();
-                            MachineData machData = new MachineData();
-                            repairData.Id = int.Parse(reader["Id"].ToString());
-                            repairData.MPSId = int.Parse(reader["MPSId"].ToString());
-                            repairData.NumberOfRepairsMPS = int.Parse(reader["NumberOfRepairs"].ToString());
-                            repairData.RepairDateStr = reader["RepairDateStr"].ToString();
-                            repairData.RepairDate = DateTime.Parse(reader["RepairDate"].ToString());
+                            while (reader.Read())
+                            {
+                                MachineRepairData repairData = new MachineRepairData();
+                                MachineData machData = new MachineData();
+                                repairData.Id = int.Parse(reader["Id"].ToString());
+                                repairData.MPSId = int.Parse(reader["MPSId"].ToString());
+                                repairData.NumberOfRepairsMPS = int.Parse(reader["NumberOfRepairs"].ToString());
+                                repairData.RepairDateStr = reader["RepairDateStr"].ToString();
+                                repairData.RepairDate = DateTime.Parse(reader["RepairDate"].ToString());
 
                                 machData.MachID = int.Parse(reader["MachID"].ToString());
-                            machData.MachCode = reader["MachCode"].ToString();
-                            machData.MachDescr = reader["MachDescr"].ToString();
+                                machData.MachCode = reader["MachCode"].ToString();
+                                machData.MachDescr = reader["MachDescr"].ToString();
 
-                            repairData.Mach = machData;
+                                repairData.Mach = machData;
 
 
-                            data.Add(repairData);
+                                data.Add(repairData);
+                            }
                         }
                     }
+
+                    connection.Close();
+                    return data;
+
+
                 }
-
-                connection.Close();
-                return data;
-
-
-            }
 
 
             }
@@ -10442,7 +10436,7 @@ Where iDay Between  @DateStart AND @DateEnd and ItemId=@ItemId");
             Machines
         INNER JOIN
             Factory ON Machines.FactoryID = Factory.FactoryID
-Where 1=1 {0}",FilterStr);
+Where 1=1 {0}", FilterStr);
 
                 using (var reader = command.ExecuteReader())
                 {
@@ -10904,7 +10898,7 @@ Where 1=1 {0}", FilterStr);
                     {
                         MRPInputData data = new MRPInputData();
                         data.Forecast = new ForecastInfoData();
-                        data.Inventory =  new InventoryData();
+                        data.Inventory = new InventoryData();
 
                         data.MRPID = Convert.ToInt32(reader["MRPID"]);
                         data.MRPCode = reader["MRPCODE"].ToString();
@@ -11196,7 +11190,7 @@ Where 1=1 {0}", FilterStr);
 
 
                 #region from string to int 
-                    // Mapping from string keys to integer indices
+                // Mapping from string keys to integer indices
                 Dictionary<string, int> workCenterIndexMap = new Dictionary<string, int>();
                 Dictionary<string, int> productIndexMap = new Dictionary<string, int>();
                 Dictionary<string, int> dateIndexMap = new Dictionary<string, int>();
@@ -11538,7 +11532,7 @@ Where 1=1 {0}", FilterStr);
                                         Y[i, j, w, t, n] = model.AddVar(0.0, 1.0, 0.0, GRB.BINARY, varName);
                                     }
                                 }
-                                
+
                             }
                         }
                     }
@@ -11552,8 +11546,8 @@ Where 1=1 {0}", FilterStr);
                         if (Qw.TryGetValue(w, out var productList) && productList.Contains(i))
                         {
                             for (int t = 1; t <= T; t++)
-                            { 
-                            // Check if the key w exists in NDict dictionary
+                            {
+                                // Check if the key w exists in NDict dictionary
 
                                 for (int n = 0; n < NDict[w]; n++)
                                 {
@@ -11620,7 +11614,7 @@ Where 1=1 {0}", FilterStr);
                             {
                                 foreach (int i in productsInW)
                                 {
-                                    MinObjective.AddTerm(Sijw[(i, j, w)] ,Y[i, j, w, t, n]);
+                                    MinObjective.AddTerm(Sijw[(i, j, w)], Y[i, j, w, t, n]);
                                 }
 
                             }
@@ -11830,14 +11824,14 @@ Where 1=1 {0}", FilterStr);
 
                         foreach (int i in productsInW)
                         {
-                            sumY += Y[i, i, w, t, 0]; 
+                            sumY += Y[i, i, w, t, 0];
 
                         }
                         model.AddConstr(sumY == 1, "Constrain8_" + w + t);
                     }
                 }
 
-               //#9.
+                //#9.
                 for (int w = 0; w < W; w++)
                 {
                     List<int> productsInW = Qw.TryGetValue(w, out var productList) ? productList : new List<int>();
@@ -11851,13 +11845,13 @@ Where 1=1 {0}", FilterStr);
                                 GRBLinExpr sumYi = 0;
                                 foreach (int i in productsInW)
                                 {
-                                    sumYi += Y[i, j, w, t, n]; 
+                                    sumYi += Y[i, j, w, t, n];
                                 }
                                 GRBLinExpr sumYk = 0;
 
                                 foreach (int k in productsInW)
                                 {
-                                    sumYk += Y[j, k, w, t, n + 1]; 
+                                    sumYk += Y[j, k, w, t, n + 1];
                                 }
                                 model.AddConstr(sumYi == sumYk, "Constrain_9" + w + t);
                             }
@@ -11877,13 +11871,13 @@ Where 1=1 {0}", FilterStr);
                             GRBLinExpr sumYi = 0;
                             foreach (int i in productsInW)
                             {
-                                sumYi += Y[i, j, w, t - 1, NDict[w] - 1]; 
+                                sumYi += Y[i, j, w, t - 1, NDict[w] - 1];
                             }
                             GRBLinExpr sumYk = 0;
 
                             foreach (int k in productsInW)
                             {
-                                sumYk += Y[j, k, w, t, 0]; 
+                                sumYk += Y[j, k, w, t, 0];
                             }
                             model.AddConstr(sumYi == sumYk, "Constrain_10" + w + t);
                         }
@@ -11907,7 +11901,7 @@ Where 1=1 {0}", FilterStr);
                                 GRBLinExpr sumY = 0;
                                 foreach (int i in productsInW)
                                 {
-                                    sumY += Y[i, j, w, t, n]; 
+                                    sumY += Y[i, j, w, t, n];
                                 }
                                 model.AddConstr(sumY * 10000000 >= X[j, w, t, n], "Constrain11_" + w + t);
 
@@ -11917,7 +11911,7 @@ Where 1=1 {0}", FilterStr);
                     }
                 }
                 ////#12 
-                
+
                 for (int w = 0; w < W; w++)
                 {
                     List<int> productsInW = Qw.TryGetValue(w, out var productList) ? productList : new List<int>();
@@ -11932,12 +11926,12 @@ Where 1=1 {0}", FilterStr);
                         {
                             for (int n = 0; n < NDict[w]; n++)
                             {
-  
-                                sumX +=  Uiw[(j, w)] * X[j, w, t, n];
+
+                                sumX += Uiw[(j, w)] * X[j, w, t, n];
 
                                 foreach (int i in productsInW)
                                 {
-                                    sumY += Y[i, j, w, t, n] * Sijw[(i, j, w)] ;
+                                    sumY += Y[i, j, w, t, n] * Sijw[(i, j, w)];
 
                                     var uiw = Uiw[(j, w)];
                                     var sijw = Sijw[(i, j, w)];
@@ -12009,7 +12003,7 @@ Where 1=1 {0}", FilterStr);
                                         }
                                     }
                                 }
-                               
+
                             }
                         }
                     }
@@ -12025,7 +12019,7 @@ Where 1=1 {0}", FilterStr);
                             DataPerDayMRP row = new DataPerDayMRP();
                             row.ItemCode = productIndexMap.FirstOrDefault(x => x.Value == i).Key;
                             row.Make = 0;
-                            row.Date = dateIndexMap.FirstOrDefault(x => x.Value == t).Key;                          
+                            row.Date = dateIndexMap.FirstOrDefault(x => x.Value == t).Key;
                             for (int w = 0; w < W; w++)
                             {
                                 if (Qw.TryGetValue(w, out var productList) && productList.Contains(i))
@@ -12045,7 +12039,7 @@ Where 1=1 {0}", FilterStr);
                                         row.Make += value;
                                     }
                                 }
-                                   
+
                             }
                             OutputData.Diagram1.DataPerDayMRP.Add(row);
                         }
@@ -12170,7 +12164,7 @@ Where 1=1 {0}", FilterStr);
                     }
 
                     // Prompt the user to enter a unique code for the CSV group
-                    string csvGroupCode = InputData.MRPCode +"_"+"W"+W;
+                    string csvGroupCode = InputData.MRPCode + "_" + "W" + W;
                     string codeListPath = Path.Combine(directoryPath, "CSVGroupCodes.txt");
                     // Check if the csvGroupCode already exists in the codeListPath
                     if (!File.Exists(codeListPath) || !File.ReadLines(codeListPath).Contains(csvGroupCode))
@@ -12181,7 +12175,7 @@ Where 1=1 {0}", FilterStr);
 
 
                     // Append the group code to each CSV filename
-                    WriteToCsv(Path.Combine(directoryPath, $"Pw_{csvGroupCode}.csv"),InputData.Pw);
+                    WriteToCsv(Path.Combine(directoryPath, $"Pw_{csvGroupCode}.csv"), InputData.Pw);
                     WriteToCsv(Path.Combine(directoryPath, $"Qw_{csvGroupCode}.csv"), InputData.Qw);
                     WriteToCsv(Path.Combine(directoryPath, $"Dit_{csvGroupCode}.csv"), InputData.Dit);
                     WriteToCsv(Path.Combine(directoryPath, $"Ci_{csvGroupCode}.csv"), InputData.Ci);
@@ -12237,7 +12231,7 @@ Where 1=1 {0}", FilterStr);
 
 
                     WriteVariablesToTxt(Path.Combine(directoryPath, $"1_tpqw.txt"), T, P, Q, W, N);
-                    WriteToTxt(Path.Combine(directoryPath, $"2_pwqwmax.txt"), Pw, Qw, T, P, Q, W, "pwqwnax"); 
+                    WriteToTxt(Path.Combine(directoryPath, $"2_pwqwmax.txt"), Pw, Qw, T, P, Q, W, "pwqwnax");
                     WriteToTxt(Path.Combine(directoryPath, $"3_qw_data.txt"), Qw, T, P, Q, W, "Qw");
                     WriteToTxt(Path.Combine(directoryPath, $"4_cij.txt"), Ci, T, P, Q, W, "Ci");
                     WriteToTxt(Path.Combine(directoryPath, $"5_rij_data.txt"), Rij, T, P, Q, W, "Rij");
@@ -12286,7 +12280,7 @@ Where 1=1 {0}", FilterStr);
                         for (int t = 0; t < T; t++)
                         {
                             double value;
-                            if (!dictionary.TryGetValue((i , t ), out value))
+                            if (!dictionary.TryGetValue((i, t), out value))
                             {
                                 value = 0.0;
                             }
@@ -12302,7 +12296,7 @@ Where 1=1 {0}", FilterStr);
                         for (int j = 0; j < Q; j++)
                         {
                             double value;
-                            if (!dictionary.TryGetValue((i , j ), out value))
+                            if (!dictionary.TryGetValue((i, j), out value))
                             {
                                 value = 0.0;
                             }
@@ -12318,7 +12312,7 @@ Where 1=1 {0}", FilterStr);
                         for (int t = 0; t < T; t++)
                         {
                             double value;
-                            if (!dictionary.TryGetValue((w , t ), out value))
+                            if (!dictionary.TryGetValue((w, t), out value))
                             {
                                 value = 0.0;
                             }
@@ -12334,7 +12328,7 @@ Where 1=1 {0}", FilterStr);
                         for (int w = 0; w < W; w++)
                         {
                             double value;
-                            if (!dictionary.TryGetValue((i , w ), out value))
+                            if (!dictionary.TryGetValue((i, w), out value))
                             {
                                 value = 0.0;
                             }
@@ -12395,13 +12389,13 @@ Where 1=1 {0}", FilterStr);
                     for (int w = 0; w < W; w++)
                     {
 
-                            int value;
-                            if (!dictionary.TryGetValue((w), out value))
-                            {
-                                value = 0;
-                            }
-                            file.Write($"{value} ");
-                        
+                        int value;
+                        if (!dictionary.TryGetValue((w), out value))
+                        {
+                            value = 0;
+                        }
+                        file.Write($"{value} ");
+
                         file.WriteLine();
                     }
                 }
@@ -12438,7 +12432,7 @@ Where 1=1 {0}", FilterStr);
                     {
                         file.Write($"{StartingSTOCK} ");
                     }
-                    else if (StartingBACKLOG > 0 )
+                    else if (StartingBACKLOG > 0)
                     {
                         file.Write($"{-StartingBACKLOG} ");
                     }
@@ -12463,14 +12457,14 @@ Where 1=1 {0}", FilterStr);
             {
                 if (Type == "Sijw")
                 {
-                    for(int w = 0; w < W; w++)
+                    for (int w = 0; w < W; w++)
                     {
                         for (int i = 0; i < Q; i++)
                         {
                             for (int j = 0; j < Q; j++)
                             {
                                 double value;
-                                if (!dictionary.TryGetValue((i , j ,w), out value))
+                                if (!dictionary.TryGetValue((i, j, w), out value))
                                 {
                                     value = 0.0;
                                 }
@@ -12491,7 +12485,7 @@ Where 1=1 {0}", FilterStr);
                             for (int j = 0; j < Q; j++)
                             {
                                 double value;
-                                if (!dictionary.TryGetValue((i , j , w ), out value))
+                                if (!dictionary.TryGetValue((i, j, w), out value))
                                 {
                                     value = 0;
                                 }
@@ -12535,7 +12529,7 @@ Where 1=1 {0}", FilterStr);
                 {
                     for (int i = 0; i < Q; i++)
                     {
-                        
+
                         for (int w = 0; w < W; w++)
                         {
                             int value = 1;
@@ -12592,21 +12586,21 @@ Where 1=1 {0}", FilterStr);
             using (StreamWriter file = new StreamWriter(filePath))
             {
 
-                    for (int w = 0; w < W; w++)
-                    {
-                      
-
-                        List<int> QproductsInW = Qw.TryGetValue(w, out var productList) ? productList : new List<int>();
+                for (int w = 0; w < W; w++)
+                {
 
 
-                        var EndItems = QproductsInW.Where(d => d < P).ToList();
-                        var Componets = QproductsInW.ToList();
+                    List<int> QproductsInW = Qw.TryGetValue(w, out var productList) ? productList : new List<int>();
 
-                        file.Write($"{EndItems.Count} ");
-                        file.Write($"{Componets.Count} ");
 
-                        file.WriteLine();
-                    }
+                    var EndItems = QproductsInW.Where(d => d < P).ToList();
+                    var Componets = QproductsInW.ToList();
+
+                    file.Write($"{EndItems.Count} ");
+                    file.Write($"{Componets.Count} ");
+
+                    file.WriteLine();
+                }
 
             }
         }
@@ -12619,7 +12613,7 @@ Where 1=1 {0}", FilterStr);
             {
                 file.WriteLine($"{T}");
                 file.WriteLine($"{P}");
-                file.WriteLine($"{Q-P}");
+                file.WriteLine($"{Q - P}");
                 file.WriteLine($"{W}");
             }
         }
@@ -13713,7 +13707,7 @@ ORDER BY Date ASC"
             try
             {
                 // Define the parameters
-                if (InputData.Forecast.TimeBucket != BasicEnums.Timebucket.Quarterly )
+                if (InputData.Forecast.TimeBucket != BasicEnums.Timebucket.Quarterly)
                 {
                     // Assuming that Filter carries all necessary information for optimization.
                     // Adjust the code below if it's stored differently.
@@ -13815,7 +13809,7 @@ ORDER BY Date ASC"
                         for (int j = 0; j < Products.Length; j++)
                         {
                             var product = Products[j];
-                            var month = Dates[Dates.Length -1];
+                            var month = Dates[Dates.Length - 1];
 
                             model.AddConstr(store[Dates.Length - 1, j] == store_target[product], $"End_Balance_{product}");
                         }
@@ -14217,8 +14211,8 @@ ORDER BY Date ASC"
 
                             for (int j = 0; j < Machines.Length; j++)
                             {
-                                var upperbounddownReq = down_req[Machines[j]] ;
-                                repair[i, j] = model.AddVar(0.0, ub:upperbounddownReq, GRB.INFINITY, GRB.INTEGER, "repair_" + Dates[i] + "_" + Machines[j]);
+                                var upperbounddownReq = down_req[Machines[j]];
+                                repair[i, j] = model.AddVar(0.0, ub: upperbounddownReq, GRB.INFINITY, GRB.INTEGER, "repair_" + Dates[i] + "_" + Machines[j]);
                                 //repair[i, j] = model.AddVar(0.0, GRB.INFINITY, 0.0, GRB.INTEGER, "repair_" + Dates[i] + "_" + Machines[j]);
                             }
                         }
@@ -14698,7 +14692,7 @@ ORDER BY Date ASC"
 
         #endregion
 
-
+        #region Alter Dates Commands
         public string[] CalculateDatesFormat(ForecastInfoData InputData)
         {
             var DateList = new string[5];
@@ -14793,7 +14787,7 @@ ORDER BY Date ASC"
             }
             return Output;
         }
-        public string ChangeSpecificDateFormat(ForecastInfoData Input,DateTime DateIn)
+        public string ChangeSpecificDateFormat(ForecastInfoData Input, DateTime DateIn)
         {
             string DateOut = "";
 
@@ -14822,10 +14816,9 @@ ORDER BY Date ASC"
             // Calculate the week of the month
             return (date.Day - 1) / 7 + 1;
         }
-
         #endregion
 
-
+        #endregion
         public UserModel GetByUserName(string userName)
         {
             UserModel user = null;
@@ -14857,6 +14850,6 @@ ORDER BY Date ASC"
             }
             return user;
         }
-
+        #endregion
     }
 }

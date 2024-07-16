@@ -1,100 +1,26 @@
 ﻿using Erp.CommonFiles;
 using Erp.Helper;
-using Erp.Model.BasicFiles;
-using Erp.Model.Suppliers;
 using Syncfusion.UI.Xaml.Grid;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Input;
 using System.Windows;
-using LiveCharts.Wpf;
 using Syncfusion.Data.Extensions;
-using Erp.Model.Manufacture.MPS;
-using Erp.Model.Manufacture;
-using Erp.Model.Data_Analytics.Forecast;
-using static Erp.Model.Enums.BasicEnums;
 using Erp.Model.Enums;
-using Syncfusion.Windows.Controls;
-using Erp.Model.Customers;
-using Erp.Model.Inventory;
-using LiveCharts.Defaults;
-using LiveCharts;
-using Erp.ViewModel.Inventory;
-using System.Windows.Data;
-using Gurobi;
 using Erp.Model.Thesis.VacationPlanning;
 using Erp.Model.Thesis;
 using System.Globalization;
-using System.Runtime.InteropServices.ComTypes;
-using ILOG.CPLEX;
-using ILOG.Concert;
+
 
 namespace Erp.ViewModel.Thesis
 {
     public class VacationsPlanningViewModel : ViewModelBase
     {
+        #region Data Properties
 
-        #region DataProperties
-
-        private int _selectedTabIndex;
-
-        public int SelectedTabIndex
-        {
-            get { return _selectedTabIndex; }
-            set
-            {
-                if (_selectedTabIndex != value)
-                {
-                    _selectedTabIndex = value;
-                    INotifyPropertyChanged(nameof(SelectedTabIndex));
-                }
-            }
-        }
-
-        private ICollectionView collectionviewD;
-
-        public ICollectionView CollectionViewD
-        {
-            get
-            {
-                return collectionviewD;
-            }
-            set
-            {
-                collectionviewD = value;
-                INotifyPropertyChanged("CollectionViewD");
-            }
-        }
-        private ICollectionView collectionViewRepair;
-
-        public ICollectionView CollectionViewRepair
-        {
-            get
-            {
-                return collectionViewRepair;
-            }
-            set
-            {
-                collectionViewRepair = value;
-                INotifyPropertyChanged("CollectionViewRepair");
-            }
-        }
-        private ObservableCollection<MPSOptResultsData> diagramdata;
-        public ObservableCollection<MPSOptResultsData> DiagramData
-        {
-            get { return diagramdata; }
-            set
-            {
-                diagramdata = value;
-                INotifyPropertyChanged(nameof(DiagramData));
-            }
-        }
-
+        #region Vacation Planning Data
         private VacationPlanningInputData inputdata;
         public VacationPlanningInputData InputData
         {
@@ -108,7 +34,6 @@ namespace Erp.ViewModel.Thesis
             }
         }
 
-
         private VacationPlanningOutputData outputdata;
         public VacationPlanningOutputData OutputData
         {
@@ -121,6 +46,10 @@ namespace Erp.ViewModel.Thesis
 
             }
         }
+        #endregion
+
+        #region Column Generation Data
+
         private VPCGInputData cginputdata;
         public VPCGInputData CGInputdata
         {
@@ -145,6 +74,24 @@ namespace Erp.ViewModel.Thesis
 
             }
         }
+        #endregion
+
+        #region Support Data
+
+        private int _selectedTabIndex;
+        public int SelectedTabIndex
+        {
+            get { return _selectedTabIndex; }
+            set
+            {
+                if (_selectedTabIndex != value)
+                {
+                    _selectedTabIndex = value;
+                    INotifyPropertyChanged(nameof(SelectedTabIndex));
+                }
+            }
+        }
+
         private Columns sfGridColumns;
         public Columns SfGridColumns
         {
@@ -155,26 +102,7 @@ namespace Erp.ViewModel.Thesis
                 INotifyPropertyChanged("SfGridColumns");
             }
         }
-        private Columns sfGridColumnsd;
-        public Columns SfGridColumnsD
-        {
-            get { return sfGridColumnsd; }
-            set
-            {
-                this.sfGridColumnsd = value;
-                INotifyPropertyChanged("SfGridColumnsD");
-            }
-        }
-        private Columns sfGridColumnsRepair;
-        public Columns SfGridColumnsRepair
-        {
-            get { return sfGridColumnsRepair; }
-            set
-            {
-                this.sfGridColumnsRepair = value;
-                INotifyPropertyChanged("SfGridColumnsRepair");
-            }
-        }
+        #endregion
 
         #region Enums
 
@@ -191,46 +119,12 @@ namespace Erp.ViewModel.Thesis
         #endregion
 
         #endregion
-        public VacationsPlanningViewModel()
-        {
 
+        #region Commands
 
-            InputData = new VacationPlanningInputData();
-            InputData.VPCode = "";
-            InputData.Schedule = new ReqScheduleInfoData();
-            InputData.Schedule.ReqScheduleRowsData = new ObservableCollection<ReqScheduleRowsData>();
+        #region CRUD Commands
 
-            OutputData = new VacationPlanningOutputData();
-            OutputData.VPYijResultsDataGrid = new ObservableCollection<VPYijResultsData>();
-            OutputData.VPXijResultsDataGrid = new ObservableCollection<VPXijResultsData>();
-            OutputData.VPXiResultsDataGrid = new ObservableCollection<VPXiResultData>();
-
-            OutputData.EmpLeaveStatusData = new ObservableCollection<EmployeeData>();
-            CGInputdata = new VPCGInputData();
-            CGOutputdata = new VPCGOutputData();
-
-            CGInputdata.VPXiResultsDataGrid = new ObservableCollection<VPXiResultData>();
-
-            this.sfGridColumns = new Columns();
-            this.SfGridColumnsRepair = new Columns();
-
-            CalculateVacationPlanningGB = new RelayCommand2(ExecuteCalculateVacationPlanning_Gurobi);
-            CalculateVacationPlanningCP = new RelayCommand2(ExecuteCalculateVacationPlanning_Cplex);
-
-
-
-
-
-            rowDataCommand = new RelayCommand2(ChangeCanExecute);
-            ShowVPCommand = new RelayCommand2(ExecuteShowVPCommand);
-            AddVPCommand = new RelayCommand2(ExecuteAddVPCommand);
-            ShowScheduleGridCommand = new RelayCommand2(ExecuteShowScheduleGridCommand);
-
-        }
-
-        #region CRUD  Commands
-
-        #region ADD 
+        #region Add
         public ICommand AddVPCommand { get; }
 
         private void ExecuteAddVPCommand(object obj)
@@ -245,14 +139,14 @@ namespace Erp.ViewModel.Thesis
                 int Flag = CommonFunctions.AddVPInputData(InputData);
                 if (Flag == 0)
                 {
-                    MessageBox.Show($"New Vacation Planning added with Code: {InputData.VPCode}");
+                    MessageBox.Show($"New Vacation Planning added with Code: {InputData.VPCode}", "", MessageBoxButton.OK, MessageBoxImage.Information);
                     ExecuteShowVPCommand(obj);
                     InputData.VPId = 0;
                     ExecuteRefreshInputCommand(obj);
                 }
                 else if (Flag == 1)
                 {
-                    MessageBox.Show($"The Vacation Planning with Code : {InputData.VPCode} already exists");
+                    MessageBox.Show($"The Vacation Planning with Code : {InputData.VPCode} already exists", "", MessageBoxButton.OK, MessageBoxImage.Error);
 
                 }
                 else if (Flag == 2)
@@ -263,7 +157,6 @@ namespace Erp.ViewModel.Thesis
 
         }
         #endregion
-
         #region Clear
 
         private ViewModelCommand _ClearInputCommand;
@@ -289,7 +182,6 @@ namespace Erp.ViewModel.Thesis
         }
 
         #endregion
-
         #region Save
 
 
@@ -314,7 +206,7 @@ namespace Erp.ViewModel.Thesis
 
             if (Flag == 1)
             {
-                MessageBox.Show($"Save/Update Completed for Vacation Planning with Code : {InputData.VPCode}");
+                MessageBox.Show($"Save/Update Completed for Vacation Planning with Code : {InputData.VPCode}","", MessageBoxButton.OK, MessageBoxImage.Information);
                 ExecuteShowVPCommand(obj);
                 ExecuteRefreshInputCommand(obj);
             }
@@ -325,7 +217,6 @@ namespace Erp.ViewModel.Thesis
         }
 
         #endregion
-
         #region Refresh
 
         private ViewModelCommand _RefreshInputCommand;
@@ -354,16 +245,13 @@ namespace Erp.ViewModel.Thesis
 
         #endregion
 
-
-        #region F7Commands
+        #region Data_Grid Commands
 
         public ICommand ShowVPCommand { get; }
         public ICommand ShowScheduleGridCommand { get; }
 
         public void ExecuteShowVPCommand(object obj)
         {
-
-
             ClearColumns();
 
             var F7input = F7Common.F7VacationPlanning(ShowDeleted);
@@ -392,32 +280,58 @@ namespace Erp.ViewModel.Thesis
             }
 
         }
+
+        protected void ClearColumns()
+        {
+
+            var ColumnsCount = this.SfGridColumns.Count();
+            if (ColumnsCount != 0)
+            {
+                for (int i = 0; i < ColumnsCount; i++)
+                {
+                    this.sfGridColumns.RemoveAt(0);
+                }
+            }
+        }
+
+        private ICommand rowDataCommand { get; set; }
+
+        public ICommand RowDataCommand
+        {
+            get
+            {
+                return rowDataCommand;
+            }
+            set
+            {
+                rowDataCommand = value;
+            }
+        }
+
         public void ChangeCanExecute(object obj)
         {
             if (F7key == "VPCode")
             {
-                InputData.VPId = (SelectedItem as VacationPlanningInputData).VPId;
-                InputData.VPCode = (SelectedItem as VacationPlanningInputData).VPCode;
-                InputData.VPDescr = (SelectedItem as VacationPlanningInputData).VPDescr;
-                InputData.EmployeeType = (SelectedItem as VacationPlanningInputData).EmployeeType;
-                InputData.MaxSatisfiedBids = (SelectedItem as VacationPlanningInputData).MaxSatisfiedBids;
-                InputData.SeparValue = (SelectedItem as VacationPlanningInputData).SeparValue;
+                InputData = (SelectedItem as VacationPlanningInputData);
 
-                InputData.VPLogicType = (SelectedItem as VacationPlanningInputData).VPLogicType;
-                InputData.IsDeleted = (SelectedItem as VacationPlanningInputData).IsDeleted;
+                //Schedule
+                InputData.Schedule.ReqScheduleRowsData = CommonFunctions.GetReqSchedulesRowsByEmpType(InputData.Schedule.ReqCode, InputData.EmployeeType);
 
-
-                #region Schedule
-
-                InputData.Schedule = (SelectedItem as VacationPlanningInputData).Schedule;
-                InputData.Schedule.ReqScheduleRowsData = CommonFunctions.GetReqSchedulesRowsByEmpType(InputData.Schedule.ReqCode,InputData.EmployeeType);
-
-                #region Dates,DatesStr List  
-
+                //Dates Arrays
                 InputData.Dates = InputData.Schedule.ReqScheduleRowsData.Select(df => df.Date).OrderBy(date => date).ToArray();
                 InputData.DatesStr = InputData.Schedule.ReqScheduleRowsData.Select(df => df.DateStr).OrderBy(dateStr => DateTime.ParseExact(dateStr, "dd/MM/yyyy", CultureInfo.InvariantCulture)).ToArray();
 
-                #endregion
+                #region Extra
+                //InputData.VPId = (SelectedItem as VacationPlanningInputData).VPId;
+                //InputData.VPCode = (SelectedItem as VacationPlanningInputData).VPCode;
+                //InputData.VPDescr = (SelectedItem as VacationPlanningInputData).VPDescr;
+                //InputData.EmployeeType = (SelectedItem as VacationPlanningInputData).EmployeeType;
+                //InputData.MaxSatisfiedBids = (SelectedItem as VacationPlanningInputData).MaxSatisfiedBids;
+                //InputData.SeparValue = (SelectedItem as VacationPlanningInputData).SeparValue;
+
+                //InputData.VPLogicType = (SelectedItem as VacationPlanningInputData).VPLogicType;
+                //InputData.IsDeleted = (SelectedItem as VacationPlanningInputData).IsDeleted;
+                //InputData.Schedule = (SelectedItem as VacationPlanningInputData).Schedule;
 
                 #endregion
 
@@ -425,23 +339,25 @@ namespace Erp.ViewModel.Thesis
             if (F7key == "ReqSchedule")
             {
                 InputData.Schedule = (SelectedItem as ReqScheduleInfoData);
-                InputData.Schedule.ReqScheduleRowsData = CommonFunctions.GetReqSchedulesRowsByEmpType(InputData.Schedule.ReqCode, InputData.EmployeeType);
+                InputData.Schedule.ReqScheduleRowsData = CommonFunctions.GetReqSchedulesRowsByEmpType
+                                                                        (InputData.Schedule.ReqCode, 
+                                                                        InputData.EmployeeType);
 
-                #region Dates, DatesStr List  
-
-                InputData.Dates = InputData.Schedule.ReqScheduleRowsData.Select(df => df.Date).OrderBy(date => date).ToArray();
-                InputData.DatesStr = InputData.Schedule.ReqScheduleRowsData.Select(df => df.DateStr).OrderBy(dateStr => DateTime.ParseExact(dateStr, "dd/MM/yyyy", CultureInfo.InvariantCulture)).ToArray();
-
-                #endregion
+                //Dates Arrays
+                InputData.Dates = InputData.Schedule.ReqScheduleRowsData.Select(df => df.Date)
+                    .OrderBy(date => date).ToArray();
+                InputData.DatesStr = InputData.Schedule.ReqScheduleRowsData.Select(df => df.DateStr)
+                    .OrderBy(dateStr => DateTime.ParseExact(dateStr, "dd/MM/yyyy", CultureInfo.InvariantCulture))
+                    .ToArray();
             }
         }
 
         #endregion
 
+        #region Vacation Planning Optimization
 
-        #region Calculate VacationPlanning
+        #region Gurobi
         public ICommand CalculateVacationPlanningGB { get; }
-        public ICommand CalculateVacationPlanningCP { get; }
 
         private void ExecuteCalculateVacationPlanning_Gurobi(object obj)
         {
@@ -542,9 +458,9 @@ namespace Erp.ViewModel.Thesis
             OutputData = CommonFunctions.Calculate_VacationPlanning_Gurobi_String(InputData);
 
             OutputData.VPYijResultsDataGrid = OutputData.VPYijResultsDataGrid.OrderBy(item => item.Employee.Seniority).ToObservableCollection();
-            OutputData.VPYijzResultsDataGrid = OutputData.VPYijzResultsDataGrid.OrderBy(item => item.Employee.Seniority).ToObservableCollection();
-            OutputData.VPXijResultsDataGrid = OutputData.VPXijResultsDataGrid.OrderBy(item => item.Employee.Seniority).ToObservableCollection();
-
+            OutputData.VPYijrzResultsDataGrid = OutputData.VPYijrzResultsDataGrid.OrderBy(item => item.Employee.Seniority).ToObservableCollection();
+            OutputData.VPXitResultsDataGrid = OutputData.VPXitResultsDataGrid.OrderBy(item => item.Employee.Seniority).ToObservableCollection();
+            OutputData.VPLLiResultsDataGrid = new ObservableCollection<VPXiResultData>();
 
             #endregion
 
@@ -553,20 +469,20 @@ namespace Erp.ViewModel.Thesis
             #region Column Generation
 
             #region Dictionaries
-            CGInputdata.LeaveDays = new Dictionary<int, int>();
-            CGInputdata.LLiDict = new Dictionary<int, int>();
+            CGInputdata.Re_Dict = new Dictionary<int, int>();
+            CGInputdata.RLLt_Dict = new Dictionary<int, int>();
             #endregion
 
             #region Populate Dictionaries
 
-            var XijList = OutputData.VPXijResultsDataGrid;
+            var XijList = OutputData.VPXitResultsDataGrid;
 
             var groupedByDate = XijList
                 .GroupBy(x => x.Date) // Group by Date
                 .Select(g => new VPXiResultData
                 {
                     Date = g.Key, // Date
-                    LimitLine = g.Sum(x => (int)x.XijFlag)
+                    LimitLine = g.Sum(x => (int)x.XitFlag)
                 });
 
             var t = 0;
@@ -577,8 +493,8 @@ namespace Erp.ViewModel.Thesis
                 row.LimitLine = PreviousLimitLine - row.LimitLine;
                 row.LLi = $"LL{t + 1}";
 
-                OutputData.VPXiResultsDataGrid.Add(row);
-                CGInputdata.LLiDict[t + 1] = row.LimitLine;
+                OutputData.VPLLiResultsDataGrid.Add(row);
+                CGInputdata.RLLt_Dict[t + 1] = row.LimitLine;
 
                 t++;
             }
@@ -589,7 +505,7 @@ namespace Erp.ViewModel.Thesis
             foreach (var emp in OutputData.EmpLeaveStatusData)
             {
 
-                CGInputdata.LeaveDays[t + 1] = emp.LeaveStatus.ProjectedBalance;
+                CGInputdata.Re_Dict[t + 1] = emp.LeaveStatus.ProjectedBalance;
                 t++;
 
             }
@@ -608,11 +524,18 @@ namespace Erp.ViewModel.Thesis
 
         }
 
+        #endregion
+        public ICommand CalculateVacationPlanning_CPLEX { get; }
+
+        #region CPLEX
         private void ExecuteCalculateVacationPlanning_Cplex(object obj)
         {
+            //Na diksw kai auth th sunarthsh
+            InputData.Employees = CommonFunctions.GetEmployeesByTypeData(InputData.EmployeeType, false);
+
             #region Vacation Planning
 
-            #region  Dictionaries
+            #region  Dictionaries Initialization
 
             InputData.LLi_Dict = new Dictionary<int, int>();
             InputData.MaxD_Dict = new Dictionary<int, int>();
@@ -633,15 +556,10 @@ namespace Erp.ViewModel.Thesis
 
             #endregion
 
-
-            InputData.Employees = CommonFunctions.GetEmployeesByTypeData(InputData.EmployeeType, false);
-
-            InputData.MaxLeaveBids = 0;
-            int LeaveBidRowsCount = 0;
-            int EmpCount = 0;
-
             #region Populate Dictionaries
 
+            int EmpCount = 0;
+            InputData.MaxLeaveBids = 0;
             foreach (var emp in InputData.Employees)
             {
                 #region LeaveStatus ,MaxD_Dict
@@ -655,17 +573,17 @@ namespace Erp.ViewModel.Thesis
 
                 emp.LeaveBidDataGridStatic = new ObservableCollection<LeaveBidsDataStatic>();
                 emp.LeaveBidDataGridStatic = CommonFunctions.GetLeaveBids(emp.Code, InputData.Schedule.ReqCode);
-                foreach(var LeaveBid in emp.LeaveBidDataGridStatic)
+                foreach (var LeaveBid in emp.LeaveBidDataGridStatic)
                 {
-                    if(LeaveBid.BidType == BasicEnums.BidType.Specific || LeaveBid.BidType == BasicEnums.BidType.Non_Specific)
+                    if (LeaveBid.BidType == BasicEnums.BidType.Specific || LeaveBid.BidType == BasicEnums.BidType.Non_Specific)
                     {
                         LeaveBid.NumberOfDaysMax = LeaveBid.NumberOfDays;
                     }
                 }
 
-                LeaveBidRowsCount = emp.LeaveBidDataGridStatic.Count();
+                int LeaveBidRowsCount = emp.LeaveBidDataGridStatic.Count();
 
-                InputData.N_Dict[EmpCount] = LeaveBidRowsCount; 
+                InputData.N_Dict[EmpCount] = LeaveBidRowsCount;
                 if (LeaveBidRowsCount > InputData.MaxLeaveBids)
                 {
                     InputData.MaxLeaveBids = LeaveBidRowsCount;
@@ -673,7 +591,7 @@ namespace Erp.ViewModel.Thesis
 
                 #endregion
 
-                #region Zbids, Rbids, NDays,DateFrom,DateTo Dictionaries
+                #region ZBids, RBids, NDays,DateFrom,DateTo Dictionaries
 
                 var DatesArray = InputData.Dates;
 
@@ -736,8 +654,6 @@ namespace Erp.ViewModel.Thesis
 
                         InputData.RBids_Dict[(emp.Seniority - 1, Bid.PriorityLevel - 1)] = Max - Min + 1;
 
-
-
                         #region Extra
 
                         InputData.RBidsDict[(emp.Code, Bid.BidCode)] = Max - Min + 1;
@@ -777,67 +693,99 @@ namespace Erp.ViewModel.Thesis
             }
             #endregion
 
-
-
             #endregion
-
 
             #region Call Function For Optimization
+
             OutputData = CplexFunctions.CalculateVacationPlanning_CPLEX(InputData);
+            if(OutputData != null)
+            {
+                MessageBox.Show($"Optimization Completed for Vacation Planning with Code : {InputData.VPCode}", "", MessageBoxButton.OK, MessageBoxImage.Information);
 
-            OutputData.VPYijResultsDataGrid = OutputData.VPYijResultsDataGrid.OrderBy(item => item.Employee.Seniority).ToObservableCollection();
-            OutputData.VPYijzResultsDataGrid = OutputData.VPYijzResultsDataGrid.OrderBy(item => item.Employee.Seniority).ToObservableCollection();
-            OutputData.VPXijResultsDataGrid = OutputData.VPXijResultsDataGrid.OrderBy(item => item.Employee.Seniority).ToObservableCollection();
+                OutputData.VPYijResultsDataGrid = OutputData.VPYijResultsDataGrid.OrderBy(item => item.Employee.Seniority).ToObservableCollection();
+                OutputData.VPYijrzResultsDataGrid = OutputData.VPYijrzResultsDataGrid.OrderBy(item => item.Employee.Seniority).ToObservableCollection();
+                OutputData.VPXitResultsDataGrid = OutputData.VPXitResultsDataGrid.OrderBy(item => item.Employee.Seniority).ToObservableCollection();
+            }
+
+
 
 
             #endregion
 
             #endregion
-
-
 
             #region Column Generation
 
-            #region Dictionaries
-            CGInputdata.LeaveDays = new Dictionary<int, int>();
-            CGInputdata.LLiDict = new Dictionary<int, int>();
+            #region Dictionaries Initialization
+            CGInputdata.Re_Dict = new Dictionary<int, int>();
+            CGInputdata.RLLt_Dict = new Dictionary<int, int>();
+            CGInputdata.Ri_Dict = new Dictionary<int, List<int>>();
+            CGInputdata.Cij_Dict = new Dictionary<(int, int), double>();
+            CGInputdata.Aijt_Dict = new Dictionary<(int, int, int), int>();
             #endregion
 
             #region Populate Dictionaries
 
-            var XijList = OutputData.VPXijResultsDataGrid;
+            var XijList = OutputData.VPXitResultsDataGrid;
 
             var groupedByDate = XijList
                 .GroupBy(x => x.Date) // Group by Date
                 .Select(g => new VPXiResultData
                 {
                     Date = g.Key, // Date
-                    LimitLine = g.Sum(x => (int)x.XijFlag)
+                    LimitLine = g.Sum(x => (int)x.XitFlag)
                 });
 
-            var t = 0;
+            var t_count = 0;
             foreach (var row in groupedByDate)
             {
-                var PreviousLimitLine = InputData.Schedule.ReqScheduleRowsData.ElementAt(t).LimitLine;
+                var PreviousLimitLine = InputData.Schedule.ReqScheduleRowsData.ElementAt(t_count).LimitLine;
 
                 row.LimitLine = PreviousLimitLine - row.LimitLine;
-                row.LLi = $"LL{t + 1}";
+                row.LLi = $"RLL{t_count + 1}";
 
-                OutputData.VPXiResultsDataGrid.Add(row);
-                CGInputdata.LLiDict[t + 1] = row.LimitLine;
+                OutputData.VPLLiResultsDataGrid.Add(row);
+                CGInputdata.RLLt_Dict[t_count] = row.LimitLine;
 
-                t++;
+                t_count++;
             }
 
             CGInputdata.Dates = InputData.DatesStr;
 
-            t = 0;
+            var i_count = 0;
             foreach (var emp in OutputData.EmpLeaveStatusData)
             {
+                CGInputdata.Re_Dict[i_count] = emp.LeaveStatus.ProjectedBalance;
+                i_count++;
+            }
 
-                CGInputdata.LeaveDays[t + 1] = emp.LeaveStatus.ProjectedBalance;
-                t++;
+            #endregion
 
+            #region Ri,Cij,Aijt Initialization
+
+            CGInputdata.I = InputData.Employees.Count();
+            for (int i = 0; i < CGInputdata.I; i++)
+            {
+                //Create a List with the Empty Vacation Plan
+                List<int> Vacationplan_List = new List<int>();
+                Vacationplan_List.Add(0);
+
+                //Insert into Ri
+                CGInputdata.Ri_Dict.Add(i, Vacationplan_List);
+
+                //Add  Cij with Cost = RE[i]
+                CGInputdata.Cij_Dict.Add((i, 0), CGInputdata.Re_Dict[i]);
+            }
+
+            CGInputdata.T = InputData.Dates.Count();
+            for (int t = 0; t < CGInputdata.T; t++)
+            {
+                for (int i = 0; i < CGInputdata.I; i++)
+                {
+                    //For each i,t and j=0 set Ajt = 0 
+                    CGInputdata.Aijt_Dict[(i, 0, t)] = 0;
+
+                }
             }
 
             #endregion
@@ -846,42 +794,70 @@ namespace Erp.ViewModel.Thesis
             CGOutputdata = new VPCGOutputData();
             CGOutputdata = CplexFunctions.CalculateVPColumnGeneration_CPLEX(CGInputdata);
 
-            #endregion
 
             #endregion
 
+            #endregion
             SelectedTabIndex = 1;
         }
 
+        #endregion
 
         #endregion
 
-        private ICommand rowDataCommand { get; set; }
-        public ICommand RowDataCommand
+        #endregion
+
+        public VacationsPlanningViewModel()
         {
-            get
-            {
-                return rowDataCommand;
-            }
-            set
-            {
-                rowDataCommand = value;
-            }
+            #region Data Initialization
+
+            #region Vacation Planning
+
+            InputData = new VacationPlanningInputData();
+            InputData.VPCode = "";
+            InputData.Schedule = new ReqScheduleInfoData();
+            InputData.Schedule.ReqScheduleRowsData = new ObservableCollection<ReqScheduleRowsData>();
+
+            OutputData = new VacationPlanningOutputData();
+            OutputData.VPYijResultsDataGrid = new ObservableCollection<VPYijResultsData>();
+            OutputData.VPXitResultsDataGrid = new ObservableCollection<VPXijResultsData>();
+            OutputData.VPLLiResultsDataGrid = new ObservableCollection<VPXiResultData>();                
+            OutputData.EmpLeaveStatusData = new ObservableCollection<EmployeeData>();
+            #endregion
+
+            #region Column Generation
+
+            CGInputdata = new VPCGInputData();
+            CGOutputdata = new VPCGOutputData();
+            CGInputdata.VPXiResultsDataGrid = new ObservableCollection<VPXiResultData>();
+            #endregion
+
+            #region Support Data
+            SelectedTabIndex = 0;
+            this.sfGridColumns = new Columns();
+            #endregion
+
+            #endregion
+
+            #region Commands Initialization
+
+            #region Optimization Commands
+
+            CalculateVacationPlanningGB = new RelayCommand2(ExecuteCalculateVacationPlanning_Gurobi);
+            CalculateVacationPlanning_CPLEX = new RelayCommand2(ExecuteCalculateVacationPlanning_Cplex);
+
+        #endregion
+
+            #region CRUD,Data_Grid Commands
+
+        rowDataCommand = new RelayCommand2(ChangeCanExecute);
+            ShowVPCommand = new RelayCommand2(ExecuteShowVPCommand);
+            AddVPCommand = new RelayCommand2(ExecuteAddVPCommand);
+            ShowScheduleGridCommand = new RelayCommand2(ExecuteShowScheduleGridCommand);
+
+            #endregion
+
+            #endregion
         }
-
-
-        protected void ClearColumns()
-        {
-
-            var ColumnsCount = this.SfGridColumns.Count();
-            if (ColumnsCount != 0)
-            {
-                for (int i = 0; i < ColumnsCount; i++)
-                {
-                    this.sfGridColumns.RemoveAt(0);
-                }
-            }
-        }
-
     }
 }

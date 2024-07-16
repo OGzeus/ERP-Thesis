@@ -59,13 +59,15 @@ namespace Erp.CommonFiles
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Code", HeaderText = "Route Code", AllowEditing = false });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Descr", HeaderText = "Route Descr", AllowEditing = false });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Airport.Code", HeaderText = "Airport Code", AllowEditing = false });
-            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Airport.City.CityDescr", HeaderText = "City Descr", AllowEditing = false });
-            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Airport.City.PrefDescr", HeaderText = "Pref Descr", AllowEditing = false });
-            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Airport.City.CountryDescr", HeaderText = "Country Descr", AllowEditing = false });
+            //GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Airport.City.CityDescr", HeaderText = "City Descr", AllowEditing = false });
+            //GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Airport.City.PrefDescr", HeaderText = "Pref Descr", AllowEditing = false });
+            //GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Airport.City.CountryDescr", HeaderText = "Country Descr", AllowEditing = false });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "StartDate_String", HeaderText = "Start Date", AllowEditing = false });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "EndDate_String", HeaderText = "End Date ", AllowEditing = false });
-            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "TotalTime", HeaderText = "Total Time", AllowEditing = false });
+            //GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "TotalTime", HeaderText = "Total Time", AllowEditing = false });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "FlightTime", HeaderText = "Flight Time ", AllowEditing = false });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Complement_Captain", HeaderText = "Complement Captain", AllowEditing = false });
+
 
 
 
@@ -73,7 +75,6 @@ namespace Erp.CommonFiles
             GridData.F7key = "FlightRoutes";
             return GridData;
         }
-
         public F7Data F7CSEmployee(CSInputData InputData)
         {
             F7Data GridData = new F7Data();
@@ -89,13 +90,13 @@ namespace Erp.CommonFiles
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Seniority", HeaderText = "Seniority" });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "EmpCrSettings.LowerBound", HeaderText = "Lower Bound" });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "EmpCrSettings.UpperBound", HeaderText = "Upper Bound" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "BaseAirport.Code", HeaderText = "Airport Code" });
 
 
 
             GridData.F7key = "Employee";
             return GridData;
         }
-
         public F7Data F7VacationPlanning(bool ShowDeleted)
         {
             F7Data GridData = new F7Data();
@@ -107,11 +108,9 @@ namespace Erp.CommonFiles
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "VPDescr", HeaderText = "VP Descr" });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "EmployeeType", HeaderText = "Employee Type" });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "VPLogicType", HeaderText = "VP Logic Type" });
-            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "MaxSatisfiedBids", HeaderText = "Max Satisfied Bids" });
-            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "SeparValue", HeaderText = "Separation Value" });
-
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Bmax", HeaderText = "Max Satisfied Bids" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Se", HeaderText = "Separation Value" });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Schedule.ReqCode", HeaderText = "Schedule Code" });
-            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Schedule.ReqDescr", HeaderText = "Schedule Descr" });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Schedule.DateFromStr", HeaderText = "Date From" });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Schedule.DateToStr", HeaderText = "Date To" });
             GridData.SfGridColumns.Add(new GridCheckBoxColumn() { MappingName = "IsDeleted", HeaderText = "Deleted" });
@@ -131,8 +130,8 @@ namespace Erp.CommonFiles
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "ReqCode", HeaderText = "Schedule Code" });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "ReqDescr", HeaderText = "Schedule Description" });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Notes", HeaderText = "Notes" });
-            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "DateFrom", HeaderText = "Date From" });
-            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "DateTo", HeaderText = "Date To" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "DateFromStr", HeaderText = "Date From" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "DateToStr", HeaderText = "Date To" });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "LimitLineFixed", HeaderText = "Limit Line Fixed" });
 
             GridData.SfGridColumns.Add(new GridCheckBoxColumn() { MappingName = "IsDeleted", HeaderText = "Deleted" });
@@ -198,10 +197,7 @@ namespace Erp.CommonFiles
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "City.CityDescr", HeaderText = "City Description" });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "City.PrefDescr", HeaderText = "Prefecture" });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "City.CountryDescr", HeaderText = "Country" });
-
             GridData.SfGridColumns.Add(new GridCheckBoxColumn() { MappingName = "IsDeleted", HeaderText = "Deleted" });
-
-
 
             GridData.F7key = "Airport";
             return GridData;
@@ -219,8 +215,7 @@ namespace Erp.CommonFiles
 
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Code", HeaderText = "Airport Code" });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "Descr", HeaderText = "Airport Descr" });
-            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "City.CityCode", HeaderText = "City Code" });
-            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "City.CityDescr", HeaderText = "City Description" });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "City.CityDescr", HeaderText = "City" });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "City.PrefDescr", HeaderText = "Prefecture" });
             GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "City.CountryDescr", HeaderText = "Country" });
 
@@ -253,7 +248,6 @@ namespace Erp.CommonFiles
             GridData.F7key = "FlightLeg";
             return GridData;
         }
-
         public F7Data F7FlightRoutes(bool ShowDeleted)
         {
             F7Data GridData = new F7Data();

@@ -3,8 +3,6 @@ using Erp.Model.BasicFiles;
 using Erp.Model.Thesis;
 using Erp.Model.Thesis.CrewScheduling;
 using Syncfusion.UI.Xaml.Grid;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Input;
@@ -40,122 +38,12 @@ namespace Erp.ViewModel.Thesis
 
         #endregion
 
+        #region Commands
 
-
-        public FlightRoutesViewModel()
-        {
-
-
-            ResetViewmodelData();
-
-
-            this.sfGridColumns = new Columns();
-            ShowFlightRoutesGridCommand = new RelayCommand2(ExecuteShowFlightRoutesGridCommand);
-
-            ShowAirportsGridCommand = new RelayCommand2(ExecuteShowAirportsGridCommand);
-
-            AddDataCommand = new RelayCommand2(ExecuteAddDataCommand);
-
-            rowDataCommand = new RelayCommand2(ChangeCanExecute);
-
-
-        }
-
-        public void ResetViewmodelData()
-        {
-            FlatData = new FlightRoutesData();
-            FlatData.Airport = new AirportData();
-
-        }
-
-        #region F7
-
-        public ICommand ShowFlightRoutesGridCommand { get; }
-        public ICommand ShowAirportsGridCommand { get; }
-
-        private void ExecuteShowFlightRoutesGridCommand(object obj)
-        {
-
-            ClearColumns();
-
-            var F7input = F7Common.F7FlightRoutes(false);
-            F7key = F7input.F7key;
-            CollectionView = F7input.CollectionView;
-            var a = F7input.SfGridColumns;
-            foreach (var item in a)
-            {
-                this.sfGridColumns.Add(item);
-            }
-
-        }
-
-        private void ExecuteShowAirportsGridCommand(object obj)
-        {
-            ClearColumns();
-
-            var F7input = F7Common.F7Airports(ShowDeleted);
-            F7key = F7input.F7key;
-            CollectionView = F7input.CollectionView;
-            var a = F7input.SfGridColumns;
-            foreach (var item in a)
-            {
-                this.sfGridColumns.Add(item);
-            }
-
-        }
-
-
-
-        public void ChangeCanExecute(object obj)
-        {
-
-            if (F7key == "FlightRoute")
-            {
-                FlatData = new FlightRoutesData();
-                FlatData.Airport = new AirportData();
-                FlatData = (SelectedItem as FlightRoutesData);
-            }
-
-            if (F7key == "Airport")
-            {
-                FlatData.Airport = new AirportData();
-                FlatData.Airport.City = new CityData();
-                FlatData.Airport = (SelectedItem as AirportData);
-            }
-
-        }
-
-
-        private ICommand rowDataCommand { get; set; }
-        public ICommand RowDataCommand
-        {
-            get
-            {
-                return rowDataCommand;
-            }
-            set
-            {
-                rowDataCommand = value;
-            }
-        }
-
-        protected void ClearColumns()
-        {
-
-            var ColumnsCount = this.SfGridColumns.Count();
-            if (ColumnsCount != 0)
-            {
-                for (int i = 0; i < ColumnsCount; i++)
-                {
-                    this.sfGridColumns.RemoveAt(0);
-                }
-            }
-        }
-        #endregion
-
-        #region Commands Crud
+        #region CRUD Commands
 
         #region 1st Tab
+
         #region Clear
 
         private ViewModelCommand clearCommand;
@@ -178,7 +66,12 @@ namespace Erp.ViewModel.Thesis
             ResetViewmodelData();
 
         }
+        public void ResetViewmodelData()
+        {
+            FlatData = new FlightRoutesData();
+            FlatData.Airport = new AirportData();
 
+        }
         #endregion
         #region Save
 
@@ -281,8 +174,108 @@ namespace Erp.ViewModel.Thesis
 
         #endregion
 
+        #region Data_Grid Commands
+
+        public ICommand ShowFlightRoutesGridCommand { get; }
+        public ICommand ShowAirportsGridCommand { get; }
+
+        private void ExecuteShowFlightRoutesGridCommand(object obj)
+        {
+
+            ClearColumns();
+
+            var F7input = F7Common.F7FlightRoutes(false);
+            F7key = F7input.F7key;
+            CollectionView = F7input.CollectionView;
+            var a = F7input.SfGridColumns;
+            foreach (var item in a)
+            {
+                this.sfGridColumns.Add(item);
+            }
+
+        }
+
+        private void ExecuteShowAirportsGridCommand(object obj)
+        {
+            ClearColumns();
+
+            var F7input = F7Common.F7Airports(ShowDeleted);
+            F7key = F7input.F7key;
+            CollectionView = F7input.CollectionView;
+            var a = F7input.SfGridColumns;
+            foreach (var item in a)
+            {
+                this.sfGridColumns.Add(item);
+            }
+
+        }
 
 
 
+        public void ChangeCanExecute(object obj)
+        {
+
+            if (F7key == "FlightRoute")
+            {
+                FlatData = new FlightRoutesData();
+                FlatData.Airport = new AirportData();
+                FlatData = (SelectedItem as FlightRoutesData);
+            }
+
+            if (F7key == "Airport")
+            {
+                FlatData.Airport = new AirportData();
+                FlatData.Airport.City = new CityData();
+                FlatData.Airport = (SelectedItem as AirportData);
+            }
+
+        }
+
+
+        private ICommand rowDataCommand { get; set; }
+        public ICommand RowDataCommand
+        {
+            get
+            {
+                return rowDataCommand;
+            }
+            set
+            {
+                rowDataCommand = value;
+            }
+        }
+
+        protected void ClearColumns()
+        {
+
+            var ColumnsCount = this.SfGridColumns.Count();
+            if (ColumnsCount != 0)
+            {
+                for (int i = 0; i < ColumnsCount; i++)
+                {
+                    this.sfGridColumns.RemoveAt(0);
+                }
+            }
+        }
+        #endregion
+
+        #endregion
+
+        public FlightRoutesViewModel()
+        {
+            #region Data Initialization
+            FlatData = new FlightRoutesData();
+            FlatData.Airport = new AirportData();
+            this.sfGridColumns = new Columns();
+            #endregion
+
+            #region Commands Initialization
+            ShowFlightRoutesGridCommand = new RelayCommand2(ExecuteShowFlightRoutesGridCommand);
+            ShowAirportsGridCommand = new RelayCommand2(ExecuteShowAirportsGridCommand);
+            AddDataCommand = new RelayCommand2(ExecuteAddDataCommand);
+            rowDataCommand = new RelayCommand2(ChangeCanExecute);
+
+            #endregion
+        }
     }
 }

@@ -1,44 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Input;
 using System.Windows;
-using LiveCharts.Wpf;
 using Syncfusion.Data.Extensions;
-using Erp.Model.Manufacture.MPS;
-using Erp.Model.Manufacture;
-using System.Runtime.InteropServices.ComTypes;
-using Erp.Model.Data_Analytics.Forecast;
-using System.Reflection.Emit;
-using Erp.Model.Data_Analytics;
-using static Erp.Model.Enums.BasicEnums;
 using Erp.Model.Enums;
-using Syncfusion.Windows.Controls;
-using Erp.Model.Customers;
-using Erp.Model.Inventory;
-using LiveCharts.Defaults;
-using LiveCharts;
-using Erp.ViewModel.Inventory;
 using System.Windows.Data;
-using Gurobi;
-using Erp.Model.Manufacture.MRP;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using Syncfusion.UI.Xaml.Grid;
 using Erp.Helper;
-using Erp.Model.BasicFiles;
 using Erp.Model.Thesis.CrewScheduling;
 using Erp.Model.Thesis;
-using Erp.Model.Thesis.VacationPlanning;
-using Syncfusion.Windows.Shared;
+using OxyPlot;
+
 
 namespace Erp.ViewModel.Thesis
 {
     public class CrewSchedulingViewModel : ViewModelBase
     {
-
         #region DataProperties
 
         private int _selectedTabIndex;
@@ -67,20 +47,6 @@ namespace Erp.ViewModel.Thesis
             {
                 collectionviewD = value;
                 INotifyPropertyChanged("CollectionViewD");
-            }
-        }
-        private ICollectionView collectionViewRepair;
-
-        public ICollectionView CollectionViewRepair
-        {
-            get
-            {
-                return collectionViewRepair;
-            }
-            set
-            {
-                collectionViewRepair = value;
-                INotifyPropertyChanged("CollectionViewRepair");
             }
         }
 
@@ -120,29 +86,6 @@ namespace Erp.ViewModel.Thesis
                 INotifyPropertyChanged("SfGridColumns");
             }
         }
-        private Columns sfGridColumnsd;
-        public Columns SfGridColumnsD
-        {
-            get { return sfGridColumnsd; }
-            set
-            {
-                this.sfGridColumnsd = value;
-                INotifyPropertyChanged("SfGridColumnsD");
-            }
-        }
-        private Columns sfGridColumnsRepair;
-        public Columns SfGridColumnsRepair
-        {
-            get { return sfGridColumnsRepair; }
-            set
-            {
-                this.sfGridColumnsRepair = value;
-                INotifyPropertyChanged("SfGridColumnsRepair");
-            }
-        }
-
-
-        #endregion
 
         #region Enums
 
@@ -151,54 +94,20 @@ namespace Erp.ViewModel.Thesis
             get { return (BasicEnums.EmployeeType[])Enum.GetValues(typeof(BasicEnums.EmployeeType)); }
         }
 
-
+        public BasicEnums.CSType[] CSTypes
+        {
+            get { return (BasicEnums.CSType[])Enum.GetValues(typeof(BasicEnums.CSType)); }
+        }
+        #endregion
 
         #endregion
-        public CrewSchedulingViewModel()
-        {
-
-
-            InputData = new CSInputData();
-            InputData.Code = " ";
-            InputData.Position = BasicEnums.EmployeeType.Captain;
-            InputData.DateFrom = new DateTime(2024, 6, 1);
-            InputData.DateTo = new DateTime(2024, 6, 30);
-            InputData.RoutesPenalty = 1000000;
-            InputData.BoundsPenalty = 100;
-
-            InputData.FlightRoutesData = new ObservableCollection<FlightRoutesData>();
-            InputData.Employees = new ObservableCollection<EmployeeData>();
-
-
-
-
-
-            this.sfGridColumns = new Columns();
-            this.SfGridColumnsRepair = new Columns();
-
-            CalculateCS_GB = new RelayCommand2(ExecuteCalculateCS_Gurobi);
-            CalculateCS_CP = new RelayCommand2(ExecuteCalculateCS_Cplex);
-
-
-
-            ShowEmployeesGridCommand = new RelayCommand2(ExecuteShowEmployeesGridCommand);
-            ShowFlightRoutestGridCommand = new RelayCommand2(ExecuteShowFlightRoutestGridCommand);
-            ShowCrewSchedulingGridCommand = new RelayCommand2(ExecuteShowCrewSchedulingGridCommand);
-
-            rowDataCommand = new RelayCommand2(ChangeCanExecute);
-
-
-        }
 
         #region Commands
 
-        #region F7 
+        #region Data_Grid Commands
         public ICommand ShowCrewSchedulingGridCommand { get; }
-
         public ICommand ShowEmployeesGridCommand { get; }
-
         public ICommand ShowFlightRoutestGridCommand { get; }
-
         public void ExecuteShowCrewSchedulingGridCommand(object obj)
         {
 
@@ -215,7 +124,6 @@ namespace Erp.ViewModel.Thesis
             }
 
         }
-
         public void ExecuteShowFlightRoutestGridCommand(object obj)
         {
 
@@ -223,8 +131,6 @@ namespace Erp.ViewModel.Thesis
 
             var F7input = F7Common.F7CSFlightRoutes(InputData);
             F7key = F7input.F7key;
-
-
             var Data = CommonFunctions.GetCSFlightRoutesData(false, InputData);
 
             CollectionView = CollectionViewSource.GetDefaultView(Data);
@@ -237,8 +143,6 @@ namespace Erp.ViewModel.Thesis
         }
         public void ExecuteShowEmployeesGridCommand(object obj)
         {
-
-
             ClearColumns();
 
             var F7input = F7Common.F7CSEmployee(InputData);
@@ -271,9 +175,33 @@ namespace Erp.ViewModel.Thesis
             }
 
         }
+        private ICommand rowDataCommand { get; set; }
+        public ICommand RowDataCommand
+        {
+            get
+            {
+                return rowDataCommand;
+            }
+            set
+            {
+                rowDataCommand = value;
+            }
+        }
+
+        protected void ClearColumns()
+        {
+
+            var ColumnsCount = this.SfGridColumns.Count();
+            if (ColumnsCount != 0)
+            {
+                for (int i = 0; i < ColumnsCount; i++)
+                {
+                    this.sfGridColumns.RemoveAt(0);
+                }
+            }
+        }
 
         #endregion
-
 
         #region CRUD  Commands
 
@@ -422,21 +350,18 @@ namespace Erp.ViewModel.Thesis
         #endregion
 
         #endregion
-        #endregion
 
+        #region Crew Scheduling Optimization
 
-        #region Calculate MRP
+        #region Gurobi
         public ICommand CalculateCS_GB { get; }
-        public ICommand CalculateCS_CP { get; }
-
         private void ExecuteCalculateCS_Gurobi(object obj)
         {
+            //Na diksw autes tis Sunarthseis
             InputData.Employees = CommonFunctions.GetEmployeesByTypeData(InputData.Position, false);
             InputData.FlightRoutesData = CommonFunctions.GetCSFlightRoutesData(false, InputData);
 
-            #region Column Generation
-
-            #region Input Data
+            #region Dictionaires,Indexes Initialization
 
             InputData.T = new int(); // DATES
             InputData.I = new int(); // EMPLOYEES
@@ -445,94 +370,122 @@ namespace Erp.ViewModel.Thesis
             InputData.DatesIndexMap = new Dictionary<int, DateTime>();
             InputData.EmployeesIndexMap = new Dictionary<int, string>();
             InputData.RoutesIndexMap = new Dictionary<int, string>();
+            InputData.RoutesCompl_Dict = new Dictionary<int, int>();
 
             InputData.RoutesDates_Dict = new Dictionary<int, (DateTime, DateTime)>();
             InputData.RoutesDay_Dict = new Dictionary<int, (int, int)>();
             InputData.RoutesTime_Dict = new Dictionary<int, (int, int)>();
             InputData.EmpBounds_Dict = new Dictionary<int, (double, double)>();
 
-            InputData.Ri = new Dictionary<int, List<int>>(); //Dictionary<Employee, List<Routes>> 
-            InputData.Cij_Hours = new Dictionary<(int, int), double>(); //Dictionary<(Emp, Route),Cost> 
-            #endregion  
-
-            #region Fill Data to Dictionaries 1
-
-            #region Dates
-
-
-            InputData.T = (int)Math.Ceiling((InputData.DateTo - InputData.DateFrom).TotalDays);
-
-                int dateCounter = 0;
-                for (var date = InputData.DateFrom; date <= InputData.DateTo; date = date.AddDays(1))
-                {
-                    InputData.DatesIndexMap.Add(dateCounter, date.Date);
-                    dateCounter++;
-                }
-
+            InputData.Ri = new Dictionary<int, List<int>>(); 
+            InputData.Cij_Hours = new Dictionary<(int, int), double>(); 
+            InputData.Aijf = new Dictionary<(int, int, int), int>();
             #endregion
 
-            #region Routes,Employyes
+            #region Populate Dictionaries,Indexes
+
+           
+
             InputData.F = InputData.FlightRoutesData.Count;
             InputData.I = InputData.Employees.Count;
 
-            int RouteCounter = 0;
             int EmployeeCounter = 0;
-
             foreach (var emp in InputData.Employees)
             {
                 InputData.EmployeesIndexMap.Add(EmployeeCounter, emp.Code);
                 InputData.EmpBounds_Dict.Add(EmployeeCounter, (emp.EmpCrSettings.LowerBound, emp.EmpCrSettings.UpperBound));
-                List<int> RoutesForEmployee = new List<int>();
 
-                foreach (var Route in InputData.FlightRoutesData)
-                {
-                    InputData.RoutesDates_Dict.Add(RouteCounter, (Route.StartDate, Route.EndDate));
+                #region Cij,Ri,Aijf Initialization 
+                //Create a List with the Empty Roster
+                List<int> RostersForEmployee_List = new List<int>();
+                RostersForEmployee_List.Add(0);
 
-                    int StartDayIndex = InputData.DatesIndexMap.FirstOrDefault(x => x.Value.Date.Date == Route.StartDate.Date).Key;
-                    int EndDayIndex = InputData.DatesIndexMap.FirstOrDefault(x => x.Value.Date.Date == Route.EndDate.Date).Key;
+                //Insert into Ri
+                InputData.Ri.Add(EmployeeCounter, RostersForEmployee_List);
 
-                    int StartTime = Route.StartDate.Minute >= 30 ? Route.StartDate.Hour + 1 : Route.StartDate.Hour;
-
-                    int EndTime = Route.EndDate.Minute >= 30 ? Route.EndDate.Hour + 1 : Route.EndDate.Hour;
-
-                    InputData.RoutesDay_Dict.Add(RouteCounter, (StartDayIndex, EndDayIndex));
-
-                    InputData.RoutesTime_Dict.Add(RouteCounter, (StartTime, EndTime));
-
-
-
-                    if (emp.BaseAirport.Code == Route.Airport.Code)
-                    {
-                        RoutesForEmployee.Add(RouteCounter);
-                        double Cij_Hours = CalculateCijCost(emp, Route);
-                        InputData.Cij_Hours.Add((EmployeeCounter, RouteCounter), Cij_Hours);
-
-                    }
-
-                    RouteCounter++;
-                }
-                InputData.Ri.Add(EmployeeCounter, RoutesForEmployee);
-
+                //Add the Roster to Cij with Cost = 0
+                InputData.Cij_Hours.Add((EmployeeCounter, 0), 0);
+                #endregion
                 EmployeeCounter++;
 
+            }
+            int RouteCounter = 0;
+            foreach (var Route in InputData.FlightRoutesData)
+            {
+                #region RoutesDates, RoutesDay, RouteTime 
+
+                int StartDayIndex = InputData.DatesIndexMap.FirstOrDefault(x => x.Value.Date.Date == Route.StartDate.Date).Key;
+                int EndDayIndex = InputData.DatesIndexMap.FirstOrDefault(x => x.Value.Date.Date == Route.EndDate.Date).Key;
+                int StartTime = Route.StartDate.Minute >= 30 ? Route.StartDate.Hour + 1 : Route.StartDate.Hour;
+                int EndTime = Route.EndDate.Minute >= 30 ? Route.EndDate.Hour + 1 : Route.EndDate.Hour;
+
+                //RoutesDay
+                InputData.RoutesDay_Dict.Add(RouteCounter, (StartDayIndex, EndDayIndex));
+                //RoutesTime
+                InputData.RoutesTime_Dict.Add(RouteCounter, (StartTime, EndTime));
+                //RoutesDate
+                InputData.RoutesDates_Dict.Add(RouteCounter, (Route.StartDate, Route.EndDate));
+
+                #endregion
+
+                #region RoutesCompl
+
+                #region Retrieve Complement based on Position/EmployeeType
+                int Complement = 0;
+                if (InputData.Position == BasicEnums.EmployeeType.Captain)
+                {
+                    Complement = Route.Complement_Captain;
+                }
+                if (InputData.Position == BasicEnums.EmployeeType.FO)
+                {
+                    Complement = Route.Complement_FO;
+                }
+                if (InputData.Position == BasicEnums.EmployeeType.Cabin_Manager)
+                {
+                    Complement = Route.Complement_Cabin_Manager;
+                }
+                if (InputData.Position == BasicEnums.EmployeeType.Flight_Attendant)
+                {
+                    Complement = Route.Complement_Flight_Attendant;
+                }
+                #endregion
+
+                //Insert Complement
+                InputData.RoutesCompl_Dict.Add(RouteCounter, Complement);
+
+                #endregion
+
+                for(int i = 0; i<InputData.I; i++)
+                {
+                    InputData.Aijf[(i, 0, RouteCounter)] = 0;
+
+                }
+
+                RouteCounter++;
+            }
+            #endregion
+
+            #region Optimize 
+            OutputData = new CSOutputData();
+
+            
+            if(InputData.CSType == BasicEnums.CSType.Set_Partition)
+            {
+                //Set-Partition
+                OutputData = CommonFunctions.CalculateCrewScheduling_SetPartition_GB(InputData);
+            }
+            else if (InputData.CSType == BasicEnums.CSType.Set_Covering)
+            {
+                //Set Cover
+                OutputData = CommonFunctions.CalculateCrewScheduling_SetCover_GB(InputData);
             }
 
 
             #endregion
 
+            #region Print Messages To Screen
 
-
-            #endregion
-
-
-
-            OutputData = new CSOutputData();
-
-            var a = CommonFunctions.CalculateCrewScheduling_SetPartition_GB(InputData);
-            var b = CommonFunctions.CalculateCrewScheduling_SetCover_GB(InputData);
-            var c = CommonFunctions.CalculateCrewScheduling_Init_GB(InputData);
-
-            if (OutputData != null ) // Assuming IsValid is a property indicating success
+            if (OutputData != null)
             {
                 MessageBox.Show($"Crew Scheduling Succeeded");
                 SelectedTabIndex = 1;
@@ -542,41 +495,13 @@ namespace Erp.ViewModel.Thesis
                 MessageBox.Show("Error during data processing", "", MessageBoxButton.OK, MessageBoxImage.Error);
             }
 
-            #endregion            
+            #endregion
 
-        }
-        private void ExecuteCalculateCS_Cplex(object obj)
-        {
-            InputData.Employees = CommonFunctions.GetEmployeesByTypeData(InputData.Position, false);
-            InputData.FlightRoutesData = CommonFunctions.GetCSFlightRoutesData(false, InputData);
-
-            #region Column Generation
-
-            #region Input Data
-
-            InputData.T = new int(); // DATES
-            InputData.I = new int(); // EMPLOYEES
-            InputData.F = new int(); // ROUTES
-
-            InputData.DatesIndexMap = new Dictionary<int, DateTime>();
-            InputData.EmployeesIndexMap = new Dictionary<int, string>();
-            InputData.RoutesIndexMap = new Dictionary<int, string>();
-
-            InputData.RoutesDates_Dict = new Dictionary<int, (DateTime, DateTime)>();
-            InputData.RoutesDay_Dict = new Dictionary<int, (int, int)>();
-            InputData.RoutesTime_Dict = new Dictionary<int, (int, int)>();
-
-            InputData.EmpBounds_Dict = new Dictionary<int, (double, double)>();
-            #endregion  
-
-            #region Fill Data to Dictionaries
-
-            #region Dates
-
+            #region Extra
 
             InputData.T = (int)Math.Ceiling((InputData.DateTo - InputData.DateFrom).TotalDays);
 
-            int dateCounter = 1;
+            int dateCounter = 0;
             for (var date = InputData.DateFrom; date <= InputData.DateTo; date = date.AddDays(1))
             {
                 InputData.DatesIndexMap.Add(dateCounter, date.Date);
@@ -585,66 +510,177 @@ namespace Erp.ViewModel.Thesis
 
             #endregion
 
-            #region Routes
-            InputData.F = InputData.FlightRoutesData.Count;
-            int RoutCounter = 1;
-            foreach (var Route in InputData.FlightRoutesData)
-            {
-                InputData.RoutesDates_Dict.Add(RoutCounter, (Route.StartDate, Route.EndDate));
+        }
+        #endregion
 
-                int StartDayIndex = InputData.DatesIndexMap.FirstOrDefault(x => x.Value.Date.Date == Route.StartDate.Date).Key;
-                int EndDayIndex = InputData.DatesIndexMap.FirstOrDefault(x => x.Value.Date.Date == Route.EndDate.Date).Key;
+        #region CPLEX
+        public ICommand CalculateCS_CPLEX { get; }
+        private void ExecuteCalculateCS_CPLEX(object obj)
+        {
+            //Na diksw autes tis Sunarthseis
+            InputData.Employees = CommonFunctions.GetEmployeesByTypeData(InputData.Position, false);
+            InputData.FlightRoutesData = CommonFunctions.GetCSFlightRoutesData(false, InputData);
 
-                int StartTime = Route.StartDate.Minute >= 30 ? Route.StartDate.Hour + 1 : Route.StartDate.Hour;
+            #region Dictionaires,Indexes Initialization
 
-                int EndTime = Route.EndDate.Minute >= 30 ? Route.EndDate.Hour + 1 : Route.EndDate.Hour;
+            InputData.T = new int(); // DATES
+            InputData.I = new int(); // EMPLOYEES
+            InputData.F = new int(); // ROUTES
 
-                InputData.RoutesDay_Dict.Add(RoutCounter, (StartDayIndex, EndDayIndex));
+            InputData.DatesIndexMap = new Dictionary<int, DateTime>();
+            InputData.EmployeesIndexMap = new Dictionary<int, string>();
+            InputData.RoutesIndexMap = new Dictionary<int, string>();
+            InputData.RoutesCompl_Dict = new Dictionary<int, int>();
 
-                InputData.RoutesTime_Dict.Add(RoutCounter, (StartTime, EndTime));
+            InputData.RoutesDates_Dict = new Dictionary<int, (DateTime, DateTime)>();
+            InputData.RoutesDay_Dict = new Dictionary<int, (int, int)>();
+            InputData.RoutesTime_Dict = new Dictionary<int, (int, int)>();
+            InputData.EmpBounds_Dict = new Dictionary<int, (double, double)>();
 
-                RoutCounter++;
-
-            }
+            InputData.Ri = new Dictionary<int, List<int>>();
+            InputData.Cij_Hours = new Dictionary<(int, int), double>();
+            InputData.Aijf = new Dictionary<(int, int, int), int>();
             #endregion
 
-            #region Employees
+            #region Populate Dictionaries,Indexes
+
+
+
+            InputData.F = InputData.FlightRoutesData.Count;
             InputData.I = InputData.Employees.Count;
-            int EmployeeCounter = 1;
+
+            int EmployeeCounter = 0;
             foreach (var emp in InputData.Employees)
             {
                 InputData.EmployeesIndexMap.Add(EmployeeCounter, emp.Code);
                 InputData.EmpBounds_Dict.Add(EmployeeCounter, (emp.EmpCrSettings.LowerBound, emp.EmpCrSettings.UpperBound));
+
+                #region Cij,Ri,Aijf Initialization 
+                //Create a List with the Empty Roster
+                List<int> RostersForEmployee_List = new List<int>();
+                RostersForEmployee_List.Add(0);
+
+                //Insert into Ri
+                InputData.Ri.Add(EmployeeCounter, RostersForEmployee_List);
+
+                //Add the Roster to Cij with Cost = 0
+                InputData.Cij_Hours.Add((EmployeeCounter, 0), 0);
+                #endregion
                 EmployeeCounter++;
 
             }
-            #endregion
-
-            #endregion
-
-            OutputData = new CSOutputData();
-            OutputData = CplexFunctions.Calculate_InitMaster_Cplex(InputData);
-
-            if (OutputData != null) // Assuming IsValid is a property indicating success
+            int RouteCounter = 0;
+            foreach (var Route in InputData.FlightRoutesData)
             {
-                MessageBox.Show($"Crew Scheduling Succeeded");
+                #region RoutesDates, RoutesDay, RouteTime 
+
+                int StartDayIndex = InputData.DatesIndexMap.FirstOrDefault(x => x.Value.Date.Date == Route.StartDate.Date).Key;
+                int EndDayIndex = InputData.DatesIndexMap.FirstOrDefault(x => x.Value.Date.Date == Route.EndDate.Date).Key;
+                int StartTime = Route.StartDate.Minute >= 30 ? Route.StartDate.Hour + 1 : Route.StartDate.Hour;
+                int EndTime = Route.EndDate.Minute >= 30 ? Route.EndDate.Hour + 1 : Route.EndDate.Hour;
+
+                //RoutesDay
+                InputData.RoutesDay_Dict.Add(RouteCounter, (StartDayIndex, EndDayIndex));
+                //RoutesTime
+                InputData.RoutesTime_Dict.Add(RouteCounter, (StartTime, EndTime));
+                //RoutesDate
+                InputData.RoutesDates_Dict.Add(RouteCounter, (Route.StartDate, Route.EndDate));
+
+                #endregion
+
+                #region RoutesCompl
+
+                #region Retrieve Complement based on Position/EmployeeType
+                int Complement = 0;
+                if (InputData.Position == BasicEnums.EmployeeType.Captain)
+                {
+                    Complement = Route.Complement_Captain;
+                }
+                if (InputData.Position == BasicEnums.EmployeeType.FO)
+                {
+                    Complement = Route.Complement_FO;
+                }
+                if (InputData.Position == BasicEnums.EmployeeType.Cabin_Manager)
+                {
+                    Complement = Route.Complement_Cabin_Manager;
+                }
+                if (InputData.Position == BasicEnums.EmployeeType.Flight_Attendant)
+                {
+                    Complement = Route.Complement_Flight_Attendant;
+                }
+                #endregion
+
+                //Insert Complement
+                InputData.RoutesCompl_Dict.Add(RouteCounter, Complement);
+
+                #endregion
+
+                for (int i = 0; i < InputData.I; i++)
+                {
+                    InputData.Aijf[(i, 0, RouteCounter)] = 0;
+
+                }
+
+                RouteCounter++;
+            }
+            #endregion
+
+            #region Optimize 
+            OutputData = new CSOutputData();
+
+
+            if (InputData.CSType == BasicEnums.CSType.Set_Partition)
+            {
+                //Set-Partition
+                OutputData = CplexFunctions.CalculateCrewScheduling_SetPartition_CPLEX(InputData);
+            }
+            else if (InputData.CSType == BasicEnums.CSType.Set_Covering)
+            {
+                //Set Cover
+                OutputData = CplexFunctions.CalculateCrewScheduling_SetCover_CPLEX(InputData);
+            }
+
+
+            #endregion
+
+            #region Print Messages To Screen
+
+            if (OutputData != null)
+            {
+                MessageBox.Show($"{InputData.CSType} completed for crew scheduling with code : {InputData.Code}", "", MessageBoxButton.OK, MessageBoxImage.Information);
                 SelectedTabIndex = 1;
             }
             else
             {
                 MessageBox.Show("Error during data processing", "", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-            #endregion            
+
+            #endregion
+
+            #region Extra
+
+            InputData.T = (int)Math.Ceiling((InputData.DateTo - InputData.DateFrom).TotalDays);
+
+            int dateCounter = 0;
+            for (var date = InputData.DateFrom; date <= InputData.DateTo; date = date.AddDays(1))
+            {
+                InputData.DatesIndexMap.Add(dateCounter, date.Date);
+                dateCounter++;
+            }
+
+            #endregion
 
         }
+        #endregion
+        #endregion
 
-
+        #region Extra
         private double CalculateCijCost(EmployeeData emp, FlightRoutesData route)
         {
             var LowerBound = emp.EmpCrSettings.LowerBound;
             var UpperBound = emp.EmpCrSettings.UpperBound;
 
-            double targetFlightHours = (LowerBound +UpperBound)/2; // Example target value from the image
+            double targetFlightHours = (LowerBound + UpperBound) / 2; // Example target value from the image
 
 
             // Calculate actual flight hours for the route
@@ -669,33 +705,39 @@ namespace Erp.ViewModel.Thesis
             return Cij_Hours;
         }
         #endregion
+        #endregion
 
-        private ICommand rowDataCommand { get; set; }
-        public ICommand RowDataCommand
+
+        public CrewSchedulingViewModel()
         {
-            get
-            {
-                return rowDataCommand;
-            }
-            set
-            {
-                rowDataCommand = value;
-            }
+            #region Data Initialization
+
+            InputData = new CSInputData();
+            InputData.Code = " ";
+            InputData.Position = BasicEnums.EmployeeType.Captain;
+            InputData.DateFrom = new DateTime(2024, 6, 1);
+            InputData.DateTo = new DateTime(2024, 6, 30);
+            InputData.RoutesPenalty = 1000000;
+            InputData.BoundsPenalty = 100;
+            InputData.CSType = BasicEnums.CSType.Set_Partition;
+            InputData.FlightRoutesData = new ObservableCollection<FlightRoutesData>();
+            InputData.Employees = new ObservableCollection<EmployeeData>();
+            this.sfGridColumns = new Columns();
+
+            #endregion
+
+            #region Commands Initialization
+
+            CalculateCS_GB = new RelayCommand2(ExecuteCalculateCS_Gurobi);
+            CalculateCS_CPLEX = new RelayCommand2(ExecuteCalculateCS_CPLEX);
+            ShowEmployeesGridCommand = new RelayCommand2(ExecuteShowEmployeesGridCommand);
+            ShowFlightRoutestGridCommand = new RelayCommand2(ExecuteShowFlightRoutestGridCommand);
+            ShowCrewSchedulingGridCommand = new RelayCommand2(ExecuteShowCrewSchedulingGridCommand);
+            rowDataCommand = new RelayCommand2(ChangeCanExecute);
+
+            #endregion
+
         }
-
-        protected void ClearColumns()
-        {
-
-            var ColumnsCount = this.SfGridColumns.Count();
-            if (ColumnsCount != 0)
-            {
-                for (int i = 0; i < ColumnsCount; i++)
-                {
-                    this.sfGridColumns.RemoveAt(0);
-                }
-            }
-        }
-
 
     }
 }

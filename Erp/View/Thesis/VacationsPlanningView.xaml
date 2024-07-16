@@ -27,7 +27,7 @@
             <Setter Property="Background" Value="{Binding Path=YijFlag, Converter={StaticResource CustomRowStyleConverter}, UpdateSourceTrigger=PropertyChanged}" />
         </Style>
         <Style x:Key="Xijflagstylecolor" TargetType="syncfusionSfDataGrid:VirtualizingCellsControl">
-            <Setter Property="Background" Value="{Binding Path=XijFlag, Converter={StaticResource CustomRowStyleConverter}, UpdateSourceTrigger=PropertyChanged}" />
+            <Setter Property="Background" Value="{Binding Path=XitFlag, Converter={StaticResource CustomRowStyleConverter}, UpdateSourceTrigger=PropertyChanged}" />
         </Style>
     </UserControl.Resources>
     <Grid>
@@ -65,10 +65,10 @@
                 <TextBlock Text="Add New VP"/>
             </Button>
             <ToggleButton x:Name = "tb" Content = "Show Deleted"  
-         IsChecked="{Binding ShowDeleted, Mode=TwoWay}"  Margin = "1" Background="Beige" BorderBrush="Black" 
+         IsChecked="{Binding ShowDeleted, Mode=TwoWay}"  Margin = "15,0,0,0" Background="Beige" BorderBrush="Black" 
          Width = "120" HorizontalAlignment = "Center" >
             </ToggleButton>
-            <TextBlock Text="Delete : " FontWeight="Bold"   Margin="1"/>
+            <TextBlock Text="Delete : " FontWeight="Bold"   Margin="5,0,0,0"/>
             <CheckBox IsChecked="{Binding InputData.IsDeleted, Mode=TwoWay}"  Margin="1" VerticalAlignment="Center"  />
 
 
@@ -141,8 +141,8 @@
                                         <TextBox Text="{Binding InputData.Schedule.ReqDescr, Mode=TwoWay}" Grid.Row="1" Grid.Column="3" Margin="2" HorizontalAlignment="Stretch" IsReadOnly="True" />
                                         <TextBox Text="{Binding InputData.Schedule.DateFromStr, Mode=TwoWay}" Grid.Row="2" Grid.Column="1" Margin="2" HorizontalAlignment="Stretch"  IsReadOnly="True"/>
                                         <TextBox Text="{Binding InputData.Schedule.DateToStr, Mode=TwoWay}" Grid.Row="2" Grid.Column="3" Margin="2" HorizontalAlignment="Stretch"  IsReadOnly="True"/>
-                                        <TextBox Text="{Binding InputData.MaxSatisfiedBids, Mode=TwoWay}" Grid.Row="3" Grid.Column="1" Margin="2" HorizontalAlignment="Stretch"  />
-                                        <TextBox Text="{Binding InputData.SeparValue, Mode=TwoWay}" Grid.Row="3" Grid.Column="3" Margin="2" HorizontalAlignment="Stretch" />
+                                        <TextBox Text="{Binding InputData.Bmax, Mode=TwoWay}" Grid.Row="3" Grid.Column="1" Margin="2" HorizontalAlignment="Stretch"  />
+                                        <TextBox Text="{Binding InputData.Se, Mode=TwoWay}" Grid.Row="3" Grid.Column="3" Margin="2" HorizontalAlignment="Stretch" />
 
                                         <ComboBox ItemsSource="{Binding EmployeeTypes}"  SelectedItem="{Binding InputData.EmployeeType , UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" Grid.Row="4" Grid.Column="1" Margin="2"/>
                                         <ComboBox ItemsSource="{Binding VPLogicTypes}"  SelectedItem="{Binding InputData.VPLogicType , UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" Grid.Row="4" Grid.Column="3" Margin="2" Width="155"/>
@@ -168,13 +168,11 @@
                                 <TextBlock Text="Save"/>
                             </Button>
 
-
-                            <Button x:Name="Calculate_GB"   HorizontalAlignment="Left" Margin="4"  Command="{Binding CalculateVacationPlanningGB}">
-                                <TextBlock Text="Calculate Vacation Planning GB" FontWeight="Bold"/>
+                            <Button x:Name="Calculate_Cplex"   HorizontalAlignment="Left" Margin="4"  Command="{Binding CalculateVacationPlanning_CPLEX}">
+                                <TextBlock Text="Calculate Vacation Planning CPLEX " FontWeight="Bold"/>
                             </Button>
-
-                            <Button x:Name="Calculate_Cplex"   HorizontalAlignment="Left" Margin="4"  Command="{Binding CalculateVacationPlanningCP}">
-                                <TextBlock Text="Calculate Vacation Planning CPLEX" FontWeight="Bold"/>
+                            <Button x:Name="Calculate_GB"   HorizontalAlignment="Left" Margin="4"  Command="{Binding CalculateVacationPlanningGB}">
+                                <TextBlock Text="Calculate Vacation Planning GUROBI" FontWeight="Bold"/>
                             </Button>
                         </StackPanel>
 
@@ -338,7 +336,7 @@
                                                     ShowGroupDropArea="True"
                                                     AllowFiltering="True"
                                                     AutoGenerateColumns="False"
-                                                    ItemsSource="{Binding OutputData.VPYijzResultsDataGrid , Mode=TwoWay , UpdateSourceTrigger=PropertyChanged}"
+                                                    ItemsSource="{Binding OutputData.VPYijrzResultsDataGrid , Mode=TwoWay , UpdateSourceTrigger=PropertyChanged}"
                                                     ShowRowHeader="True" 
                                                     AutoExpandGroups="True"
                                                     FontSize="18">
@@ -372,7 +370,7 @@
 
                             </Grid>
                         </TabItem>
-                        <TabItem Header="Xij Plan">
+                        <TabItem Header="Xit Plan">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
@@ -404,7 +402,7 @@
                                                     ShowGroupDropArea="True"
                                                     AllowFiltering="True"
                                                     AutoGenerateColumns="False"
-                                                    ItemsSource="{Binding OutputData.VPXijResultsDataGrid , Mode=TwoWay , UpdateSourceTrigger=PropertyChanged}"
+                                                    ItemsSource="{Binding OutputData.VPXitResultsDataGrid , Mode=TwoWay , UpdateSourceTrigger=PropertyChanged}"
                                                     ShowRowHeader="True" 
                                                     FontSize="18"
                                                     AutoExpandGroups="True">
@@ -416,8 +414,8 @@
                                         <syncfusion:GridTextColumn MappingName="Employee.Code" HeaderText="Employee Code" AllowEditing="False"/>
                                         <syncfusion:GridTextColumn MappingName="Employee.Seniority" HeaderText="Seniority" AllowEditing="False"/>
                                         <syncfusion:GridTextColumn Width="110"  MappingName="Date" HeaderText="Date" AllowEditing="False"/>
-                                        <syncfusion:GridTextColumn MappingName="Xij" HeaderText="Xij" AllowEditing="False"/>
-                                        <syncfusion:GridCheckBoxColumn MappingName="XijFlag" HeaderText="Granted" AllowEditing="False"/>
+                                        <syncfusion:GridTextColumn MappingName="Xit" HeaderText="Xit" AllowEditing="False"/>
+                                        <syncfusion:GridCheckBoxColumn MappingName="XitFlag" HeaderText="Granted" AllowEditing="False"/>
 
                                     </syncfusion:SfDataGrid.Columns>
                                     <!--<i:Interaction.Triggers>
@@ -430,7 +428,7 @@
 
                             </Grid>
                         </TabItem>
-                        <TabItem Header="Entiltement">
+                        <TabItem Header="Entitlement">
                             <Grid>
 
 
@@ -473,9 +471,9 @@
                                     <syncfusion:SfDataGrid.Columns>
                                         <syncfusion:GridTextColumn MappingName="Code" HeaderText="Emp Code " AllowEditing="False"/>
                                         <syncfusion:GridTextColumn MappingName="Seniority" HeaderText="Seniority " AllowEditing="False"/>
-                                        <syncfusion:GridTextColumn MappingName="LeaveStatus.CurrentBalance" HeaderText=" Leave Current Balance" AllowEditing="False"/>
+                                        <syncfusion:GridTextColumn MappingName="LeaveStatus.CurrentBalance" HeaderText=" Entiltement" AllowEditing="False"/>
 
-                                        <syncfusion:GridTextColumn MappingName="LeaveStatus.ProjectedBalance" HeaderText="Leave Projected Balance " AllowEditing="False"/>
+                                        <syncfusion:GridTextColumn MappingName="LeaveStatus.ProjectedBalance" HeaderText="New Entiltement " AllowEditing="False"/>
 
                                     </syncfusion:SfDataGrid.Columns>
                                     <!--<i:Interaction.Triggers>
@@ -488,7 +486,7 @@
 
                             </Grid>
                         </TabItem>
-                        <TabItem Header="LLi Plan">
+                        <TabItem Header="RLLt Plan">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
@@ -519,14 +517,14 @@
                                                     ShowGroupDropArea="True"
                                                     AllowFiltering="True"
                                                     AutoGenerateColumns="False"
-                                                    ItemsSource="{Binding OutputData.VPXiResultsDataGrid , Mode=TwoWay , UpdateSourceTrigger=PropertyChanged}"
+                                                    ItemsSource="{Binding OutputData.VPLLiResultsDataGrid , Mode=TwoWay , UpdateSourceTrigger=PropertyChanged}"
                                                     ShowRowHeader="True" 
                                                     FontSize="18"
                                                     AutoExpandGroups="True">
 
 
                                     <syncfusion:SfDataGrid.Columns>
-                                        <syncfusion:GridTextColumn Width="110" MappingName="LLi" HeaderText="LLi" AllowEditing="False"/>
+                                        <syncfusion:GridTextColumn Width="110" MappingName="LLi" HeaderText="RLL" AllowEditing="False"/>
                                         <syncfusion:GridTextColumn Width="110"  MappingName="Date" HeaderText="Date" AllowEditing="False"/>
                                         <syncfusion:GridTextColumn Width="110"  MappingName="LimitLine" HeaderText="LimitLine" AllowEditing="False"/>
 

@@ -51,10 +51,10 @@
             </Button>
 
             <ToggleButton x:Name = "tb" Content = "Show Deleted"  
-         IsChecked="{Binding ShowDeleted, Mode=TwoWay}"  Margin = "1" Background="Beige" BorderBrush="Black" 
+         IsChecked="{Binding ShowDeleted, Mode=TwoWay}"  Margin = "15,0,0,0" Background="Beige" BorderBrush="Black" 
          Width = "120" HorizontalAlignment = "Center" >
             </ToggleButton>
-            <TextBlock Text="Delete : " FontWeight="Bold"   Margin="1"/>
+            <TextBlock Text="Delete : " FontWeight="Bold"   Margin="5,0,0,0"/>
             <CheckBox IsChecked="{Binding FlatData.IsDeleted, Mode=TwoWay}"  Margin="1" VerticalAlignment="Center"  />
 
         </StackPanel>
@@ -105,12 +105,12 @@
                             
                             <TextBlock Text="Hire Date : " Grid.Row="5" Grid.Column="0" Margin="2"/>
                             <TextBlock Text="Total Flight Hours : " Grid.Row="5" Grid.Column="2" Margin="2"/>
-
-                            <TextBlock Text="Seniority : " Grid.Row="6" Grid.Column="0" Margin="2"/>
-                            <TextBlock Text="Base Airport : " Grid.Row="6" Grid.Column="2" Margin="2"/>
-
-                            <TextBlock Text="Position: " Grid.Row="7" Grid.Column="0" Margin="2"/>
-                            <TextBlock Text="Certification: " Grid.Row="7" Grid.Column="2" Margin="2"/>
+                            <TextBlock Text="Position: " Grid.Row="6" Grid.Column="0" Margin="2"/>
+                            <TextBlock Text="Seniority : " Grid.Row="6" Grid.Column="2" Margin="2"/>
+                            <TextBlock Text="Base Airport : " Grid.Row="8" Grid.Column="0" Margin="2"/>
+                            <TextBlock Text="Lower Bound : " Grid.Row="7" Grid.Column="0" Margin="2"/>
+                            <TextBlock Text="Upper Bound : " Grid.Row="7" Grid.Column="2" Margin="2"/>
+                            <!--<TextBlock Text="Certification: " Grid.Row="7" Grid.Column="2" Margin="2"/>-->
 
                             <TextBox Text="{Binding FlatData.FirstName, Mode=TwoWay}" Grid.Row="1" Grid.Column="1" Margin="2" HorizontalAlignment="Stretch"  />
                             <TextBox Text="{Binding FlatData.LastName, Mode=TwoWay}" Grid.Row="1" Grid.Column="3" Margin="2" HorizontalAlignment="Stretch" />
@@ -126,19 +126,25 @@
 
                             <DatePicker SelectedDate="{Binding FlatData.HireDate, UpdateSourceTrigger=PropertyChanged ,Mode=TwoWay}" Grid.Row="5" Grid.Column="1" Margin="2" HorizontalAlignment="Left" />
                             <TextBox Text="{Binding FlatData.TotalFlightHours, Mode=TwoWay}" Grid.Row="5" Grid.Column="3" Margin="2" HorizontalAlignment="Stretch" />
-
-                            <TextBox Text="{Binding FlatData.Seniority, Mode=TwoWay}" Grid.Row="6" Grid.Column="1" Margin="2" HorizontalAlignment="Stretch"  />
                             
-                            <StackPanel Grid.Row="6" Grid.Column="3" HorizontalAlignment="Left"  Orientation="Horizontal" Margin="2" >
+                            <StackPanel Grid.Row="8" Grid.Column="1" HorizontalAlignment="Left"  Orientation="Horizontal" Margin="2" >
                                 <TextBox Text="{Binding FlatData.BaseAirport.Code , Mode=TwoWay}" HorizontalAlignment="left" Width="155"   />
                                 <Button Content="f" Width="20"                    Command="{Binding ShowAirportsGridCommand}"/>
                             </StackPanel>
-                            <ComboBox ItemsSource="{Binding EmployeeTypes}"  SelectedItem="{Binding FlatData.Position , UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" Grid.Row="7"  Grid.Column="1" Margin="2"/>
-                            
-                            <StackPanel Grid.Row="7" Grid.Column="3" HorizontalAlignment="Left"  Orientation="Horizontal" Margin="2" >
+                            <TextBox Text="{Binding FlatData.Seniority, Mode=TwoWay}" Grid.Row="6" Grid.Column="3" Margin="2" HorizontalAlignment="Stretch"  />
+
+                            <ComboBox ItemsSource="{Binding EmployeeTypes}"  SelectedItem="{Binding FlatData.Position , UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" Grid.Row="6"  Grid.Column="1" Margin="2"/>
+                            <TextBox Text="{Binding FlatData.EmpCrSettings.LowerBound, Mode=TwoWay}" Grid.Row="7" Grid.Column="1" Margin="2" HorizontalAlignment="Stretch"  />
+                            <TextBox Text="{Binding FlatData.EmpCrSettings.UpperBound, Mode=TwoWay}" Grid.Row="7" Grid.Column="3" Margin="2" HorizontalAlignment="Stretch" />
+                            <!--<StackPanel Grid.Row="7" Grid.Column="3" HorizontalAlignment="Left"  Orientation="Horizontal" Margin="2" >
                                 <TextBox Text="{Binding FlatData.Certification.Code , Mode=TwoWay}" HorizontalAlignment="left" Width="155"   />
                                 <Button Content="f" Width="20"                    Command="{Binding ShowCertificationsGridCommand}"/>
-                            </StackPanel>
+                            </StackPanel>-->
+
+
+
+
+
 
                         </Grid>
                         <StackPanel  HorizontalAlignment="Left" Orientation="Horizontal">
@@ -525,47 +531,8 @@
                     </StackPanel>
 
                 </TabItem>
-                <TabItem Header="Crew Scheduling Settings">
-                    <StackPanel>
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
 
-                            </Grid.RowDefinitions>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-
-
-
-                            <TextBlock Text="Lower Bound : " Grid.Row="1" Grid.Column="0" Margin="2"/>
-                            <TextBlock Text="Upper Bound : " Grid.Row="1" Grid.Column="2" Margin="2"/>
-
-
-                            <TextBox Text="{Binding FlatData.EmpCrSettings.LowerBound, Mode=TwoWay}" Grid.Row="1" Grid.Column="1" Margin="2" HorizontalAlignment="Stretch"  />
-                            <TextBox Text="{Binding FlatData.EmpCrSettings.UpperBound, Mode=TwoWay}" Grid.Row="1" Grid.Column="3" Margin="2" HorizontalAlignment="Stretch" />
-
-                        </Grid>
-
-
-                    </StackPanel>
-                </TabItem>
-                <TabItem Header="Languages">
+                <!--<TabItem Header="Languages">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
@@ -621,16 +588,16 @@
                                 <syncfusion:GridCheckBoxColumn MappingName="LanguageFlag" HeaderText="Select" AllowEditing="True"/>
 
                             </syncfusion:SfDataGrid.Columns>
-                            <!--<i:Interaction.Triggers>
+                            --><!--<i:Interaction.Triggers>
                             <i:EventTrigger EventName="MouseDoubleClick">
                                 <i:InvokeCommandAction Command="{Binding Path=DataContext.RowDataCommand,ElementName=sfGrid}" CommandParameter="{Binding}"/>
                             </i:EventTrigger>
-                        </i:Interaction.Triggers>-->
+                        </i:Interaction.Triggers>--><!--
                         </syncfusion:SfDataGrid>
 
 
                     </Grid>
-                </TabItem>
+                </TabItem>-->
             </TabControl>
         </StackPanel>
 

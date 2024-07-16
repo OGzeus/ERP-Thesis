@@ -110,6 +110,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="3. Commands.cs" />
     <Compile Include="Commands\AsyncCommand.cs" />
     <Compile Include="CommonFiles\ClusteringFunctions.cs" />
     <Compile Include="CommonFiles\CommonFunctions.cs" />
@@ -516,19 +517,6 @@
     <Compile Include="View\UserControlMenuItem.xaml.cs">
       <DependentUpon>UserControlMenuItem.xaml</DependentUpon>
     </Compile>
-    <Compile Include="V_Proxeiro\Vacation Planning\Employee\EmployeeData.cs" />
-    <Compile Include="V_Proxeiro\Vacation Planning\Employee\LeaveBidDataStatic.cs" />
-    <Compile Include="V_Proxeiro\Vacation Planning\Employee\LeaveBidsData.cs" />
-    <Compile Include="V_Proxeiro\Vacation Planning\Employee\LeaveStatusData.cs" />
-    <Compile Include="V_Proxeiro\Vacation Planning\Schedule\ReqScheduleInfoData.cs" />
-    <Compile Include="V_Proxeiro\Vacation Planning\Schedule\ReqScheduleRows.cs" />
-    <Compile Include="V_Proxeiro\Vacation Planning\Vacation Planning Optimization\VacationPlanningInputData.cs" />
-    <Compile Include="V_Proxeiro\Vacation Planning\Vacation Planning Optimization\VacationPlanningOutputData.cs" />
-    <Compile Include="V_Proxeiro\Vacation Planning\Vacation Planning Optimization\VP Output\VPXijResultsData.cs" />
-    <Compile Include="V_Proxeiro\Vacation Planning\Vacation Planning Optimization\VP Output\VPXiResultData.cs" />
-    <Compile Include="V_Proxeiro\Vacation Planning\Vacation Planning Optimization\VP Output\VPYijResultsData.cs" />
-    <Compile Include="V_Proxeiro\Vacation Planning\Vacation Planning Optimization\VPCGInputData.cs" />
-    <Compile Include="V_Proxeiro\Vacation Planning\Vacation Planning Optimization\VPCGOutputData.cs" />
     <Page Include="CustomControls\BindablePasswordBox.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -774,12 +762,26 @@
     </EmbeddedResource>
     <None Include="bin\Debug\cslogfile.log" />
     <None Include="bin\Debug\cslogfile_final.log" />
+    <None Include="bin\Debug\OptimizationResults\CPLEX\Thesis\CS_Set_Cover\CS_SetCover.lp" />
+    <None Include="bin\Debug\OptimizationResults\CPLEX\Thesis\CS_Set_Cover\CS_SetCover.mps" />
+    <None Include="bin\Debug\OptimizationResults\CPLEX\Thesis\CS_Set_Cover\CS_SetCover.sol" />
+    <None Include="bin\Debug\OptimizationResults\CPLEX\Thesis\CS_Set_Partition\CS_Set_Partition.lp" />
+    <None Include="bin\Debug\OptimizationResults\CPLEX\Thesis\CS_Set_Partition\CS_Set_Partition.mps" />
+    <None Include="bin\Debug\OptimizationResults\CPLEX\Thesis\CS_Set_Partition\CS_Set_Partition.sol" />
     <None Include="bin\Debug\OptimizationResults\CPLEX\Thesis\Vacation_Planning\VP.lp" />
     <None Include="bin\Debug\OptimizationResults\CPLEX\Thesis\Vacation_Planning\VP.mps" />
     <None Include="bin\Debug\OptimizationResults\CPLEX\Thesis\Vacation_Planning\VP.sol" />
     <None Include="bin\Debug\OptimizationResults\CPLEX\Thesis\VP_Column_Generation\VP_CG.lp" />
     <None Include="bin\Debug\OptimizationResults\CPLEX\Thesis\VP_Column_Generation\VP_CG.mps" />
     <None Include="bin\Debug\OptimizationResults\CPLEX\Thesis\VP_Column_Generation\VP_CG.sol" />
+    <None Include="bin\Debug\OptimizationResults\Gurobi\Thesis\CS_Set_Cover\CS_SetCover.lp" />
+    <None Include="bin\Debug\OptimizationResults\Gurobi\Thesis\CS_Set_Cover\CS_SetCover.mps" />
+    <None Include="bin\Debug\OptimizationResults\Gurobi\Thesis\CS_Set_Cover\CS_SetCover.mst" />
+    <None Include="bin\Debug\OptimizationResults\Gurobi\Thesis\CS_Set_Cover\CS_SetCover.sol" />
+    <None Include="bin\Debug\OptimizationResults\Gurobi\Thesis\CS_Set_Partition\CS_SetPartition.lp" />
+    <None Include="bin\Debug\OptimizationResults\Gurobi\Thesis\CS_Set_Partition\CS_SetPartition.mps" />
+    <None Include="bin\Debug\OptimizationResults\Gurobi\Thesis\CS_Set_Partition\CS_SetPartition.mst" />
+    <None Include="bin\Debug\OptimizationResults\Gurobi\Thesis\CS_Set_Partition\CS_SetPartition.sol" />
     <None Include="bin\Debug\OptimizationResults\Gurobi\Thesis\Vacation_Planning\VP.lp" />
     <None Include="bin\Debug\OptimizationResults\Gurobi\Thesis\Vacation_Planning\VP.mps" />
     <None Include="bin\Debug\OptimizationResults\Gurobi\Thesis\Vacation_Planning\VP.mst" />
@@ -808,7 +810,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Model\Stores\" />
-    <Folder Include="V_Proxeiro\Crew Scheduling\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

@@ -1,48 +1,24 @@
 ﻿using Erp.CommonFiles;
 using Erp.Helper;
-using Erp.Model.Inventory;
 using Syncfusion.UI.Xaml.Grid;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows;
-using System.ComponentModel;
-using Erp.Model.BasicFiles;
-using Erp.Model.Suppliers;
-using Erp.Model.Customers;
-using Erp.Model.Interfaces;
 using Erp.Model.Enums;
 using Erp.Model.Thesis;
 using Syncfusion.Data.Extensions;
-using OxyPlot;
-using Syncfusion.Windows.Shared;
 using Erp.Model.Thesis.CrewScheduling;
 
 namespace Erp.ViewModel.Thesis
 {
     public class EmployeeViewModel : ViewModelBase
     {
+        #region Data Properties
 
-
-        #region DataProperties
-
-        private Columns sfGridColumns;
-        public Columns SfGridColumns
-        {
-            get { return sfGridColumns; }
-            set
-            {
-                this.sfGridColumns = value;
-                INotifyPropertyChanged("SfGridColumns");
-            }
-        }
-
-
+        #region Employee Data
         private EmployeeData flatData;
         public EmployeeData FlatData
         {
@@ -53,6 +29,41 @@ namespace Erp.ViewModel.Thesis
                 INotifyPropertyChanged(nameof(FlatData));
             }
         }
+        #endregion
+
+        #region Support Data
+        private Columns sfGridColumns;
+        public Columns SfGridColumns
+        {
+            get { return sfGridColumns; }
+            set
+            {
+                this.sfGridColumns = value;
+                INotifyPropertyChanged("SfGridColumns");
+            }
+        }
+        #endregion
+
+        #region Enums
+
+        public BasicEnums.EmployeeType[] EmployeeTypes
+        {
+            get { return (BasicEnums.EmployeeType[])Enum.GetValues(typeof(BasicEnums.EmployeeType)); }
+        }
+
+        public BasicEnums.Gender[] Genders
+        {
+            get { return (BasicEnums.Gender[])Enum.GetValues(typeof(BasicEnums.Gender)); }
+        }
+        public BasicEnums.BidType[] BidTypes
+        {
+            get { return (BasicEnums.BidType[])Enum.GetValues(typeof(BasicEnums.BidType)); }
+        }
+
+        #endregion
+
+        #region Extra
+
         #region Languages
         private ObservableCollection<EMPLanguageData> _EMPLanguageData;
         public ObservableCollection<EMPLanguageData> EMPLanguageData
@@ -77,8 +88,6 @@ namespace Erp.ViewModel.Thesis
 
 
         #endregion
-
-
         #region Leave Bids
 
      
@@ -97,280 +106,11 @@ namespace Erp.ViewModel.Thesis
 
         #endregion
 
-        #region Enums
-
-        public BasicEnums.EmployeeType[] EmployeeTypes
-        {
-            get { return (BasicEnums.EmployeeType[])Enum.GetValues(typeof(BasicEnums.EmployeeType)); }
-        }
-
-        public BasicEnums.Gender[] Genders
-        {
-            get { return (BasicEnums.Gender[])Enum.GetValues(typeof(BasicEnums.Gender)); }
-        }
-        public BasicEnums.BidType[] BidTypes
-        {
-            get { return (BasicEnums.BidType[])Enum.GetValues(typeof(BasicEnums.BidType)); }
-        }
-
         #endregion
 
-        public EmployeeViewModel()
-        {
+        #region Commands
 
-
-            FlatData = new EmployeeData();
-            flatData.EmpCrSettings = new EmployeeCR_Settings();
-            ResetEmployeeViewModelData();
-
-
-
-
-            this.sfGridColumns = new Columns();
-
-            ShowEmployeeInfoGridCommand = new RelayCommand2(ExecuteShowEmployeeInfoGridCommand);
-            ShowCertificationsGridCommand = new RelayCommand2(ExecuteShowCertificationsGridCommand);
-            ShowAirportsGridCommand = new RelayCommand2(ExecuteShowAirportsGridCommand);
-
-            AddEmployeeDataCommand = new RelayCommand2(ExecuteAddEmployeeDataCommand);
-
-            rowDataCommand = new RelayCommand2(ChangeCanExecute);
-            rowDataCommand2 = new RelayCommand2(ChangeCanExecuteLeaveBid);
-
-            FlatData.MainSchedule = CommonFunctions.GetMainScheduleInfoData();
-
-        }
-
-        public void ResetEmployeeViewModelData()
-        {
-            FlatData.LeaveStatus = new LeaveStatusData();
-            FlatData.HireDate = DateTime.Now;
-            FlatData.DateOfBirth = DateTime.Now.AddYears(-20);
-            FlatData.BaseAirport = new AirportData();
-            FlatData.Certification = new CertificationData();
-            FlatData.EmpCrSettings = new EmployeeCR_Settings();
-
-            FlatData.LeaveBidInfo = new LeaveBidsData();
-
-            FlatData.LeaveBidDataGridStatic = new ObservableCollection<LeaveBidsDataStatic>();
-            FlatData.LeaveBidsInfoStatic = new LeaveBidsDataStatic();
-
-            FlatData.LeaveBidInfo.PriorityLevel = 1;
-
-
-            FlatData.MainSchedule = new ReqScheduleInfoData();
-
-            FlatData.MainSchedule = CommonFunctions.GetMainScheduleInfoData();
-            EMPLanguageData = new ObservableCollection<EMPLanguageData>();
-        }
-        public void ResetLeaveBidInfoData(EmployeeData Data)
-        {
-
-            Data.LeaveBidInfo = new LeaveBidsData();
-
-            Data.LeaveBidDataGridStatic = new ObservableCollection<LeaveBidsDataStatic>();
-            Data.LeaveBidsInfoStatic = new LeaveBidsDataStatic();
-
-            Data.LeaveBidInfo.PriorityLevel = 1;
-            Data.LeaveBidInfo.DateFrom = FlatData.MainSchedule.DateFrom;
-            Data.LeaveBidInfo.DateTo = FlatData.MainSchedule.DateFrom.AddDays(10);
-            Data.LeaveBidInfo.NumberOfDays = 10;
-            Data.LeaveBidInfo.NumberOfDaysMin = 8;
-            Data.LeaveBidInfo.NumberOfDaysMax = 10;
-
-
-        }
-        #region F7
-
-        public ICommand ShowEmployeeInfoGridCommand { get; }
-        public ICommand ShowAirportsGridCommand { get; }
-        public ICommand ShowCertificationsGridCommand { get; }
-
-        public void ExecuteShowEmployeeInfoGridCommand(object obj)
-        {
-            ClearColumns();
-
-            var F7input = F7Common.F7Employee(ShowDeleted);
-            F7key = F7input.F7key;
-            CollectionView = F7input.CollectionView;
-            var a = F7input.SfGridColumns;
-            foreach (var item in a)
-            {
-                this.sfGridColumns.Add(item);
-            }
-
-        }
-
-
-        private void ExecuteShowCertificationsGridCommand(object obj)
-        {
-            ClearColumns();
-
-            var F7input = F7Common.F7Certification(ShowDeleted);
-            F7key = F7input.F7key;
-            CollectionView = F7input.CollectionView;
-            var a = F7input.SfGridColumns;
-            foreach (var item in a)
-            {
-                this.sfGridColumns.Add(item);
-            }
-
-        }
-
-        private void ExecuteShowAirportsGridCommand(object obj)
-        {
-
-
-            ClearColumns();
-
-            var F7input = F7Common.F7Airports(false);
-            F7key = F7input.F7key;
-            CollectionView = F7input.CollectionView;
-            var a = F7input.SfGridColumns;
-            foreach (var item in a)
-            {
-                this.sfGridColumns.Add(item);
-            }
-
-        }
-        public void ChangeCanExecute(object obj)
-        {
-
-            if (F7key == "Employee")
-            {
-
-                FlatData.EmployeeId = (SelectedItem as EmployeeData).EmployeeId;
-
-                FlatData.Code = (SelectedItem as EmployeeData).Code;
-                FlatData.Descr = (SelectedItem as EmployeeData).Descr;
-                FlatData.FirstName = (SelectedItem as EmployeeData).FirstName;
-                FlatData.LastName = (SelectedItem as EmployeeData).LastName;
-                FlatData.Gender = (SelectedItem as EmployeeData).Gender;
-
-                FlatData.DateOfBirth = (SelectedItem as EmployeeData).DateOfBirth;
-                FlatData.ContactNumber = (SelectedItem as EmployeeData).ContactNumber;
-                FlatData.Email = (SelectedItem as EmployeeData).Email;
-                FlatData.Address = (SelectedItem as EmployeeData).Address;
-                FlatData.Position = (SelectedItem as EmployeeData).Position;
-                FlatData.HireDate = (SelectedItem as EmployeeData).HireDate;
-                FlatData.TotalFlightHours = (SelectedItem as EmployeeData).TotalFlightHours;
-                FlatData.Seniority = (SelectedItem as EmployeeData).Seniority;
-                FlatData.Language = (SelectedItem as EmployeeData).Language;
-
-                FlatData.BaseAirport = (SelectedItem as EmployeeData).BaseAirport;
-                FlatData.Certification = (SelectedItem as EmployeeData).Certification;
-
-                FlatData.IsDeleted = (SelectedItem as EmployeeData).IsDeleted;
-
-                EMPLanguageData = CommonFunctions.GetEMPLanguageData(FlatData.Code, false);
-                FlatData.MainSchedule = CommonFunctions.GetMainScheduleInfoData();
-
-                FlatData.EmpCrSettings = (SelectedItem as EmployeeData).EmpCrSettings;
-
-                ExecuteRefreshLeaveBids(FlatData);
-                ExecuteRefreshCommandLeaveStatus(FlatData);
-
-            }
-            if (F7key == "Airport")
-            {
-                FlatData.BaseAirport = new AirportData();
-                FlatData.BaseAirport = (SelectedItem as AirportData);
-
-            }
-
-            if (F7key == "Certification")
-            {
-                FlatData.Certification = new CertificationData();
-                FlatData.Certification = (SelectedItem as CertificationData);
-            }
-            if(F7key == "LeaveBid")
-            {
-                FlatData.LeaveBidInfo = new LeaveBidsData();
-                FlatData.LeaveBidInfo.Employee = new EmployeeData();
-                FlatData.LeaveBidInfo.Schedule = new ReqScheduleInfoData();
-
-                FlatData.LeaveBidInfo.BidCode = (SelectedItem as LeaveBidsData).BidCode;
-
-                FlatData.LeaveBidInfo.PriorityLevel = (SelectedItem as LeaveBidsData).PriorityLevel;
-
-                FlatData.LeaveBidInfo.BidType = (SelectedItem as LeaveBidsData).BidType;
-
-                FlatData.LeaveBidInfo.DateFrom = (SelectedItem as LeaveBidsData).DateFrom;
-                FlatData.LeaveBidInfo.DateTo = (SelectedItem as LeaveBidsData).DateTo;
-
-                FlatData.LeaveBidInfo.NumberOfDays = (SelectedItem as LeaveBidsData).NumberOfDays;
-                FlatData.LeaveBidInfo.NumberOfDaysMin = (SelectedItem as LeaveBidsData).NumberOfDaysMin;
-                FlatData.LeaveBidInfo.NumberOfDaysMax = (SelectedItem as LeaveBidsData).NumberOfDaysMax;
-
-                FlatData.LeaveBidInfo.Employee = FlatData;
-                FlatData.LeaveBidInfo.Schedule = FlatData.MainSchedule;
-            }
-        }
-
-        public void ChangeCanExecuteLeaveBid(object obj)
-        {
-
-                FlatData.LeaveBidInfo = new LeaveBidsData();
-                FlatData.LeaveBidInfo.Employee = new EmployeeData();
-                FlatData.LeaveBidInfo.Schedule = new ReqScheduleInfoData();
-
-                FlatData.LeaveBidInfo.BidCode = (SelectedItem2 as LeaveBidsDataStatic).BidCode;
-
-                FlatData.LeaveBidInfo.PriorityLevel = (SelectedItem2 as LeaveBidsDataStatic).PriorityLevel;
-
-                FlatData.LeaveBidInfo.BidType = (SelectedItem2 as LeaveBidsDataStatic).BidType;
-
-                FlatData.LeaveBidInfo.DateFrom = (SelectedItem2 as LeaveBidsDataStatic).DateFrom;
-                FlatData.LeaveBidInfo.DateTo = (SelectedItem2 as LeaveBidsDataStatic).DateTo;
-
-                FlatData.LeaveBidInfo.NumberOfDays = (SelectedItem2 as LeaveBidsDataStatic).NumberOfDays;
-                FlatData.LeaveBidInfo.NumberOfDaysMin = (SelectedItem2 as LeaveBidsDataStatic).NumberOfDaysMin;
-                FlatData.LeaveBidInfo.NumberOfDaysMax = (SelectedItem2 as LeaveBidsDataStatic).NumberOfDaysMax;
-
-                FlatData.LeaveBidInfo.Employee = FlatData;
-                FlatData.LeaveBidInfo.Schedule = FlatData.MainSchedule;
-         
-        }
-        private ICommand rowDataCommand { get; set; }
-        public ICommand RowDataCommand
-        {
-            get
-            {
-                return rowDataCommand;
-            }
-            set
-            {
-                rowDataCommand = value;
-            }
-        }
-    private ICommand rowDataCommand2 { get; set; }
-    public ICommand RowDataCommand2
-    {
-        get
-        {
-            return rowDataCommand2;
-        }
-        set
-        {
-            rowDataCommand2 = value;
-        }
-    }
-    protected void ClearColumns()
-        {
-
-            var ColumnsCount = this.SfGridColumns.Count();
-            if (ColumnsCount != 0)
-            {
-                for (int i = 0; i < ColumnsCount; i++)
-                {
-                    this.sfGridColumns.RemoveAt(0);
-                }
-            }
-        }
-        #endregion
-
-
-        #region Commands Crud
+        #region CRUD Commands
 
         #region 1st Tab General Info 
         #region Clear
@@ -393,10 +133,31 @@ namespace Erp.ViewModel.Thesis
         private void ExecuteClearCommand(object commandParameter)
         {
             FlatData = new EmployeeData();
-            ResetEmployeeViewModelData();
+            ClearEmployeeData();
 
         }
+        public void ClearEmployeeData()
+        {
+            FlatData.LeaveStatus = new LeaveStatusData();
+            FlatData.HireDate = DateTime.Now;
+            FlatData.DateOfBirth = DateTime.Now.AddYears(-20);
+            FlatData.BaseAirport = new AirportData();
+            FlatData.Certification = new CertificationData();
+            FlatData.EmpCrSettings = new EmployeeCR_Settings();
 
+            FlatData.LeaveBidInfo = new LeaveBidsData();
+
+            FlatData.LeaveBidDataGridStatic = new ObservableCollection<LeaveBidsDataStatic>();
+            FlatData.LeaveBidsInfoStatic = new LeaveBidsDataStatic();
+
+            FlatData.LeaveBidInfo.PriorityLevel = 1;
+
+
+            FlatData.MainSchedule = new ReqScheduleInfoData();
+
+            FlatData.MainSchedule = CommonFunctions.GetMainScheduleInfoData();
+            EMPLanguageData = new ObservableCollection<EMPLanguageData>();
+        }
         #endregion
         #region Save
 
@@ -453,7 +214,7 @@ namespace Erp.ViewModel.Thesis
 
         private void ExecuteRefreshCommand(object commandParameter)
         {
-            ResetEmployeeViewModelData();
+            ClearEmployeeData();
 
             FlatData = CommonFunctions.GetEmployeeChooserData(FlatData.EmployeeId, FlatData.Code);
             FlatData.MainSchedule = CommonFunctions.GetMainScheduleInfoData();
@@ -509,102 +270,6 @@ namespace Erp.ViewModel.Thesis
 
         }
         #endregion
-
-        #endregion
-
-        #region 3d Tab Language
-        #region Save
-        private ViewModelCommand saveCommand2;
-        public ICommand SaveCommand2
-        {
-            get
-            {
-                if (saveCommand2 == null)
-                {
-                    saveCommand2 = new ViewModelCommand(ExecuteSaveCommand2);
-                }
-
-                return saveCommand2;
-            }
-        }
-        private void ExecuteSaveCommand2(object obj)
-        {
-            EMPLanguageData = EMPLanguageData.Where(d => d.ExistingFlag == true || (d.NewLanguageFlag == true && d.LanguageFlag == true)).ToObservableCollection();
-
-            //FlatData2.Clear();
-            //foreach (var item in NewData)
-            //{
-            //    FlatData2.Add(item);
-            //}
-
-
-            bool Flag = CommonFunctions.SaveEMPLanguageData(EMPLanguageData, FlatData.Code);
-
-
-            if (Flag == true)
-            {
-                MessageBox.Show($"The Update of the Languages has been completed for the Employee with Code: {FlatData.Code}");
-                ExecuteRefreshCommand2(obj);
-            }
-            else
-            {
-                MessageBox.Show("Error during data processing", "", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        #endregion
-        #region Refresh
-
-        private ViewModelCommand refreshCommand2;
-
-        public ICommand RefreshCommand2
-        {
-            get
-            {
-                if (refreshCommand2 == null)
-                {
-                    refreshCommand2 = new ViewModelCommand(ExecuteRefreshCommand2);
-                }
-
-                return refreshCommand2;
-            }
-        }
-
-        public void ExecuteRefreshCommand2(object commandParameter)
-        {
-
-            FlatData.LeaveBidDataGridStatic = CommonFunctions.GetLeaveBids(FlatData.Code, FlatData.MainSchedule.ReqCode);
-
-        }
-
-        #endregion
-
-        #region AddEMPLanguage
-
-        private ViewModelCommand _AddEMPLanguage;
-
-        public ICommand AddEMPLanguage
-        {
-            get
-            {
-                if (_AddEMPLanguage == null)
-                {
-                    _AddEMPLanguage = new ViewModelCommand(ExecuteAddEMPLanguage);
-                }
-
-                return _AddEMPLanguage;
-            }
-        }
-
-
-        private void ExecuteAddEMPLanguage(object commandParameter)
-        {
-
-            EMPLanguageData = CommonFunctions.GetEMPLanguageData(FlatData.Code, true);
-
-        }
-
-        #endregion
         #endregion
 
         #region 2nd Tab LeaveBids,LeaveStatus
@@ -629,7 +294,7 @@ namespace Erp.ViewModel.Thesis
             FlatData.LeaveBidDataGridStatic = FlatData.LeaveBidDataGridStatic.Where(d => d.ExistingFlag == true || (d.NewBidFlag == true && d.Bidflag == true)).ToObservableCollection();
 
 
-            bool Flag = CommonFunctions.SaveLeaveBidsData(FlatData.LeaveBidDataGridStatic, FlatData.Code,FlatData.MainSchedule.ReqCode);
+            bool Flag = CommonFunctions.SaveLeaveBidsData(FlatData.LeaveBidDataGridStatic, FlatData.Code, FlatData.MainSchedule.ReqCode);
 
 
             if (Flag == true)
@@ -672,7 +337,7 @@ namespace Erp.ViewModel.Thesis
             FlatData.LeaveBidInfo.NumberOfDays = 10;
             FlatData.LeaveBidInfo.NumberOfDaysMin = 8;
             FlatData.LeaveBidInfo.NumberOfDaysMax = 10;
-            if(FlatData.LeaveBidDataGridStatic.Count != 0)
+            if (FlatData.LeaveBidDataGridStatic.Count != 0)
             {
                 FlatData.LeaveBidInfo.PriorityLevel = FlatData.LeaveBidDataGridStatic.Select(item => item.PriorityLevel).Max() + 1;
             }
@@ -683,7 +348,21 @@ namespace Erp.ViewModel.Thesis
 
             #endregion
         }
+        public void ResetLeaveBidInfoData(EmployeeData Data)
+        {
 
+            Data.LeaveBidInfo = new LeaveBidsData();
+            Data.LeaveBidDataGridStatic = new ObservableCollection<LeaveBidsDataStatic>();
+            Data.LeaveBidsInfoStatic = new LeaveBidsDataStatic();
+            Data.LeaveBidInfo.PriorityLevel = 1;
+            Data.LeaveBidInfo.DateFrom = FlatData.MainSchedule.DateFrom;
+            Data.LeaveBidInfo.DateTo = FlatData.MainSchedule.DateFrom.AddDays(10);
+            Data.LeaveBidInfo.NumberOfDays = 10;
+            Data.LeaveBidInfo.NumberOfDaysMin = 8;
+            Data.LeaveBidInfo.NumberOfDaysMax = 10;
+
+
+        }
         #endregion
         #region Clear
 
@@ -715,9 +394,10 @@ namespace Erp.ViewModel.Thesis
             FlatData.LeaveBidInfo.NumberOfDays = 10;
             FlatData.LeaveBidInfo.NumberOfDaysMin = 8;
             FlatData.LeaveBidInfo.NumberOfDaysMax = 10;
-            FlatData.LeaveBidInfo.PriorityLevel =  1;
+            FlatData.LeaveBidInfo.PriorityLevel = 1;
 
             #endregion
+
         }
 
         #endregion
@@ -752,8 +432,8 @@ namespace Erp.ViewModel.Thesis
 
                 if (FlatData.LeaveBidInfo.DateFrom > FlatData.LeaveBidInfo.DateTo)
                 {
-                    string dateFromString =  FlatData.LeaveBidInfo.DateFrom.ToString("dd/MM/yyyy") ;
-                    string dateToString = FlatData.LeaveBidInfo.DateTo.ToString("dd/MM/yyyy") ;
+                    string dateFromString = FlatData.LeaveBidInfo.DateFrom.ToString("dd/MM/yyyy");
+                    string dateToString = FlatData.LeaveBidInfo.DateTo.ToString("dd/MM/yyyy");
 
                     System.Windows.MessageBox.Show($"The Date From = {dateFromString} is Beyond the Date To = {dateToString}",
                                                    "Error",
@@ -766,7 +446,7 @@ namespace Erp.ViewModel.Thesis
             {
                 if (FlatData.LeaveBidInfo.NumberOfDays <= 0)
                 {
-                    System.Windows.MessageBox.Show($"The Number Of Days is <= 0 . Current Number Of Days = {FlatData.LeaveBidInfo.NumberOfDays}" , "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    System.Windows.MessageBox.Show($"The Number Of Days is <= 0 . Current Number Of Days = {FlatData.LeaveBidInfo.NumberOfDays}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
             }
@@ -796,7 +476,7 @@ namespace Erp.ViewModel.Thesis
             #endregion
 
             #region Same Bid Priority
-            if( add ==true )
+            if (add == true)
             {
                 foreach (var row in FlatData.LeaveBidDataGridStatic)
                 {
@@ -811,7 +491,7 @@ namespace Erp.ViewModel.Thesis
             #endregion
 
             #region Date Errors 
-            if(FlatData.LeaveBidInfo.DateFrom < FlatData.MainSchedule.DateFrom || FlatData.LeaveBidInfo.DateFrom > FlatData.MainSchedule.DateTo 
+            if (FlatData.LeaveBidInfo.DateFrom < FlatData.MainSchedule.DateFrom || FlatData.LeaveBidInfo.DateFrom > FlatData.MainSchedule.DateTo
                 || FlatData.LeaveBidInfo.DateTo < FlatData.MainSchedule.DateFrom || FlatData.LeaveBidInfo.DateTo > FlatData.MainSchedule.DateTo)
             {
                 string dateFromString = FlatData.MainSchedule.DateFrom.ToString("dd/MM/yyyy");
@@ -829,7 +509,7 @@ namespace Erp.ViewModel.Thesis
             if (FlatData.LeaveBidInfo.BidType == BasicEnums.BidType.Specific)
             {
                 TimeSpan duration = FlatData.LeaveBidInfo.DateTo - FlatData.LeaveBidInfo.DateFrom;
-                int numberOfDays = duration.Days; 
+                int numberOfDays = duration.Days;
                 if (numberOfDays > FlatData.LeaveStatus.CurrentBalance)
                 {
                     System.Windows.MessageBox.Show($"The Number of days = {numberOfDays} is Beyond the Current Balance ={FlatData.LeaveStatus.CurrentBalance}",
@@ -891,7 +571,7 @@ namespace Erp.ViewModel.Thesis
                 int numberOfDays = duration.Days + 1;
 
                 FlatData.LeaveBidInfo.NumberOfDays = numberOfDays;
-                
+
                 FlatData.LeaveBidInfo.NumberOfDaysMin = 0;
                 FlatData.LeaveBidInfo.NumberOfDaysMax = 0;
 
@@ -921,7 +601,7 @@ namespace Erp.ViewModel.Thesis
             FlatData.LeaveBidsInfoStatic.NumberOfDays = FlatData.LeaveBidInfo.NumberOfDays;
             FlatData.LeaveBidsInfoStatic.NumberOfDaysMin = FlatData.LeaveBidInfo.NumberOfDaysMin;
             FlatData.LeaveBidsInfoStatic.NumberOfDaysMax = FlatData.LeaveBidInfo.NumberOfDaysMax;
-            FlatData.LeaveBidsInfoStatic.ExistingFlag = FlatData.LeaveBidInfo.ExistingFlag; 
+            FlatData.LeaveBidsInfoStatic.ExistingFlag = FlatData.LeaveBidInfo.ExistingFlag;
             FlatData.LeaveBidsInfoStatic.NewBidFlag = FlatData.LeaveBidInfo.NewBidFlag;
             FlatData.LeaveBidsInfoStatic.Bidflag = FlatData.LeaveBidInfo.Bidflag;
             FlatData.LeaveBidsInfoStatic.Modify = FlatData.LeaveBidInfo.Modify;
@@ -937,7 +617,7 @@ namespace Erp.ViewModel.Thesis
 
             #region Set Proper Priority Levels
             var i = 1;
-            foreach(var row in FlatData.LeaveBidDataGridStatic)
+            foreach (var row in FlatData.LeaveBidDataGridStatic)
             {
                 row.PriorityLevel = i;
                 i++;
@@ -1226,7 +906,7 @@ namespace Erp.ViewModel.Thesis
                     FlatData.LeaveBidInfo.PriorityLevel = RowToRemove.PriorityLevel;
                     #endregion
                 }
-                else if(Flag ==1) 
+                else if (Flag == 1)
                 {
                     MessageBox.Show($"The Leave Bid with Code '{FlatData.LeaveBidInfo.BidCode}' was not saved in the database in the First Place. However, it has been successfully removed from the user interface.");
                     #region Reset Values
@@ -1240,7 +920,7 @@ namespace Erp.ViewModel.Thesis
 
                     #endregion;
                 }
-                else if(Flag==0)
+                else if (Flag == 0)
                 {
                     MessageBox.Show("Error during data processing", "", MessageBoxButton.OK, MessageBoxImage.Error);
 
@@ -1321,10 +1001,318 @@ namespace Erp.ViewModel.Thesis
 
         #endregion
 
+        #region Extra
+
+        #region 3d Tab Language
+        #region Save
+        private ViewModelCommand saveCommand2;
+        public ICommand SaveCommand2
+        {
+            get
+            {
+                if (saveCommand2 == null)
+                {
+                    saveCommand2 = new ViewModelCommand(ExecuteSaveCommand2);
+                }
+
+                return saveCommand2;
+            }
+        }
+        private void ExecuteSaveCommand2(object obj)
+        {
+            EMPLanguageData = EMPLanguageData.Where(d => d.ExistingFlag == true || (d.NewLanguageFlag == true && d.LanguageFlag == true)).ToObservableCollection();
+
+            //FlatData2.Clear();
+            //foreach (var item in NewData)
+            //{
+            //    FlatData2.Add(item);
+            //}
+
+
+            bool Flag = CommonFunctions.SaveEMPLanguageData(EMPLanguageData, FlatData.Code);
+
+
+            if (Flag == true)
+            {
+                MessageBox.Show($"The Update of the Languages has been completed for the Employee with Code: {FlatData.Code}");
+                ExecuteRefreshCommand2(obj);
+            }
+            else
+            {
+                MessageBox.Show("Error during data processing", "", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        #endregion
+        #region Refresh
+
+        private ViewModelCommand refreshCommand2;
+
+        public ICommand RefreshCommand2
+        {
+            get
+            {
+                if (refreshCommand2 == null)
+                {
+                    refreshCommand2 = new ViewModelCommand(ExecuteRefreshCommand2);
+                }
+
+                return refreshCommand2;
+            }
+        }
+
+        public void ExecuteRefreshCommand2(object commandParameter)
+        {
+
+            FlatData.LeaveBidDataGridStatic = CommonFunctions.GetLeaveBids(FlatData.Code, FlatData.MainSchedule.ReqCode);
+
+        }
+
+        #endregion
+        #region AddEMPLanguage
+
+        private ViewModelCommand _AddEMPLanguage;
+
+        public ICommand AddEMPLanguage
+        {
+            get
+            {
+                if (_AddEMPLanguage == null)
+                {
+                    _AddEMPLanguage = new ViewModelCommand(ExecuteAddEMPLanguage);
+                }
+
+                return _AddEMPLanguage;
+            }
+        }
+
+
+        private void ExecuteAddEMPLanguage(object commandParameter)
+        {
+
+            EMPLanguageData = CommonFunctions.GetEMPLanguageData(FlatData.Code, true);
+
+        }
+
+        #endregion
         #endregion
 
+        #endregion
+        #endregion
+
+        #region Data_Grid Commands
+
+        public ICommand ShowEmployeeInfoGridCommand { get; }
+        public ICommand ShowAirportsGridCommand { get; }
+        public ICommand ShowCertificationsGridCommand { get; }
+
+        public void ExecuteShowEmployeeInfoGridCommand(object obj)
+        {
+            ClearColumns();
+
+            var F7input = F7Common.F7Employee(ShowDeleted);
+            F7key = F7input.F7key;
+            CollectionView = F7input.CollectionView;
+            var a = F7input.SfGridColumns;
+            foreach (var item in a)
+            {
+                this.sfGridColumns.Add(item);
+            }
+
+        }
+
+        private void ExecuteShowCertificationsGridCommand(object obj)
+        {
+            ClearColumns();
+
+            var F7input = F7Common.F7Certification(ShowDeleted);
+            F7key = F7input.F7key;
+            CollectionView = F7input.CollectionView;
+            var a = F7input.SfGridColumns;
+            foreach (var item in a)
+            {
+                this.sfGridColumns.Add(item);
+            }
+
+        }
+
+        private void ExecuteShowAirportsGridCommand(object obj)
+        {
 
 
+            ClearColumns();
 
+            var F7input = F7Common.F7Airports(false);
+            F7key = F7input.F7key;
+            CollectionView = F7input.CollectionView;
+            var a = F7input.SfGridColumns;
+            foreach (var item in a)
+            {
+                this.sfGridColumns.Add(item);
+            }
+
+        }
+        public void ChangeCanExecute(object obj)
+        {
+
+            if (F7key == "Employee")
+            {
+
+                FlatData.EmployeeId = (SelectedItem as EmployeeData).EmployeeId;
+
+                FlatData.Code = (SelectedItem as EmployeeData).Code;
+                FlatData.Descr = (SelectedItem as EmployeeData).Descr;
+                FlatData.FirstName = (SelectedItem as EmployeeData).FirstName;
+                FlatData.LastName = (SelectedItem as EmployeeData).LastName;
+                FlatData.Gender = (SelectedItem as EmployeeData).Gender;
+
+                FlatData.DateOfBirth = (SelectedItem as EmployeeData).DateOfBirth;
+                FlatData.ContactNumber = (SelectedItem as EmployeeData).ContactNumber;
+                FlatData.Email = (SelectedItem as EmployeeData).Email;
+                FlatData.Address = (SelectedItem as EmployeeData).Address;
+                FlatData.Position = (SelectedItem as EmployeeData).Position;
+                FlatData.HireDate = (SelectedItem as EmployeeData).HireDate;
+                FlatData.TotalFlightHours = (SelectedItem as EmployeeData).TotalFlightHours;
+                FlatData.Seniority = (SelectedItem as EmployeeData).Seniority;
+                FlatData.Language = (SelectedItem as EmployeeData).Language;
+
+                FlatData.BaseAirport = (SelectedItem as EmployeeData).BaseAirport;
+                FlatData.Certification = (SelectedItem as EmployeeData).Certification;
+
+                FlatData.IsDeleted = (SelectedItem as EmployeeData).IsDeleted;
+
+                EMPLanguageData = CommonFunctions.GetEMPLanguageData(FlatData.Code, false);
+                FlatData.MainSchedule = CommonFunctions.GetMainScheduleInfoData();
+
+                FlatData.EmpCrSettings = (SelectedItem as EmployeeData).EmpCrSettings;
+
+                ExecuteRefreshLeaveBids(FlatData);
+                ExecuteRefreshCommandLeaveStatus(FlatData);
+
+            }
+            if (F7key == "Airport")
+            {
+                FlatData.BaseAirport = new AirportData();
+                FlatData.BaseAirport = (SelectedItem as AirportData);
+
+            }
+
+            if (F7key == "Certification")
+            {
+                FlatData.Certification = new CertificationData();
+                FlatData.Certification = (SelectedItem as CertificationData);
+            }
+            if (F7key == "LeaveBid")
+            {
+                FlatData.LeaveBidInfo = new LeaveBidsData();
+                FlatData.LeaveBidInfo.Employee = new EmployeeData();
+                FlatData.LeaveBidInfo.Schedule = new ReqScheduleInfoData();
+
+                FlatData.LeaveBidInfo.BidCode = (SelectedItem as LeaveBidsData).BidCode;
+
+                FlatData.LeaveBidInfo.PriorityLevel = (SelectedItem as LeaveBidsData).PriorityLevel;
+
+                FlatData.LeaveBidInfo.BidType = (SelectedItem as LeaveBidsData).BidType;
+
+                FlatData.LeaveBidInfo.DateFrom = (SelectedItem as LeaveBidsData).DateFrom;
+                FlatData.LeaveBidInfo.DateTo = (SelectedItem as LeaveBidsData).DateTo;
+
+                FlatData.LeaveBidInfo.NumberOfDays = (SelectedItem as LeaveBidsData).NumberOfDays;
+                FlatData.LeaveBidInfo.NumberOfDaysMin = (SelectedItem as LeaveBidsData).NumberOfDaysMin;
+                FlatData.LeaveBidInfo.NumberOfDaysMax = (SelectedItem as LeaveBidsData).NumberOfDaysMax;
+
+                FlatData.LeaveBidInfo.Employee = FlatData;
+                FlatData.LeaveBidInfo.Schedule = FlatData.MainSchedule;
+            }
+        }
+
+        public void ChangeCanExecuteLeaveBid(object obj)
+        {
+
+            FlatData.LeaveBidInfo = new LeaveBidsData();
+            FlatData.LeaveBidInfo.Employee = new EmployeeData();
+            FlatData.LeaveBidInfo.Schedule = new ReqScheduleInfoData();
+
+            FlatData.LeaveBidInfo.BidCode = (SelectedItem2 as LeaveBidsDataStatic).BidCode;
+
+            FlatData.LeaveBidInfo.PriorityLevel = (SelectedItem2 as LeaveBidsDataStatic).PriorityLevel;
+
+            FlatData.LeaveBidInfo.BidType = (SelectedItem2 as LeaveBidsDataStatic).BidType;
+
+            FlatData.LeaveBidInfo.DateFrom = (SelectedItem2 as LeaveBidsDataStatic).DateFrom;
+            FlatData.LeaveBidInfo.DateTo = (SelectedItem2 as LeaveBidsDataStatic).DateTo;
+
+            FlatData.LeaveBidInfo.NumberOfDays = (SelectedItem2 as LeaveBidsDataStatic).NumberOfDays;
+            FlatData.LeaveBidInfo.NumberOfDaysMin = (SelectedItem2 as LeaveBidsDataStatic).NumberOfDaysMin;
+            FlatData.LeaveBidInfo.NumberOfDaysMax = (SelectedItem2 as LeaveBidsDataStatic).NumberOfDaysMax;
+
+            FlatData.LeaveBidInfo.Employee = FlatData;
+            FlatData.LeaveBidInfo.Schedule = FlatData.MainSchedule;
+
+        }
+        private ICommand rowDataCommand { get; set; }
+        public ICommand RowDataCommand
+        {
+            get
+            {
+                return rowDataCommand;
+            }
+            set
+            {
+                rowDataCommand = value;
+            }
+        }
+        private ICommand rowDataCommand2 { get; set; }
+        public ICommand RowDataCommand2
+        {
+            get
+            {
+                return rowDataCommand2;
+            }
+            set
+            {
+                rowDataCommand2 = value;
+            }
+        }
+        protected void ClearColumns()
+        {
+
+            var ColumnsCount = this.SfGridColumns.Count();
+            if (ColumnsCount != 0)
+            {
+                for (int i = 0; i < ColumnsCount; i++)
+                {
+                    this.sfGridColumns.RemoveAt(0);
+                }
+            }
+        }
+        #endregion
+
+        #endregion
+
+        public EmployeeViewModel()
+        {
+            #region Data Initialization
+
+            FlatData = new EmployeeData();
+            flatData.EmpCrSettings = new EmployeeCR_Settings();
+            FlatData.MainSchedule = CommonFunctions.GetMainScheduleInfoData();
+
+            ClearEmployeeData();
+            this.sfGridColumns = new Columns();
+            #endregion
+
+            #region Commands
+            ShowEmployeeInfoGridCommand = new RelayCommand2(ExecuteShowEmployeeInfoGridCommand);
+            ShowCertificationsGridCommand = new RelayCommand2(ExecuteShowCertificationsGridCommand);
+            ShowAirportsGridCommand = new RelayCommand2(ExecuteShowAirportsGridCommand);
+
+            AddEmployeeDataCommand = new RelayCommand2(ExecuteAddEmployeeDataCommand);
+
+            rowDataCommand = new RelayCommand2(ChangeCanExecute);
+            rowDataCommand2 = new RelayCommand2(ChangeCanExecuteLeaveBid);
+            #endregion
+
+        }
     }
 }

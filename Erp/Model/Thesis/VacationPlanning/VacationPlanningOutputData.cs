@@ -49,37 +49,37 @@ namespace Erp.Model.Thesis.VacationPlanning
             }
         }
 
-        private ObservableCollection<VPYijResultsData> _VPYijzResultsDataGrid;
+        private ObservableCollection<VPYijResultsData> _VPYijrzResultsDataGrid;
 
-        public ObservableCollection<VPYijResultsData> VPYijzResultsDataGrid 
+        public ObservableCollection<VPYijResultsData> VPYijrzResultsDataGrid
         {
-            get { return _VPYijzResultsDataGrid; }
+            get { return _VPYijrzResultsDataGrid; }
             set
             {
-                _VPYijzResultsDataGrid = value;
-                OnPropertyChanged(nameof(VPYijzResultsDataGrid));
+                _VPYijrzResultsDataGrid = value;
+                OnPropertyChanged(nameof(VPYijrzResultsDataGrid));
             }
         }
-        private ObservableCollection<VPXijResultsData> _VPXijResultsDataGrid;
+        private ObservableCollection<VPXijResultsData> _VPXitResultsDataGrid;
 
-        public ObservableCollection<VPXijResultsData> VPXijResultsDataGrid
+        public ObservableCollection<VPXijResultsData> VPXitResultsDataGrid
         {
-            get { return _VPXijResultsDataGrid; }
+            get { return _VPXitResultsDataGrid; }
             set
             {
-                _VPXijResultsDataGrid = value;
-                OnPropertyChanged(nameof(VPXijResultsDataGrid));
+                _VPXitResultsDataGrid = value;
+                OnPropertyChanged(nameof(VPXitResultsDataGrid));
             }
         }
-        private ObservableCollection<VPXiResultData> _VPXiResultsDataGrid;
+        private ObservableCollection<VPXiResultData> _VPLLiResultsDataGrid;
 
-        public ObservableCollection<VPXiResultData> VPXiResultsDataGrid
+        public ObservableCollection<VPXiResultData> VPLLiResultsDataGrid
         {
-            get { return _VPXiResultsDataGrid; }
+            get { return _VPLLiResultsDataGrid; }
             set
             {
-                _VPXiResultsDataGrid = value;
-                OnPropertyChanged(nameof(VPXiResultsDataGrid));
+                _VPLLiResultsDataGrid = value;
+                OnPropertyChanged(nameof(VPLLiResultsDataGrid));
             }
         }
         private string[] dates;

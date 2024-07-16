@@ -3,15 +3,11 @@ using Erp.Helper;
 using Syncfusion.UI.Xaml.Grid;
 using System;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Linq;
 using System.Windows.Input;
 using System.Windows;
 using Syncfusion.Data.Extensions;
-using Erp.Model.Data_Analytics.Forecast;
 using Erp.Model.Enums;
-using Erp.Model.Data_Analytics;
-using static Erp.Model.Enums.BasicEnums;
 using Erp.Model.Thesis;
 
 namespace Erp.ViewModel.Thesis
@@ -19,18 +15,9 @@ namespace Erp.ViewModel.Thesis
     public class RequirementsScheduleViewModel : ViewModelBase
     {
 
-        #region DataProperties
-        private Columns sfGridColumns;
-        public Columns SfGridColumns
-        {
-            get { return sfGridColumns; }
-            set
-            {
-                this.sfGridColumns = value;
-                INotifyPropertyChanged("SfGridColumns");
-            }
-        }
+        #region Data Properties
 
+        #region Schedule Data
         private ReqScheduleInfoData flatData;
         public ReqScheduleInfoData FlatData
         {
@@ -56,14 +43,22 @@ namespace Erp.ViewModel.Thesis
 
             }
         }
-        public void OnPropertyChanged(string propertyName)
+        #endregion
+
+        #region Support Data
+        private Columns sfGridColumns;
+        public Columns SfGridColumns
         {
-            if (PropertyChanged != null)
-                PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+            get { return sfGridColumns; }
+            set
+            {
+                this.sfGridColumns = value;
+                INotifyPropertyChanged("SfGridColumns");
+            }
         }
         #endregion
-        #region Enums
 
+        #region Enums
 
         public BasicEnums.EmployeeType[] EmployeeTypes
         {
@@ -71,27 +66,12 @@ namespace Erp.ViewModel.Thesis
         }
 
         #endregion
-        public RequirementsScheduleViewModel()
-        {
 
-            FlatData = new ReqScheduleInfoData();
-            FlatData.ReqCode ="";
-            FlatData.ReqScheduleRowsData = new ObservableCollection<ReqScheduleRowsData>();
-            FlatData.DateFrom = DateTime.Now;
-            FlatData.DateTo = DateTime.Now.AddMonths(6);
-            FlatData.Notes = "Notes";
-            FlatData.LimitLineFixed = 2;
+        #endregion
 
-            ShowReqScheduleInfoDataGridCommand = new RelayCommand2(ExecuteShowReqScheduleInfoDataGridCommand);
-            CreateScheduleCommand = new RelayCommand2(ExecuteCreateScheduleCommand);
+        #region Commands
 
-            AddScheduleCommand = new RelayCommand2(ExecuteAddScheduleCommand);
-
-            this.sfGridColumns = new Columns();
-            rowDataCommand = new RelayCommand2(ChangeCanExecute);
-        }
-
-        #region F7
+        #region Data_Grid Commands
 
         public ICommand ShowReqScheduleInfoDataGridCommand { get; }
 
@@ -168,8 +148,10 @@ namespace Erp.ViewModel.Thesis
 
         #endregion
 
-        #region ButtonCommands
+        #region CRUD Commands
+
         #region 1st Tab
+
         #region Add
         public ICommand AddScheduleCommand { get; }
 
@@ -347,9 +329,11 @@ namespace Erp.ViewModel.Thesis
 
         }
         #endregion
+
         #endregion
 
         #region 2nd Tab
+
         #region Create or UpdateSchedule
         public ICommand CreateScheduleCommand { get; }
 
@@ -372,7 +356,7 @@ namespace Erp.ViewModel.Thesis
 
                 for (int i = 0; i <= numberOfDays; i++)
                 {
-                    foreach(var type in EmployeeTypes)
+                    foreach (var type in EmployeeTypes)
                     {
                         var Row = new ReqScheduleRowsData();
 
@@ -400,7 +384,8 @@ namespace Erp.ViewModel.Thesis
 
         #endregion
 
-        #region Crud
+        #region CRUD Commands
+
         #region Save
         private ViewModelCommand saveCommand2;
         public ICommand SaveCommand2
@@ -432,7 +417,6 @@ namespace Erp.ViewModel.Thesis
             }
         }
         #endregion
-
         #region Refresh
 
         private ViewModelCommand refreshCommand2;
@@ -457,7 +441,6 @@ namespace Erp.ViewModel.Thesis
 
         }
         #endregion
-
         #region Clear
 
         private ViewModelCommand _ClearCommand2;
@@ -482,18 +465,41 @@ namespace Erp.ViewModel.Thesis
             ExecuteCreateScheduleCommand(FlatData);
         }
         #endregion
+
         #endregion
 
         #endregion
-        #endregion
-        public event PropertyChangedEventHandler PropertyChanged;
 
-        public void RaisePropertyChanged(string propertyname)
+        #endregion
+
+        #endregion
+
+        public RequirementsScheduleViewModel()
         {
-            if (PropertyChanged != null)
-            {
-                PropertyChanged(this, new PropertyChangedEventArgs(propertyname));
-            }
+            #region Data Initialization
+
+            FlatData = new ReqScheduleInfoData();
+            FlatData.ReqCode = "";
+            FlatData.ReqScheduleRowsData = new ObservableCollection<ReqScheduleRowsData>();
+            FlatData.DateFrom = DateTime.Now;
+            FlatData.DateTo = DateTime.Now.AddMonths(6);
+            FlatData.Notes = "Notes";
+            FlatData.LimitLineFixed = 2;
+            this.sfGridColumns = new Columns();
+
+            #endregion
+
+            #region Commands Initialization
+
+            ShowReqScheduleInfoDataGridCommand = new RelayCommand2(ExecuteShowReqScheduleInfoDataGridCommand);
+            CreateScheduleCommand = new RelayCommand2(ExecuteCreateScheduleCommand);
+            AddScheduleCommand = new RelayCommand2(ExecuteAddScheduleCommand);
+            rowDataCommand = new RelayCommand2(ChangeCanExecute);
+
+            #endregion
         }
+
+
+
     }
 }

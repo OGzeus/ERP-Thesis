@@ -1,13 +1,6 @@
 ﻿using Erp.Helper;
-using Erp.Model.Enums;
-using Erp.Model.Thesis.CrewScheduling;
 using Erp.Model.Thesis;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Input;
 using System.Windows;
 using Syncfusion.UI.Xaml.Grid;
@@ -17,8 +10,6 @@ namespace Erp.ViewModel.Thesis
 {
     public class AirportsViewmodel : ViewModelBase
     {
-
-
         #region DataProperties
 
         private Columns sfGridColumns;
@@ -46,33 +37,139 @@ namespace Erp.ViewModel.Thesis
 
         #endregion
 
+        #region Commands
 
+        #region CRUD Commands
 
-        public AirportsViewmodel()
+        #region 1st Tab
+        #region Clear
+
+        private ViewModelCommand clearCommand;
+
+        public ICommand ClearCommand
         {
+            get
+            {
+                if (clearCommand == null)
+                {
+                    clearCommand = new ViewModelCommand(ExecuteClearCommand);
+                }
 
-
-            ResetAirportsViewmodelData();
-
-
-            this.sfGridColumns = new Columns();
-
-            ShowAirportsGridCommand = new RelayCommand2(ExecuteShowAirportsGridCommand);
-            ShowCitiesGridCommand = new RelayCommand2(ExecuteShowCitiesGridCommand);
-            AddAirportDataCommand = new RelayCommand2(ExecuteAddAirportDataCommand);
-
-            rowDataCommand = new RelayCommand2(ChangeCanExecute);
-
-
+                return clearCommand;
+            }
         }
 
+        private void ExecuteClearCommand(object commandParameter)
+        {
+            ResetAirportsViewmodelData();
+
+        }
         public void ResetAirportsViewmodelData()
         {
             FlatData = new AirportData();
             FlatData.City = new CityData();
         }
+        #endregion
+        #region Save
 
-        #region F7
+
+        private ViewModelCommand savecommand;
+
+        public ICommand SaveCommand
+        {
+            get
+            {
+                if (savecommand == null)
+                {
+                    savecommand = new ViewModelCommand(ExecuteSaveCommand);
+                }
+
+                return savecommand;
+            }
+        }
+
+        private void ExecuteSaveCommand(object obj)
+        {
+            int Flag = CommonFunctions.SaveAirportsData(FlatData);
+
+            if (Flag == 1)
+            {
+                MessageBox.Show($"Η Αποθήκευση/Ανανέωση Ολοκληρώθηκε για το Αεροδρόμιο με Κωδικό : {FlatData.Code}");
+                ExecuteShowAirportsGridCommand(obj);
+
+            }
+            else if (Flag == -1)
+            {
+                MessageBox.Show("Σφάλμα κατά την επεξεργασία δεδομένων", "", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        #endregion
+        #region Refresh
+
+        private ViewModelCommand refreshCommand;
+
+        public ICommand RefreshCommand
+        {
+            get
+            {
+                if (refreshCommand == null)
+                {
+                    refreshCommand = new ViewModelCommand(ExecuteRefreshCommand);
+                }
+
+                return refreshCommand;
+            }
+        }
+
+        private void ExecuteRefreshCommand(object commandParameter)
+        {
+            FlatData = CommonFunctions.GetAirportsChooserData(FlatData.Id, FlatData.Code);
+        }
+
+        #endregion
+        #region Add
+
+        public ICommand AddAirportDataCommand { get; }
+
+        private void ExecuteAddAirportDataCommand(object obj)
+        {
+            if (string.IsNullOrWhiteSpace(FlatData.Code) || string.IsNullOrWhiteSpace(FlatData.Descr))
+            {
+                MessageBox.Show("Insert Code and Description");
+            }
+
+            else
+            {
+                int Flag = CommonFunctions.AddAirportsData(FlatData);
+                if (Flag == 0)
+
+                {
+                    MessageBox.Show($"Ο Αποθηκεύτηκε νέο Αεροδρόμιο με Κωδικό : {FlatData.Code}");
+                    ExecuteShowAirportsGridCommand(obj);
+                    FlatData.Id = 0;
+                    ExecuteRefreshCommand(obj);
+
+                }
+                else if (Flag == 1)
+                {
+                    MessageBox.Show($"The Airport with Code : {FlatData.Code} already exists");
+
+                }
+                else if (Flag == 2)
+                {
+                    MessageBox.Show("Error during data processing", "", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+
+        }
+        #endregion
+
+        #endregion
+
+        #endregion
+
+        #region Data_Grid Commands
 
         public ICommand ShowAirportsGridCommand { get; }
         public ICommand ShowCitiesGridCommand { get; }
@@ -159,136 +256,26 @@ namespace Erp.ViewModel.Thesis
         }
         #endregion
 
+        #endregion
 
-        #region Commands Crud
-
-        #region 1st Tab
-        #region Clear
-
-        private ViewModelCommand clearCommand;
-
-        public ICommand ClearCommand
+        public AirportsViewmodel()
         {
-            get
-            {
-                if (clearCommand == null)
-                {
-                    clearCommand = new ViewModelCommand(ExecuteClearCommand);
-                }
+            #region Data Initialization
 
-                return clearCommand;
-            }
-        }
-
-        private void ExecuteClearCommand(object commandParameter)
-        {
             ResetAirportsViewmodelData();
+            this.sfGridColumns = new Columns();
 
+            #endregion
+
+            #region Commands Initialization
+
+            ShowAirportsGridCommand = new RelayCommand2(ExecuteShowAirportsGridCommand);
+            ShowCitiesGridCommand = new RelayCommand2(ExecuteShowCitiesGridCommand);
+            AddAirportDataCommand = new RelayCommand2(ExecuteAddAirportDataCommand);
+            rowDataCommand = new RelayCommand2(ChangeCanExecute);
+
+            #endregion
         }
-
-        #endregion
-        #region Save
-
-
-        private ViewModelCommand savecommand;
-
-        public ICommand SaveCommand
-        {
-            get
-            {
-                if (savecommand == null)
-                {
-                    savecommand = new ViewModelCommand(ExecuteSaveCommand);
-                }
-
-                return savecommand;
-            }
-        }
-
-        private void ExecuteSaveCommand(object obj)
-        {
-            int Flag = CommonFunctions.SaveAirportsData(FlatData);
-
-            if (Flag == 1)
-            {
-                MessageBox.Show($"Η Αποθήκευση/Ανανέωση Ολοκληρώθηκε για το Αεροδρόμιο με Κωδικό : {FlatData.Code}");
-                ExecuteShowAirportsGridCommand(obj);
-
-            }
-            else if (Flag == -1)
-            {
-                MessageBox.Show("Σφάλμα κατά την επεξεργασία δεδομένων", "", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        #endregion
-        #region Refresh
-
-        private ViewModelCommand refreshCommand;
-
-        public ICommand RefreshCommand
-        {
-            get
-            {
-                if (refreshCommand == null)
-                {
-                    refreshCommand = new ViewModelCommand(ExecuteRefreshCommand);
-                }
-
-                return refreshCommand;
-            }
-        }
-
-        private void ExecuteRefreshCommand(object commandParameter)
-        {
-            FlatData = CommonFunctions.GetAirportsChooserData(FlatData.Id, FlatData.Code);
-
-        }
-
-        #endregion
-        #region Add
-
-        public ICommand AddAirportDataCommand { get; }
-
-        private void ExecuteAddAirportDataCommand(object obj)
-        {
-            if (string.IsNullOrWhiteSpace(FlatData.Code) || string.IsNullOrWhiteSpace(FlatData.Descr))
-            {
-                MessageBox.Show("Insert Code and Description");
-            }
-
-            else
-            {
-                int Flag = CommonFunctions.AddAirportsData(FlatData);
-                if (Flag == 0)
-
-                {
-                    MessageBox.Show($"Ο Αποθηκεύτηκε νέο Αεροδρόμιο με Κωδικό : {FlatData.Code}");
-                    ExecuteShowAirportsGridCommand(obj);
-                    FlatData.Id = 0;
-                    ExecuteRefreshCommand(obj);
-
-                }
-                else if (Flag == 1)
-                {
-                    MessageBox.Show($"The Airport with Code : {FlatData.Code} already exists");
-
-                }
-                else if (Flag == 2)
-                {
-                    MessageBox.Show("Error during data processing", "", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-            }
-
-        }
-        #endregion
-
-        #endregion
-
-        #endregion
-
-
-
 
     }
 }

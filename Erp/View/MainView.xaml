@@ -89,13 +89,13 @@
                 <StackPanel>
                     <!--Logo-->
                     <StackPanel Orientation="Horizontal" Height="35" Margin="15,25,0,40">
-                        <Image Source="/Images/Logo.PNG" />
+                        <Image Source="/Images/Logo.PNG"  />
                         <TextBlock Text="ERP THESIS" Foreground="WhiteSmoke"
                                    FontSize="20"
                                    FontFamily="Segoe UI"
                                    FontWeight="Medium"
                                    VerticalAlignment="Center"
-                                   Margin="10,0,0,0"/>
+                                   Margin="5,0,0,0"/>
                     </StackPanel>
                     <Grid HorizontalAlignment="Stretch" Grid.Row="1" >
                         <Grid.RowDefinitions>
@@ -225,7 +225,7 @@
                                 </Ellipse.Fill>
                             </Ellipse>
 
-                            <Button Style="{StaticResource iconButton}"
+                            <!--<Button Style="{StaticResource iconButton}"
                                     Tag="{StaticResource color1}">
                                 <fa:IconImage Icon="Clock" Style="{StaticResource iconButtonIcon}"/>
                             </Button>
@@ -238,7 +238,7 @@
                             <Button Style="{StaticResource iconButton}"
                                     Tag="{StaticResource color1}">
                                 <fa:IconImage Icon="Bell" Style="{StaticResource iconButtonIcon}"/>
-                            </Button>
+                            </Button>-->
 
                         </StackPanel>
                     </Grid>

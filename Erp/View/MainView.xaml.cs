@@ -166,7 +166,7 @@ namespace Erp.View
 
             var menuFlights = new List<SubItem>();
 
-            menuFlights.Add(new SubItem("Languages", new LanguageView()));
+            //menuFlights.Add(new SubItem("Languages", new LanguageView()));
             menuFlights.Add(new SubItem("Employees", new EmployeeView()));
             menuFlights.Add(new SubItem("Requirements Schedule", new RequirementsScheduleView()));
             menuFlights.Add(new SubItem("Vacation Planning", new VacationsPlanningView()));
@@ -182,9 +182,9 @@ namespace Erp.View
             menuFlights2.Add(new SubItem("Airports", new AirportsView()));
             menuFlights2.Add(new SubItem("Flight Legs", new FlightLegsView()));
             menuFlights2.Add(new SubItem("Flight Routes", new FlightRoutesView()));
-            menuFlights2.Add(new SubItem("Crew Scheduling", new CrewSchedulingView()));
+            menuFlights2.Add(new SubItem("Crew Rostering", new CrewSchedulingView()));
 
-            var CSThesis = new ItemMenu("Crew Scheduling Menu", menuFlights2, PackIconKind.Schedule);
+            var CSThesis = new ItemMenu("Crew Rostering Menu", menuFlights2, PackIconKind.Schedule);
             #endregion
 
             SubItems = SubItems.Concat(menuBasic).ToList();

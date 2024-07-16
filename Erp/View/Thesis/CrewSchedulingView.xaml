@@ -7,7 +7,6 @@
              xmlns:syncfusion="http://schemas.syncfusion.com/wpf"
              xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity" 
              xmlns:syncfusionSfDataGrid="clr-namespace:Syncfusion.UI.Xaml.Grid;assembly=Syncfusion.SfGrid.WPF"       
-
              xmlns:converter="clr-namespace:Erp.Converters"
              xmlns:viewmodel="clr-namespace:Erp.ViewModel.Thesis" 
              xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
@@ -38,13 +37,13 @@
 
         </Grid.ColumnDefinitions>
 
-        <TextBlock Text="Crew Scheduling Code : " FontWeight="Bold"   Grid.Row="1" Grid.Column="0"  Margin="2"/>
+        <TextBlock Text="Crew Rostering Code : " FontWeight="Bold"   Grid.Row="1" Grid.Column="0"  Margin="2"/>
         <StackPanel Grid.Row="1" Grid.Column="1" HorizontalAlignment="Left"  Orientation="Horizontal"  Margin="2">
             <TextBox Text="{Binding InputData.Code, Mode=TwoWay}" HorizontalAlignment="left" Width="115"  />
             <Button Content="f" Width="20"                        Command="{Binding ShowCrewSchedulingGridCommand}"/>
         </StackPanel>
 
-        <TextBlock Text="Crew Scheduling Description : " FontWeight="Bold"  Grid.Row="1" Grid.Column="2"  Margin="2"/>
+        <TextBlock Text="Crew Rostering Description : " FontWeight="Bold"  Grid.Row="1" Grid.Column="2"  Margin="2"/>
         <StackPanel Grid.Row="1" Grid.Column="3" HorizontalAlignment="Stretch"  Orientation="Horizontal"  Margin="2">
             <TextBox Text="{Binding InputData.Descr, Mode=TwoWay}" HorizontalAlignment="Stretch" Width="135" />
         </StackPanel>
@@ -53,7 +52,7 @@
 
         <StackPanel Grid.Row="1" Grid.Column="4" HorizontalAlignment="Stretch"  Orientation="Horizontal" Margin="2" >
             <Button x:Name="AddItem"  Width="220"  Margin="1" HorizontalAlignment="Left" Command="{Binding AddCommand}">
-                <TextBlock Text="Add New Crew Scheduling"/>
+                <TextBlock Text="Add New Crew Rostering"/>
             </Button>
             <ToggleButton x:Name = "tb" Content = "Show Deleted"  
          IsChecked="{Binding ShowDeleted, Mode=TwoWay}"  Margin = "1" Background="Beige" BorderBrush="Black" 
@@ -69,7 +68,7 @@
         <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="8"  converter:MainStackPanelReadonly.IsEnabledBasedOnProperty="{Binding InputData.Code}" >
 
             <TabControl SelectedIndex="{Binding SelectedTabIndex}">
-                <TabItem Header="Crew Scheduling Input ">
+                <TabItem Header="Crew Rostering Input ">
                     <StackPanel>
                         <Grid  Margin="0,0,-193,0">
                             <Grid.RowDefinitions>
@@ -122,6 +121,7 @@
                                         <TextBlock Text="Penalty Employee  : " Grid.Row="2" Grid.Column="2" Margin="2"/>
                                         
                                         <TextBlock Text="Position: " Grid.Row="3" Grid.Column="0" Margin="2"/>
+                                        <TextBlock Text="Problem Type: " Grid.Row="3" Grid.Column="2" Margin="2"/>
 
                                         <xctk:DateTimePicker Value="{Binding InputData.DateFrom, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" 
                              Format="Custom" 
@@ -143,6 +143,7 @@
                                         <TextBox Grid.Row="2"  Grid.Column="3" Text="{Binding InputData.BoundsPenalty, Mode=TwoWay}" HorizontalAlignment="Stretch" Width="182" />
                                         
                                         <ComboBox Grid.Row="3"  Grid.Column="1" ItemsSource="{Binding EmployeeTypes}"  SelectedItem="{Binding InputData.Position , UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"  Margin="2"/>
+                                        <ComboBox Grid.Row="3"  Grid.Column="3" ItemsSource="{Binding CSTypes}"  SelectedItem="{Binding InputData.CSType , UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"  Margin="2"/>
 
                                     </Grid>
                                 </StackPanel>
@@ -171,12 +172,12 @@
                             <Button Content="Show Flight Routes" Width="170" Margin="2" Command="{Binding ShowFlightRoutestGridCommand}"/>
 
 
-                            <Button x:Name="Calculate_GB"   HorizontalAlignment="Left" Margin="4"  Command="{Binding CalculateCS_GB}">
-                                <TextBlock Text="Calculate Crew Scheduling GB" FontWeight="Bold"/>
-                            </Button>
+                            <!--<Button x:Name="Calculate_GB"   HorizontalAlignment="Left" Margin="4"  Command="{Binding CalculateCS_GB}">
+                                <TextBlock Text="Calculate Crew Rostering GB" FontWeight="Bold"/>
+                            </Button>-->
 
-                            <Button x:Name="Calculate_Cplex"   HorizontalAlignment="Left" Margin="4"  Command="{Binding CalculateCS_CP}">
-                                <TextBlock Text="Calculate Crew Scheduling CPLEX" FontWeight="Bold"/>
+                            <Button x:Name="Calculate_Cplex"   HorizontalAlignment="Left" Margin="4"  Command="{Binding CalculateCS_CPLEX}">
+                                <TextBlock Text="Calculate Crew Rostering" FontWeight="Bold"/>
                             </Button>
                         </StackPanel>
 
@@ -213,9 +214,9 @@
 
                     </StackPanel>
                 </TabItem>
-                <TabItem Header="Crew Scheduling Results">
+                <TabItem Header="Optimization Results">
                     <TabControl>
-                        <TabItem Header="Crew Scheduling Results">
+                        <TabItem Header="Results">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
@@ -232,8 +233,11 @@
                                     <ColumnDefinition Width="*"/>
 
                                 </Grid.ColumnDefinitions>
+
                                 <TextBlock Text="Objective Value : " Grid.Row="0" Grid.Column="0" Margin="2"/>
                                 <TextBox Text="{Binding OutputData.ObjValue, Mode=TwoWay}" Grid.Row="0" Grid.Column="1"  HorizontalAlignment="Stretch" Width="135" Margin="2" />
+                                <TextBlock Text="CS Type : " Grid.Row="0" Grid.Column="2" Margin="2"/>
+                                <TextBox Text="{Binding InputData.CSType, Mode=TwoWay}" Grid.Row="0" Grid.Column="3"  HorizontalAlignment="Stretch" Width="135" Margin="2" />
 
 
 

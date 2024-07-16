@@ -28,13 +28,11 @@ namespace Erp.DataBase.Τhesis
         [Column(TypeName = "datetime")]
         public DateTime? DateTo { get; set; }
 
-
         [Column(TypeName = "int")]
         public int? RoutesPenalty { get; set; }
 
         [Column(TypeName = "int")]
         public int? BoundsPenalty { get; set; }
-
 
         [Column(TypeName = "bit")]
         public bool? IsDeleted { get; set; }

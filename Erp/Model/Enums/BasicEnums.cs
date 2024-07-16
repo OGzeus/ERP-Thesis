@@ -11,6 +11,11 @@ namespace Erp.Model.Enums
     {
         #region Thesis
 
+        public enum CSType
+        {
+            Set_Partition,
+            Set_Covering
+        }
         public enum VPLogicType
         {
          Strict_Seniority,
