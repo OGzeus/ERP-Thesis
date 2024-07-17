@@ -195,14 +195,14 @@ namespace Erp.View
             SubItems = SubItems.Concat(menuSpCh).ToList();
             SubItems = SubItems.Concat(menuFlights).ToList();
 
-            Menu.Children.Add(new UserControlMenuItem(BasicFiles, this));
-            Menu.Children.Add(new UserControlMenuItem(Customers, this));
-            //Menu.Children.Add(new UserControlMenuItem(Schedules, this));
-            //Menu.Children.Add(new UserControlMenuItem(Vendors, this));
-            Menu.Children.Add(new UserControlMenuItem(Inventory, this));
-            Menu.Children.Add(new UserControlMenuItem(Production, this));
-            Menu.Children.Add(new UserControlMenuItem(SupChain, this));
-            Menu.Children.Add(new UserControlMenuItem(DataAnalysis, this));
+            //Menu.Children.Add(new UserControlMenuItem(BasicFiles, this));
+            //Menu.Children.Add(new UserControlMenuItem(Customers, this));
+            ////Menu.Children.Add(new UserControlMenuItem(Schedules, this));
+            ////Menu.Children.Add(new UserControlMenuItem(Vendors, this));
+            //Menu.Children.Add(new UserControlMenuItem(Inventory, this));
+            //Menu.Children.Add(new UserControlMenuItem(Production, this));
+            //Menu.Children.Add(new UserControlMenuItem(SupChain, this));
+            //Menu.Children.Add(new UserControlMenuItem(DataAnalysis, this));
 
 
             Menu.Children.Add(new UserControlMenuItem(VPThesis, this));
