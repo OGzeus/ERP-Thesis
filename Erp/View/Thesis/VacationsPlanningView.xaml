@@ -168,12 +168,12 @@
                                 <TextBlock Text="Save"/>
                             </Button>
 
-                            <Button x:Name="Calculate_Cplex"   HorizontalAlignment="Left" Margin="4"  Command="{Binding CalculateVacationPlanning_CPLEX}">
-                                <TextBlock Text="Calculate Vacation Planning CPLEX " FontWeight="Bold"/>
+                            <Button x:Name="Calculate_Cplex"   HorizontalAlignment="Left" Margin="4" Width="250" Command="{Binding CalculateVacationPlanning_CPLEX}">
+                                <TextBlock Text="Calculate Vacation Planning" FontWeight="Bold"/>
                             </Button>
-                            <Button x:Name="Calculate_GB"   HorizontalAlignment="Left" Margin="4"  Command="{Binding CalculateVacationPlanningGB}">
+                            <!--<Button x:Name="Calculate_GB"   HorizontalAlignment="Left" Margin="4"  Command="{Binding CalculateVacationPlanningGB}">
                                 <TextBlock Text="Calculate Vacation Planning GUROBI" FontWeight="Bold"/>
-                            </Button>
+                            </Button>-->
                         </StackPanel>
 
                         <syncfusion:SfDataGrid x:Name="sfGrid"

@@ -45,13 +45,13 @@
         <StackPanel Grid.Row="1" Grid.Column="3" HorizontalAlignment="Stretch"  Orientation="Horizontal" Margin="2" >
             <TextBox Text="{Binding FlatData.Descr}" HorizontalAlignment="Stretch" Width="135" />
         </StackPanel>
-        <StackPanel Grid.Row="1" Grid.Column="4"  HorizontalAlignment="Left" Orientation="Horizontal" Margin="1" >
+        <StackPanel Grid.Row="1" Grid.Column="4"  HorizontalAlignment="Left" Orientation="Horizontal" Margin="15,0,0,0" >
             <Button x:Name="AddPriceList"  Width="170" Margin = "1" HorizontalAlignment="Left" Command="{Binding AddEmployeeDataCommand}">
                 <TextBlock Text="Add New Employee"/>
             </Button>
 
             <ToggleButton x:Name = "tb" Content = "Show Deleted"  
-         IsChecked="{Binding ShowDeleted, Mode=TwoWay}"  Margin = "15,0,0,0" Background="Beige" BorderBrush="Black" 
+         IsChecked="{Binding ShowDeleted, Mode=TwoWay}"  Margin="15,0,0,0" Background="Beige" BorderBrush="Black" 
          Width = "120" HorizontalAlignment = "Center" >
             </ToggleButton>
             <TextBlock Text="Delete : " FontWeight="Bold"   Margin="5,0,0,0"/>

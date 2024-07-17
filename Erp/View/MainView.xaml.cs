@@ -223,25 +223,10 @@ namespace Erp.View
         private void TabControlExt_OnCloseButtonClick(object sender, CloseTabEventArgs e)
         {
 
-            var selectedTab = MyTabControl.SelectedItem as TabItem;
+            var selectedTab = e.TargetTabItem;
 
+            MyTabControl.Items.Remove(selectedTab);
 
-
-            MyTabControl.Items.Remove(MyTabControl.SelectedItem);
-            #region To vlepoume
-            //            var currentscreen = selectedTab.Content;
-
-            //            var userControlMenuItem = Menu.Children
-            //.OfType<UserControlMenuItem>()
-            //.FirstOrDefault();
-
-            //            var ListViewItemMenu = userControlMenuItem.ListViewItemMenu;
-
-            //            var ListViewMenu = userControlMenuItem.ListViewMenu.ItemsSource;
-
-            //            var SpecificSubItem = ((IEnumerable<SubItem>)ListViewMenu).FirstOrDefault();
-
-            #endregion
         }
 
 

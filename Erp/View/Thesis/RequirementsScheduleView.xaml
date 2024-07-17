@@ -47,7 +47,7 @@
             <TextBox Text="{Binding FlatData.ReqDescr, Mode=TwoWay}" HorizontalAlignment="Stretch" Width="135"  Height="28"/>
         </StackPanel>
 
-        <StackPanel Grid.Row="1" Grid.Column="4" HorizontalAlignment="Stretch"  Orientation="Horizontal" Margin="2" >
+        <StackPanel Grid.Row="1" Grid.Column="4" HorizontalAlignment="Stretch"  Orientation="Horizontal" Margin="15,2,2,2" >
             <Button x:Name="AddItem"  Width="160" HorizontalAlignment="Left" Margin="2" Command="{Binding AddScheduleCommand}">
                 <TextBlock Text="Add New Schedule"/>
             </Button>

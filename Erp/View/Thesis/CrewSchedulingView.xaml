@@ -50,16 +50,16 @@
 
 
 
-        <StackPanel Grid.Row="1" Grid.Column="4" HorizontalAlignment="Stretch"  Orientation="Horizontal" Margin="2" >
+        <StackPanel Grid.Row="1" Grid.Column="4" HorizontalAlignment="Stretch"  Orientation="Horizontal" Margin="15,2,2,2"  >
             <Button x:Name="AddItem"  Width="220"  Margin="1" HorizontalAlignment="Left" Command="{Binding AddCommand}">
                 <TextBlock Text="Add New Crew Rostering"/>
             </Button>
             <ToggleButton x:Name = "tb" Content = "Show Deleted"  
-         IsChecked="{Binding ShowDeleted, Mode=TwoWay}"  Margin = "1" Background="Beige" BorderBrush="Black" 
-         Width = "113" HorizontalAlignment = "Center" >
+         IsChecked="{Binding ShowDeleted, Mode=TwoWay}"  Margin = "15,2,2,2"  Background="Beige" BorderBrush="Black" 
+         Width = "120" HorizontalAlignment = "Center" >
             </ToggleButton>
-            <TextBlock Text="Delete : " FontWeight="Bold" FontSize="14"  Margin="1"/>
-            <CheckBox IsChecked="{Binding InputData.IsDeleted, Mode=TwoWay}"  Margin="1" VerticalAlignment="Center"  />
+            <TextBlock Text="Delete : " FontWeight="Bold"  Margin="5,2,2,2" />
+            <CheckBox IsChecked="{Binding InputData.IsDeleted, Mode=TwoWay}"  Margin="2" VerticalAlignment="Center"  />
 
 
 
@@ -168,7 +168,7 @@
                                 <TextBlock Text="Save"/>
                             </Button>
 
-                            <Button Content="Show Employees" Width="170" Margin="2" Command="{Binding ShowEmployeesGridCommand}"/>
+                            <Button Content="Show Employees" Width="150" Margin="2" Command="{Binding ShowEmployeesGridCommand}"/>
                             <Button Content="Show Flight Routes" Width="170" Margin="2" Command="{Binding ShowFlightRoutestGridCommand}"/>
 
 
@@ -176,7 +176,7 @@
                                 <TextBlock Text="Calculate Crew Rostering GB" FontWeight="Bold"/>
                             </Button>-->
 
-                            <Button x:Name="Calculate_Cplex"   HorizontalAlignment="Left" Margin="4"  Command="{Binding CalculateCS_CPLEX}">
+                            <Button x:Name="Calculate_Cplex"   HorizontalAlignment="Left" Margin="4" Width="230" Command="{Binding CalculateCS_CPLEX}">
                                 <TextBlock Text="Calculate Crew Rostering" FontWeight="Bold"/>
                             </Button>
                         </StackPanel>
