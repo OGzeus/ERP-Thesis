@@ -94,13 +94,13 @@ namespace Erp.ViewModel.Thesis
 
             if (Flag == 1)
             {
-                MessageBox.Show($"Η Αποθήκευση/Ανανέωση Ολοκληρώθηκε για το Αεροδρόμιο με Κωδικό : {FlatData.Code}");
+                MessageBox.Show($"Saving/Updating Completed for the Airport with Code : {FlatData.Code}");
                 ExecuteShowAirportsGridCommand(obj);
 
             }
             else if (Flag == -1)
             {
-                MessageBox.Show("Σφάλμα κατά την επεξεργασία δεδομένων", "", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Error during data processing", "", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -145,7 +145,8 @@ namespace Erp.ViewModel.Thesis
                 if (Flag == 0)
 
                 {
-                    MessageBox.Show($"Ο Αποθηκεύτηκε νέο Αεροδρόμιο με Κωδικό : {FlatData.Code}");
+                    MessageBox.Show($"A new Airport was saved with Code: {FlatData.Code}");
+
                     ExecuteShowAirportsGridCommand(obj);
                     FlatData.Id = 0;
                     ExecuteRefreshCommand(obj);

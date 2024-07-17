@@ -234,7 +234,7 @@ namespace Erp.ViewModel.Thesis
                 int Flag = CommonFunctions.AddCSInputData(InputData);
                 if (Flag == 0)
                 {
-                    MessageBox.Show($"New Crew Scheduling saved with Code: {InputData.Code}");
+                    MessageBox.Show($"A New Crew Scheduling saved with Code: {InputData.Code}");
                     ExecuteShowCrewSchedulingGridCommand(obj);
                     InputData.Id = 0;
                     ExecuteRefreshInputCommand(obj);
@@ -246,7 +246,7 @@ namespace Erp.ViewModel.Thesis
                 }
                 else if (Flag == 2)
                 {
-                    MessageBox.Show("Σφάλμα κατά την επεξεργασία δεδομένων", "", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show("Error during data processing", "", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
 
@@ -278,7 +278,7 @@ namespace Erp.ViewModel.Thesis
 
         #endregion
 
-        #region SaveMPS
+        #region Save
 
 
         private ViewModelCommand _SaveInputCommand;

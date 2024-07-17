@@ -195,17 +195,19 @@ namespace Erp.View
             SubItems = SubItems.Concat(menuSpCh).ToList();
             SubItems = SubItems.Concat(menuFlights).ToList();
 
-            //Menu.Children.Add(new UserControlMenuItem(BasicFiles, this));
-            //Menu.Children.Add(new UserControlMenuItem(Customers, this));
-            ////Menu.Children.Add(new UserControlMenuItem(Vendors, this));
-            //Menu.Children.Add(new UserControlMenuItem(Inventory, this));
-            //Menu.Children.Add(new UserControlMenuItem(Production, this));
-            //Menu.Children.Add(new UserControlMenuItem(SupChain, this));
-            //Menu.Children.Add(new UserControlMenuItem(DataAnalysis, this));
+            Menu.Children.Add(new UserControlMenuItem(BasicFiles, this));
+            Menu.Children.Add(new UserControlMenuItem(Customers, this));
+            //Menu.Children.Add(new UserControlMenuItem(Schedules, this));
+            //Menu.Children.Add(new UserControlMenuItem(Vendors, this));
+            Menu.Children.Add(new UserControlMenuItem(Inventory, this));
+            Menu.Children.Add(new UserControlMenuItem(Production, this));
+            Menu.Children.Add(new UserControlMenuItem(SupChain, this));
+            Menu.Children.Add(new UserControlMenuItem(DataAnalysis, this));
+
+
             Menu.Children.Add(new UserControlMenuItem(VPThesis, this));
             Menu.Children.Add(new UserControlMenuItem(CSThesis, this));
 
-            //Menu.Children.Add(new UserControlMenuItem(Schedules, this));
 
         }
 
@@ -228,7 +230,27 @@ namespace Erp.View
             MyTabControl.Items.Remove(selectedTab);
 
         }
+        private void TabControlExt_OnCloseAllTabs(object sender, CloseTabEventArgs e)
+        {
+            for (int i = MyTabControl.Items.Count - 1; i >= 0; i--)
+            {
+                MyTabControl.Items.RemoveAt(i);
+            }
+        }
 
+        private void TabControlExt_OnCloseOtherTabs(object sender, CloseTabEventArgs e)
+        {
+            var selectedTab = e.TargetTabItem;
+
+            for (int i = MyTabControl.Items.Count - 1; i >= 0; i--)
+            {
+                var item = MyTabControl.Items[i];
+                if (item != selectedTab)
+                {
+                    MyTabControl.Items.RemoveAt(i);
+                }
+            }
+        }
 
         internal void SwitchScreen2(object sender, string HeaderText)
         {

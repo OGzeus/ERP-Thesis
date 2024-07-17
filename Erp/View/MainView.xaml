@@ -255,6 +255,8 @@
                      Grid.ColumnSpan="3" 
                      CloseButtonType="Both"
                      OnCloseButtonClick="TabControlExt_OnCloseButtonClick"
+                     OnCloseAllTabs="TabControlExt_OnCloseAllTabs"
+                     OnCloseOtherTabs="TabControlExt_OnCloseOtherTabs"
                      EnableLabelEdit="False"
                      Background="White"
                                 >

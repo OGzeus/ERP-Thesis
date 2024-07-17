@@ -510,6 +510,8 @@
                                                 >
                             <syncfusion:SfDataGrid.Columns>
                                 <syncfusion:GridTextColumn MappingName="BidCode" HeaderText="Leave Bid Code"/>
+                                <syncfusion:GridTextColumn MappingName="OldBidCode" HeaderText="Old Bid Code"/>
+
                                 <syncfusion:GridTextColumn MappingName="PriorityLevel" HeaderText="Priority Level"   />
                                 <syncfusion:GridTextColumn MappingName="BidType" HeaderText="Bid Type"/>
                                 <syncfusion:GridTextColumn MappingName="DateFromStr" HeaderText="Date From"  />

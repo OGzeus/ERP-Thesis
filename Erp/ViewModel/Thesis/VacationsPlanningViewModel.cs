@@ -139,7 +139,7 @@ namespace Erp.ViewModel.Thesis
                 int Flag = CommonFunctions.AddVPInputData(InputData);
                 if (Flag == 0)
                 {
-                    MessageBox.Show($"New Vacation Planning added with Code: {InputData.VPCode}", "", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show($"A New Vacation Planning added with Code: {InputData.VPCode}", "", MessageBoxButton.OK, MessageBoxImage.Information);
                     ExecuteShowVPCommand(obj);
                     InputData.VPId = 0;
                     ExecuteRefreshInputCommand(obj);
@@ -151,7 +151,7 @@ namespace Erp.ViewModel.Thesis
                 }
                 else if (Flag == 2)
                 {
-                    MessageBox.Show("Σφάλμα κατά την επεξεργασία δεδομένων", "", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show("Error during data processing", "", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
 

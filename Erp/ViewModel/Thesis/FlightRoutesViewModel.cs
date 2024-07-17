@@ -97,14 +97,14 @@ namespace Erp.ViewModel.Thesis
 
             if (Flag == 1)
             {
-                MessageBox.Show($"Η Αποθήκευση/Ανανέωση Ολοκληρώθηκε για το Flight Route με Κωδικό : {FlatData.Code}");
+                MessageBox.Show($"Saving/Updating Completed for the Flight Route with Code : {FlatData.Code}");
                 ExecuteShowFlightRoutesGridCommand(obj);
                 ExecuteRefreshCommand(obj);
 
             }
             else if (Flag == -1)
             {
-                MessageBox.Show("Σφάλμα κατά την επεξεργασία δεδομένων", "", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Error during data processing", "", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -150,7 +150,7 @@ namespace Erp.ViewModel.Thesis
                 if (Flag == 0)
 
                 {
-                    MessageBox.Show($"Ο Αποθηκεύτηκε νέο Flight Route με Κωδικό : {FlatData.Code}");
+                    MessageBox.Show($"A new Flight Route was saved with Code: {FlatData.Code}");
                     ExecuteShowFlightRoutesGridCommand(obj);
                     FlatData.FlightRouteId = 0;
                     ExecuteRefreshCommand(obj);

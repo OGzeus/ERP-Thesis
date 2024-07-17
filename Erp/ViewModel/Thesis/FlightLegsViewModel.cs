@@ -232,14 +232,14 @@ namespace Erp.ViewModel.Thesis
 
             if (Flag == 1)
             {
-                MessageBox.Show($"Η Αποθήκευση/Ανανέωση Ολοκληρώθηκε για το Flight Leg με Κωδικό : {FlatData.Code}");
+                MessageBox.Show($"Saving/Updating Completed for the Flight Leg with Code: {FlatData.Code}");
                 ExecuteShowFlightLegsGridCommand(obj);
                 ExecuteRefreshCommand(obj);
 
             }
             else if (Flag == -1)
             {
-                MessageBox.Show("Σφάλμα κατά την επεξεργασία δεδομένων", "", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Error during data processing", "", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -285,7 +285,7 @@ namespace Erp.ViewModel.Thesis
                 if (Flag == 0)
 
                 {
-                    MessageBox.Show($"Ο Αποθηκεύτηκε νέο Flight Leg με Κωδικό : {FlatData.Code}");
+                    MessageBox.Show($"A new Flight Leg was saved with Code: {FlatData.Code}");
                     ExecuteShowFlightLegsGridCommand(obj);
                     FlatData.FlightLegId = 0;
                     ExecuteRefreshCommand(obj);

@@ -179,7 +179,7 @@ namespace Erp.ViewModel.Thesis
                 }
                 else if (Flag == 2)
                 {
-                    MessageBox.Show("Σφάλμα κατά την επεξεργασία δεδομένων", "", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show("Error while processing data", "", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
 
@@ -408,12 +408,12 @@ namespace Erp.ViewModel.Thesis
 
             if (Flag == true)
             {
-                MessageBox.Show($"Η Αποθήκευση/Ανανέωση του προγραμματος Ολοκληρώθηκε για τo Schedule με Κωδικό : {FlatData.ReqCode}");
+                MessageBox.Show($"Saving/Updating Completed for the Schedule with Code : {FlatData.ReqCode}");
 
             }
             else
             {
-                MessageBox.Show("Σφάλμα κατά την επεξεργασία δεδομένων", "", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Error during data processing", "", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
         #endregion

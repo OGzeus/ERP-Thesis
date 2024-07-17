@@ -254,7 +254,7 @@ public int AddEmployeeData(EmployeeData flatData)
                 newItem.HireDate = DateTime.Now;
                 newItem.IsDeleted = false;
                 newItem.BaseAirportId = dbContext.Airports.FirstOrDefault().AirportID;
-
+                newItem.CertificationID = dbContext.Certifications.FirstOrDefault().CertID;
                 dbContext.Employees.Add(newItem);
                 dbContext.SaveChanges();
                 return 0;
@@ -498,8 +498,9 @@ ORDER BY L.PriorityLevel");
                         data.Employee = new EmployeeData();
                         data.Schedule = new ReqScheduleInfoData();
 
+                        data.BidId = int.Parse(reader["BidId"].ToString());
                         data.BidCode = reader["BidCode"].ToString();
-
+                        data.OldBidCode = data.BidCode;
                         data.PriorityLevel = int.Parse(reader["PriorityLevel"].ToString());
 
                         data.BidType = (BasicEnums.BidType)Enum.Parse(typeof(BasicEnums.BidType), reader["BidType"].ToString());
@@ -583,17 +584,9 @@ ORDER BY L.PriorityLevel");
                             result += 1;
 
                         }
-                        else if (row.ExistingFlag == true && row.Bidflag == false)
-                        {
-                            var existingBid = dbContext.LeaveBids.SingleOrDefault(b => b.EmpId == EmployeeId && b.BidCode == row.BidCode);
-                            dbContext.LeaveBids.Remove(existingBid);
-
-                        }
                         else if (row.ExistingFlag == true && row.Bidflag == true && row.Modify == true)
                         {
-                            if (row.OldBidCode != row.BidCode)
-                            {
-                                var existingBid = dbContext.LeaveBids.SingleOrDefault(b => b.EmpId == EmployeeId && b.BidCode == row.OldBidCode);
+                                var existingBid = dbContext.LeaveBids.SingleOrDefault(b => b.EmpId == EmployeeId && b.BidId == row.BidId);
                                 // Update existing bom
                                 existingBid.BidCode = row.BidCode;
                                 existingBid.PriorityLevel = row.PriorityLevel;
@@ -605,24 +598,6 @@ ORDER BY L.PriorityLevel");
                                 existingBid.NumberOfDays = row.NumberOfDays;
                                 existingBid.NumberOfDaysMin = row.NumberOfDaysMin;
                                 existingBid.NumberOfDaysMax = row.NumberOfDaysMax;
-                            }
-                            else
-                            {
-                                var existingBid = dbContext.LeaveBids.SingleOrDefault(b => b.EmpId == EmployeeId && b.BidCode == row.BidCode);
-                                // Update existing bom
-                                existingBid.BidCode = row.BidCode;
-                                existingBid.PriorityLevel = row.PriorityLevel;
-                                existingBid.BidType = row.BidType.ToString();
-                                existingBid.DateFrom = row.DateFrom;
-                                existingBid.DateTo = row.DateTo;
-                                existingBid.DateFromStr = row.DateFrom.ToString();
-                                existingBid.DateToStr = row.DateTo.ToString();
-                                existingBid.NumberOfDays = row.NumberOfDays;
-                                existingBid.NumberOfDaysMin = row.NumberOfDaysMin;
-                                existingBid.NumberOfDaysMax = row.NumberOfDaysMax;
-                            }
-
-
                         }
 
 
