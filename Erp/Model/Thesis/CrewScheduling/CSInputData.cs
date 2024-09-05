@@ -1,18 +1,10 @@
-﻿using Erp.Model.BasicFiles;
-using Erp.Model.Data_Analytics.Forecast;
-using Erp.Model.Interfaces;
-using Erp.Model.Inventory;
-using Erp.Model.Manufacture.MRP;
-using Erp.Model.Manufacture;
+﻿using Erp.Model.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 using Erp.Model.Enums;
-using Deedle.Internal;
-using Erp.Model.Thesis.CrewScheduling;
+
 
 namespace Erp.Model.Thesis.CrewScheduling
 {

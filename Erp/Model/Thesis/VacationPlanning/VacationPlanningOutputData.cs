@@ -1,6 +1,5 @@
 ﻿using Erp.Model.Enums;
 using Erp.Model.Interfaces;
-using Erp.Model.Manufacture.MPS;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;

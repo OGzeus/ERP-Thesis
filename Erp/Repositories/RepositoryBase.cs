@@ -16,11 +16,11 @@ namespace Erp.Repositories
 
         public RepositoryBase()
         {
-            _connectionString = "Server=localhost\\SQLEXPRESS; Database =ERPDatabase;Encrypt=false; Integrated Security=true";
+            _connectionString = "Server=localhost\\SQLEXPRESS; Database =AirDatabase;Encrypt=false; Integrated Security=true";
         }
 
         public DbContextOptions<ErpDbContext> options = new DbContextOptionsBuilder<ErpDbContext>()
-    .UseSqlServer("Server=localhost\\SQLEXPRESS;Database=ERPDatabase;Trusted_Connection=True;MultipleActiveResultSets=True;Encrypt=false;")
+    .UseSqlServer("Server=localhost\\SQLEXPRESS;Database=AirDatabase;Trusted_Connection=True;MultipleActiveResultSets=True;Encrypt=false;")
     .Options;
 
         protected SqlConnection GetConnection()

@@ -14,13 +14,7 @@ namespace Erp.Model.Data_Analytics
         public int ForId { get; set; }
         public string ForCode { get; set; }
 
-        private ItemData _Item;
 
-        public ItemData Item
-        {
-            get { return _Item; }
-            set { _Item = value; INotifyPropertyChanged("Item"); }
-        }
         public DateTime Date { get; set; }
         public string DateStr { get; set; }
 

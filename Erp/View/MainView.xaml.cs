@@ -1,35 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 using System.Runtime.InteropServices;
 using System.Windows.Interop;
 using Erp.ViewModel;
 using MaterialDesignThemes.Wpf;
 using Erp.View.BasicFiles;
 using Erp.Model;
-using Erp.View.Suppliers;
-using Erp.View.Manufacture;
-using Erp.View.Inventory;
-using Erp.View.SupplyChain;
-using Erp.ViewModel.Data_Analytics;
-using Erp.View.Data_Analytics;
-using Erp.DataBase;
-using Microsoft.EntityFrameworkCore;
-using Erp.View.Customers;
 using System.ComponentModel;
-using Erp.View.Schedules;
-using System.Collections.ObjectModel;
-using MahApps.Metro.Controls;
 using Syncfusion.Windows.Tools.Controls;
 using Syncfusion.Data.Extensions;
 using Erp.View.Thesis;
@@ -77,91 +59,6 @@ namespace Erp.View
             DataContext = new MainViewModel();
 
 
-            #region BasicFiles
-
-            var menuBasic = new List<SubItem>();
-            menuBasic.Add(new SubItem("Products", new ItemView()));
-            menuBasic.Add(new SubItem("Countries", new CountryView()));
-            menuBasic.Add(new SubItem("Prefectures", new PrefectureView()));
-            menuBasic.Add(new SubItem("Cities", new CityView()));
-            menuBasic.Add(new SubItem("Routes", new RoutesView()));
-
-            var BasicFiles = new ItemMenu("Basic Files", menuBasic, PackIconKind.Schedule);
-
-            #endregion
-
-            #region Customers
-            var menuCustomers = new List<SubItem>();
-            menuCustomers.Add(new SubItem("Customers", new CustomerView()));
-            menuCustomers.Add(new SubItem("Customer Price Catalogs", new PriceListView()));
-            menuCustomers.Add(new SubItem("Customer Orders", new CustomerOrderView()));
-
-            var Customers = new ItemMenu("Customers", menuCustomers, PackIconKind.Register);
-            #endregion
-
-            #region Vendors
-
-            var menuVendors = new List<SubItem>();
-            menuVendors.Add(new SubItem("Vendors", new SupplierInfoView()));
-            menuVendors.Add(new SubItem("Vendors Search"));
-            var Vendors = new ItemMenu("Vendors", menuVendors, PackIconKind.Schedule);
-
-            #endregion
-
-            #region Inventory
-
-            var menuInv = new List<SubItem>();
-            menuInv.Add(new SubItem("Inventories/Stock", new InventoryView()));
-            menuInv.Add(new SubItem("Inventory Control", new InventoryControlView()));
-            //menuInv.Add(new SubItem("Inventory optimization", new GurobiView()));
-            menuInv.Add(new SubItem("Inventory Diagrams", new InvVisualisationView()));
-
-            var Inventory = new ItemMenu("Inventory", menuInv, PackIconKind.Schedule);
-
-            #endregion
-
-            #region Productions
-
-            var menuProd = new List<SubItem>();
-            menuProd.Add(new SubItem("Machines", new MachineView()));
-            menuProd.Add(new SubItem("Maintenance Schedule", new MachMaintenaceView()));
-            menuProd.Add(new SubItem("MPS", new MPSView()));
-            menuProd.Add(new SubItem("MRP", new MRPView()));
-            menuProd.Add(new SubItem("MRP Results", new MRPResultsView()));
-            //menuProd.Add(new SubItem("Gantt Diagram",new GanttChartView()));
-            var Production = new ItemMenu("Production", menuProd, PackIconKind.Schedule);
-
-            #endregion
-
-            #region SupplyChain
-
-            var menuSpCh = new List<SubItem>();
-            menuSpCh.Add(new SubItem("Clustering VRP", new Clustering_Vrp_View()));
-            menuSpCh.Add(new SubItem("VRP", new VehicleRoutingView()));
-            menuSpCh.Add(new SubItem("SupplyChainViewModel", new SupplyChainView()));
-            menuSpCh.Add(new SubItem("VrpVisualisation" , new VrpVisView()));
-            var SupChain = new ItemMenu("Supply Chain", menuSpCh, PackIconKind.Schedule);
-
-            #endregion
-
-            #region Data Analysis
-
-            var menuData = new List<SubItem>();
-            menuData.Add(new SubItem("Forecast Demand", new ForecastDemandView()));
-
-            //menuData.Add(new SubItem("MrpVisualisations", new MRPVisualisationView()));
-            //menuData.Add(new SubItem("Sales Analysis", new SalesDashBoardView()));
-            var DataAnalysis = new ItemMenu("Data Analysis", menuData, PackIconKind.Schedule);
-
-            #endregion
-
-            #region Schedules
-
-            var menuScdles = new List<SubItem>();
-            menuScdles.Add(new SubItem("Project Management Schedule", new PrManagementScheduleView()));
-            var Schedules = new ItemMenu("Schedules", menuScdles, PackIconKind.Schedule);
-            #endregion
-
             #region Diplwmatikh Kozanidhs
 
             var menuFlights = new List<SubItem>();
@@ -187,12 +84,6 @@ namespace Erp.View
             var CSThesis = new ItemMenu("Crew Rostering Menu", menuFlights2, PackIconKind.Schedule);
             #endregion
 
-            SubItems = SubItems.Concat(menuBasic).ToList();
-            SubItems = SubItems.Concat(menuCustomers).ToList();
-            SubItems = SubItems.Concat(menuInv).ToList();
-            SubItems = SubItems.Concat(menuProd).ToList();
-            SubItems = SubItems.Concat(menuData).ToList();
-            SubItems = SubItems.Concat(menuSpCh).ToList();
             SubItems = SubItems.Concat(menuFlights).ToList();
 
             //Menu.Children.Add(new UserControlMenuItem(BasicFiles, this));

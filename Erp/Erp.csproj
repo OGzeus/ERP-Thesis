@@ -112,12 +112,9 @@
     </ApplicationDefinition>
     <Compile Include="3. Commands.cs" />
     <Compile Include="Commands\AsyncCommand.cs" />
-    <Compile Include="CommonFiles\ClusteringFunctions.cs" />
     <Compile Include="CommonFiles\CommonFunctions.cs" />
     <Compile Include="CommonFiles\CPLEXFunctions.cs" />
     <Compile Include="CommonFiles\F7Common.cs" />
-    <Compile Include="CommonFiles\ML_AI_Functions.cs" />
-    <Compile Include="CommonFiles\Nikos_Polychronopoulos_ML_Functions.cs" />
     <Compile Include="Converters\ColorConverter.cs" />
     <Compile Include="Converters\CultureFormatConverter.cs" />
     <Compile Include="Converters\CustomRowStyleConverter.cs" />
@@ -133,30 +130,10 @@
     <Compile Include="CustomControls\DeleteButton.xaml.cs">
       <DependentUpon>DeleteButton.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DataBase\BomDataEntity.cs" />
     <Compile Include="DataBase\CityDataEntity.cs" />
-    <Compile Include="DataBase\COrderCartEntity.cs" />
     <Compile Include="DataBase\CountryDataEntity.cs" />
-    <Compile Include="DataBase\CPriceListEntity.cs" />
-    <Compile Include="DataBase\CPriceListItemsEntity.cs" />
-    <Compile Include="DataBase\CustomerDataEntity.cs" />
-    <Compile Include="DataBase\CustomerOrderEntity.cs" />
-    <Compile Include="DataBase\DemandForecastEntity.cs" />
     <Compile Include="DataBase\ErpDbContext.cs" />
-    <Compile Include="DataBase\FactoryDataEntity.cs" />
-    <Compile Include="DataBase\ForecastInfoDataEntity.cs" />
-    <Compile Include="DataBase\InventoryDataEntity.cs" />
-    <Compile Include="DataBase\ItemDataEntity.cs" />
-    <Compile Include="DataBase\ItemProcessDataEntity.cs" />
-    <Compile Include="DataBase\LotPolicyDataEntity.cs" />
-    <Compile Include="DataBase\MachineDataEntity.cs" />
-    <Compile Include="DataBase\MPSInputDataEntity.cs" />
-    <Compile Include="DataBase\MRPInputDataEntity.cs" />
-    <Compile Include="DataBase\NumberDatesOfRepairsMPSEntity.cs" />
-    <Compile Include="DataBase\NumberOfRepairsOnlyMPSEntity.cs" />
     <Compile Include="DataBase\PrefectureEntity.cs" />
-    <Compile Include="DataBase\RoutesDataEntity.cs" />
-    <Compile Include="DataBase\StockDataEntity.cs" />
     <Compile Include="DataBase\Τhesis\AircraftDataEntity.cs" />
     <Compile Include="DataBase\Τhesis\AirportsDataEntity.cs" />
     <Compile Include="DataBase\Τhesis\CertificationsDataEntity.cs" />
@@ -175,108 +152,21 @@
     <Compile Include="F7TextBox.cs" />
     <Compile Include="Helper\RelayCommand.cs" />
     <Compile Include="Model\BaseData.cs" />
-    <Compile Include="Model\BasicFiles\BomData.cs" />
     <Compile Include="Model\BasicFiles\CityData.cs" />
     <Compile Include="Model\BasicFiles\CountryData.cs" />
-    <Compile Include="Model\BasicFiles\FactoryData.cs" />
-    <Compile Include="Model\BasicFiles\ItemData.cs" />
-    <Compile Include="Model\BasicFiles\ItemProcessData.cs" />
-    <Compile Include="Model\BasicFiles\ItemProdInfoData.cs" />
-    <Compile Include="Model\BasicFiles\LotPolicyData.cs" />
     <Compile Include="Model\BasicFiles\PrefectureData.cs" />
-    <Compile Include="Model\BasicFiles\RoutesData.cs" />
-    <Compile Include="Model\BasicFiles\SupItemData.cs" />
     <Compile Include="Model\ChildViewModelData.cs" />
-    <Compile Include="Model\Customers\CustomerData.cs" />
-    <Compile Include="Model\Customers\CustomerOrderData.cs" />
-    <Compile Include="Model\Customers\ItemQuantityOrderData.cs" />
-    <Compile Include="Model\Customers\PriceListData.cs" />
-    <Compile Include="Model\Customers\PriceListItemData.cs" />
     <Compile Include="Model\Data Analytics\DemandForecastData.cs" />
     <Compile Include="Model\Data Analytics\Forecast\ForecastInfoData.cs" />
-    <Compile Include="Model\Data Analytics\HeatMapData.cs" />
-    <Compile Include="Model\Data Analytics\SalesDashBoardData.cs" />
     <Compile Include="Model\Enums\BasicEnums.cs" />
     <Compile Include="Model\F7Data.cs" />
     <Compile Include="Model\Interfaces\IToolbarRepository.cs" />
     <Compile Include="Model\Interfaces\IUserRepository.cs" />
     <Compile Include="Model\Interfaces\RecordBaseModel.cs" />
-    <Compile Include="Model\Inventory\InvControl ConstantDemand\BasicEOQData.cs" />
-    <Compile Include="Model\Inventory\InvControl ConstantDemand\LostSalesData.cs" />
-    <Compile Include="Model\Inventory\InvControl ConstantDemand\PendingOrdersData.cs" />
-    <Compile Include="Model\Inventory\InvControl ConstantDemand\RefillEOQData.cs" />
-    <Compile Include="Model\Inventory\InvControl TimeVaryingDemand\TimeVaryingInvData.cs" />
-    <Compile Include="Model\Inventory\InvControl TimeVaryingDemand\TimeVaryingInvResultsData.cs" />
-    <Compile Include="Model\Inventory\InvControlData.cs" />
-    <Compile Include="Model\Inventory\InvDiagramsSearchData.cs" />
-    <Compile Include="Model\Inventory\InventoryData.cs" />
-    <Compile Include="Model\Inventory\StockData.cs" />
     <Compile Include="Model\ItemMenu.cs" />
     <Compile Include="Model\Log.cs" />
-    <Compile Include="Model\Manufacture\MachineData.cs" />
-    <Compile Include="Model\Manufacture\MachMaintenanceData.cs" />
-    <Compile Include="Model\Manufacture\MPS\DiagramMPSData.cs" />
-    <Compile Include="Model\Manufacture\MPS\MachineRepairData.cs" />
-    <Compile Include="Model\Manufacture\MPS\MachRepairResultsData.cs" />
-    <Compile Include="Model\Manufacture\MPS\MPSInputData.cs" />
-    <Compile Include="Model\Manufacture\MPS\MPSOptResultsData.cs" />
-    <Compile Include="Model\Manufacture\MPS\MPSOutputData.cs" />
-    <Compile Include="Model\Manufacture\MrpInputData.cs" />
-    <Compile Include="Model\Manufacture\MrpResultData.cs" />
-    <Compile Include="Model\Manufacture\MRP\DataPerDayMRP.cs" />
-    <Compile Include="Model\Manufacture\MRP\DecisionVariablesInvStatus.cs" />
-    <Compile Include="Model\Manufacture\MRP\DecisionVariableX.cs" />
-    <Compile Include="Model\Manufacture\MRP\DecisionVariableY.cs" />
-    <Compile Include="Model\Manufacture\MRP\DiagramsMRPData.cs" />
-    <Compile Include="Model\Manufacture\MRP\MRPInputData.cs" />
-    <Compile Include="Model\Manufacture\MRP\MRPOutputData.cs" />
-    <Compile Include="Model\Manufacture\PlannedOrdersData.cs" />
-    <Compile Include="Model\Manufacture\ProcessData.cs" />
-    <Compile Include="Model\Manufacture\ProjectData.cs" />
-    <Compile Include="Model\Manufacture\TaskData.cs" />
-    <Compile Include="Model\Manufacture\WorkcenterData.cs" />
     <Compile Include="Model\ModelBase.cs" />
-    <Compile Include="Model\OrderModel.cs" />
-    <Compile Include="Model\RelationalDatabaseDiagram\ColumnModel.cs" />
-    <Compile Include="Model\RelationalDatabaseDiagram\ConnectionModel.cs" />
-    <Compile Include="Model\RelationalDatabaseDiagram\TableModel.cs" />
     <Compile Include="Model\SubItem.cs" />
-    <Compile Include="Model\Suppliers\SupplierInfoData.cs" />
-    <Compile Include="Model\Suppliers\SupplierInfoSearchFilterData.cs" />
-    <Compile Include="Model\SupplyChain\ActivePanelToVisibilityConverter_CL.cs" />
-    <Compile Include="Model\SupplyChain\ActivePanelToVisibilityConverter_TSP.cs" />
-    <Compile Include="Model\SupplyChain\ActivePanelToVisibilityConverter_VRP.cs" />
-    <Compile Include="Model\SupplyChain\Clusters\ClusterDatapoint.cs" />
-    <Compile Include="Model\SupplyChain\Clusters\DBSCAN_InputData.cs" />
-    <Compile Include="Model\SupplyChain\Clusters\DBSCAN_OutputData.cs" />
-    <Compile Include="Model\SupplyChain\Clusters\DiagramClusteringData.cs" />
-    <Compile Include="Model\SupplyChain\Clusters\HierarchicalInputData.cs" />
-    <Compile Include="Model\SupplyChain\Clusters\KmeansInputData.cs" />
-    <Compile Include="Model\SupplyChain\Clusters\KmeansOutputData.cs" />
-    <Compile Include="Model\SupplyChain\Clusters\MainDatapoint.cs" />
-    <Compile Include="Model\SupplyChain\Clusters\SFMapDatapoint.cs" />
-    <Compile Include="Model\SupplyChain\CL_InputData.cs" />
-    <Compile Include="Model\SupplyChain\CL_OutputData.cs" />
-    <Compile Include="Model\SupplyChain\CL_Vrp_InputData.cs" />
-    <Compile Include="Model\SupplyChain\CL_Vrp_OutputData.cs" />
-    <Compile Include="Model\SupplyChain\Node.cs" />
-    <Compile Include="Model\SupplyChain\Route.cs" />
-    <Compile Include="Model\SupplyChain\TSP\AntColony_TSP_InputData.cs" />
-    <Compile Include="Model\SupplyChain\TSP\AntColony_TSP_OutputData.cs" />
-    <Compile Include="Model\SupplyChain\TSP\City_Tsp_OutputData.cs" />
-    <Compile Include="Model\SupplyChain\TSP\DiagramData.cs" />
-    <Compile Include="Model\SupplyChain\TSP\SAnnealing_TSP_InputData.cs" />
-    <Compile Include="Model\SupplyChain\TSP\SAnnealing_TSP_OutputData.cs" />
-    <Compile Include="Model\SupplyChain\TSP_InputData.cs" />
-    <Compile Include="Model\SupplyChain\TSP_OutputData.cs" />
-    <Compile Include="Model\SupplyChain\Vehicle.cs" />
-    <Compile Include="Model\SupplyChain\VehicleData.cs" />
-    <Compile Include="Model\SupplyChain\VRP\Cluster_Vehicles_Data.cs" />
-    <Compile Include="Model\SupplyChain\VRP\RouteVRPData.cs" />
-    <Compile Include="Model\SupplyChain\VRP\SimAnnealing_InputData.cs" />
-    <Compile Include="Model\SupplyChain\VRP\TotalVRPOutputData.cs" />
-    <Compile Include="Model\SupplyChain\VRP\VRPResultsData.cs" />
-    <Compile Include="Model\SupplyChain\VRP_InputData.cs" />
     <Compile Include="Model\Thesis\ActivePanelToVisibilityLeaveTypeConverter.cs" />
     <Compile Include="Model\Thesis\AircraftData.cs" />
     <Compile Include="Model\Thesis\AirportData.cs" />
@@ -308,50 +198,11 @@
     <Compile Include="Repositories\UserRepository.cs" />
     <Compile Include="ViewModel\BasicFiles\CityViewModel.cs" />
     <Compile Include="ViewModel\BasicFiles\CountryViewModel.cs" />
-    <Compile Include="ViewModel\BasicFiles\ItemViewModel.cs" />
     <Compile Include="ViewModel\BasicFiles\PrefectureViewModel.cs" />
-    <Compile Include="ViewModel\BasicFiles\RoutesViewModel.cs" />
-    <Compile Include="ViewModel\Customer\CustomerMainViewModel.cs" />
-    <Compile Include="ViewModel\Customer\CustomerOrderViewModel.cs" />
-    <Compile Include="ViewModel\Customer\CustomerViewModel.cs" />
-    <Compile Include="ViewModel\Customer\PriceListViewModel.cs" />
-    <Compile Include="ViewModel\Data Analytics\AnalyticsMainViewModel.cs" />
-    <Compile Include="ViewModel\Data Analytics\ForecastDemandViewModel.cs" />
-    <Compile Include="ViewModel\Data Analytics\MRPVisualisationViewModel.cs" />
-    <Compile Include="ViewModel\Data Analytics\SalesDashBoardViewModel.cs" />
     <Compile Include="ViewModel\DictionaryViewModel.cs" />
-    <Compile Include="ViewModel\FlatSearchViewModel.cs" />
-    <Compile Include="ViewModel\Inventory\ActivePanelToVisibilityConverter.cs" />
-    <Compile Include="ViewModel\Inventory\GurobiViewModel.cs" />
-    <Compile Include="ViewModel\Inventory\InventoryControlViewModel.cs" />
-    <Compile Include="ViewModel\Inventory\InventoryMainViewModel.cs" />
-    <Compile Include="ViewModel\Inventory\InventoryViewModel.cs" />
-    <Compile Include="ViewModel\Inventory\InvVisualisationViewModel.cs" />
-    <Compile Include="ViewModel\Inventory\OptimizationResultsInvData.cs" />
-    <Compile Include="ViewModel\Inventory\StockViewModel.cs" />
     <Compile Include="ViewModel\MainViewModel2.cs" />
-    <Compile Include="ViewModel\Manufacture\GanttChartViewModel.cs" />
-    <Compile Include="ViewModel\Manufacture\MachineViewModel.cs" />
-    <Compile Include="ViewModel\Manufacture\MachMaintenanceViewModel.cs" />
-    <Compile Include="ViewModel\Manufacture\ManufactureMainViewModel.cs" />
     <Compile Include="ViewModel\LoginViewModel.cs" />
     <Compile Include="ViewModel\MainViewModel.cs" />
-    <Compile Include="ViewModel\Manufacture\MPSViewModel.cs" />
-    <Compile Include="ViewModel\Manufacture\MRPResultsViewModel.cs" />
-    <Compile Include="ViewModel\Manufacture\MRPViewModel.cs" />
-    <Compile Include="ViewModel\Schedules\PrManagementScheduleViewModel.cs" />
-    <Compile Include="ViewModel\Stores\StoreMainViewModel.cs" />
-    <Compile Include="ViewModel\Suppliers\SupplierInfoChooserViewModel.cs" />
-    <Compile Include="ViewModel\Suppliers\SupplierInfoSearchResultViewModel.cs" />
-    <Compile Include="ViewModel\Suppliers\SupplierInfoSearchViewModel.cs" />
-    <Compile Include="ViewModel\Suppliers\SupplierInfoViewModel.cs" />
-    <Compile Include="ViewModel\Suppliers\SupplierOrderSearchViewModel.cs" />
-    <Compile Include="ViewModel\Suppliers\SupplierOrderViewModel.cs" />
-    <Compile Include="ViewModel\SupplyChain\Clustering_Vrp_Viewmodel.cs" />
-    <Compile Include="ViewModel\SupplyChain\SupplyChainMainViewModel.cs" />
-    <Compile Include="ViewModel\SupplyChain\SupplyChainViewModel.cs" />
-    <Compile Include="ViewModel\SupplyChain\VehicleRoutingViewModel.cs" />
-    <Compile Include="ViewModel\SupplyChain\VrpVisViewModel.cs" />
     <Compile Include="ViewModel\TabViewModel.cs" />
     <Compile Include="ViewModel\Thesis\AirportsViewmodel.cs" />
     <Compile Include="ViewModel\Thesis\CrewSchedulingViewModel.cs" />
@@ -361,7 +212,6 @@
     <Compile Include="ViewModel\Thesis\LanguageViewModel.cs" />
     <Compile Include="ViewModel\Thesis\RequirementsScheduleViewModel.cs" />
     <Compile Include="ViewModel\Thesis\VacationsPlanningViewModel.cs" />
-    <Compile Include="ViewModel\UpdateForecast.cs" />
     <Compile Include="ViewModel\ViewModelBase.cs" />
     <Compile Include="ViewModel\ViewModelCommand.cs" />
     <Compile Include="View\BasicFiles\CityView.xaml.cs">
@@ -370,122 +220,14 @@
     <Compile Include="View\BasicFiles\CountryView.xaml.cs">
       <DependentUpon>CountryView.xaml</DependentUpon>
     </Compile>
-    <Compile Include="View\BasicFiles\ItemView.xaml.cs">
-      <DependentUpon>ItemView.xaml</DependentUpon>
-    </Compile>
     <Compile Include="View\BasicFiles\PrefectureView.xaml.cs">
       <DependentUpon>PrefectureView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="View\BasicFiles\RoutesView.xaml.cs">
-      <DependentUpon>RoutesView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="View\Customers\CustomerMainView.xaml.cs">
-      <DependentUpon>CustomerMainView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="View\Customers\CustomerOrderSearchView.xaml.cs">
-      <DependentUpon>CustomerOrderSearchView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="View\Customers\CustomerOrderView.xaml.cs">
-      <DependentUpon>CustomerOrderView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="View\Customers\CustomerView.xaml.cs">
-      <DependentUpon>CustomerView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="View\Customers\PriceListView.xaml.cs">
-      <DependentUpon>PriceListView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="View\Data Analytics\AnalyticsMainView.xaml.cs">
-      <DependentUpon>AnalyticsMainView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="View\Data Analytics\ForecastDemandView.xaml.cs">
-      <DependentUpon>ForecastDemandView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="View\Data Analytics\MRPVisualisationView.xaml.cs">
-      <DependentUpon>MRPVisualisationView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="View\Data Analytics\SalesDashBoardView.xaml.cs">
-      <DependentUpon>SalesDashBoardView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="View\FlatSearchView.xaml.cs">
-      <DependentUpon>FlatSearchView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="View\Inventory\GurobiView.xaml.cs">
-      <DependentUpon>GurobiView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="View\Inventory\InventoryControlView.xaml.cs">
-      <DependentUpon>InventoryControlView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="View\Inventory\InventoryMainView.xaml.cs">
-      <DependentUpon>InventoryMainView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="View\Inventory\InventoryView.xaml.cs">
-      <DependentUpon>InventoryView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="View\Inventory\InvVisualisationView.xaml.cs">
-      <DependentUpon>InvVisualisationView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="View\Inventory\StockView.xaml.cs">
-      <DependentUpon>StockView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="View\Manufacture\GanttChartView.xaml.cs">
-      <DependentUpon>GanttChartView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="View\Manufacture\MachineView.xaml.cs">
-      <DependentUpon>MachineView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="View\Manufacture\MachMaintenaceView.xaml.cs">
-      <DependentUpon>MachMaintenaceView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="View\Manufacture\ManufactureMainView.xaml.cs">
-      <DependentUpon>ManufactureMainView.xaml</DependentUpon>
     </Compile>
     <Compile Include="View\LoginView.xaml.cs">
       <DependentUpon>LoginView.xaml</DependentUpon>
     </Compile>
     <Compile Include="View\MainView.xaml.cs">
       <DependentUpon>MainView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="View\Manufacture\MPSView.xaml.cs">
-      <DependentUpon>MPSView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="View\Manufacture\MRPResultsView.xaml.cs">
-      <DependentUpon>MRPResultsView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="View\Manufacture\MRPView.xaml.cs">
-      <DependentUpon>MRPView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="View\Schedules\PrManagementScheduleView.xaml.cs">
-      <DependentUpon>PrManagementScheduleView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="View\Stores\StoreMainView.xaml.cs">
-      <DependentUpon>StoreMainView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="View\Suppliers\SupplierInfoView.xaml.cs">
-      <DependentUpon>SupplierInfoView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="View\Suppliers\SupplierOrderSearchView.xaml.cs">
-      <DependentUpon>SupplierOrderSearchView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="View\Suppliers\SupplierOrderView.xaml.cs">
-      <DependentUpon>SupplierOrderView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="View\Suppliers\SupplyInfoSearchView.xaml.cs">
-      <DependentUpon>SupplyInfoSearchView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="View\SupplyChain\Clustering_Vrp_View.xaml.cs">
-      <DependentUpon>Clustering_Vrp_View.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="View\SupplyChain\SupplyChainMainView.xaml.cs">
-      <DependentUpon>SupplyChainMainView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="View\SupplyChain\SupplyChainView.xaml.cs">
-      <DependentUpon>SupplyChainView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="View\SupplyChain\VehicleRoutingView.xaml.cs">
-      <DependentUpon>VehicleRoutingView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="View\SupplyChain\VrpVisView.xaml.cs">
-      <DependentUpon>VrpVisView.xaml</DependentUpon>
     </Compile>
     <Compile Include="View\Thesis\AirportsView.xaml.cs">
       <DependentUpon>AirportsView.xaml</DependentUpon>
@@ -549,95 +291,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="View\BasicFiles\ItemView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
     <Page Include="View\BasicFiles\PrefectureView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="View\BasicFiles\RoutesView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="View\Customers\CustomerMainView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="View\Customers\CustomerOrderSearchView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="View\Customers\CustomerOrderView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="View\Customers\CustomerView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="View\Customers\PriceListView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="View\Data Analytics\AnalyticsMainView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="View\Data Analytics\ForecastDemandView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="View\Data Analytics\MRPVisualisationView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="View\Data Analytics\SalesDashBoardView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="View\FlatSearchView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="View\Inventory\GurobiView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="View\Inventory\InventoryControlView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="View\Inventory\InventoryMainView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="View\Inventory\InventoryView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="View\Inventory\InvVisualisationView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="View\Inventory\StockView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="View\Manufacture\GanttChartView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="View\Manufacture\MachineView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="View\Manufacture\MachMaintenaceView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="View\Manufacture\ManufactureMainView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -646,62 +300,6 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="View\MainView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="View\Manufacture\MPSView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="View\Manufacture\MRPResultsView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="View\Manufacture\MRPView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="View\Schedules\PrManagementScheduleView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="View\Stores\StoreMainView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="View\Suppliers\SupplierInfoView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="View\Suppliers\SupplierOrderSearchView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="View\Suppliers\SupplierOrderView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="View\Suppliers\SupplyInfoSearchView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="View\SupplyChain\Clustering_Vrp_View.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="View\SupplyChain\SupplyChainMainView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="View\SupplyChain\SupplyChainView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="View\SupplyChain\VehicleRoutingView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="View\SupplyChain\VrpVisView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -808,9 +406,7 @@
     <Resource Include="Images\Logo.PNG" />
     <Resource Include="Images\usericon.PNG" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Model\Stores\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
     <PackageReference Include="Accord">

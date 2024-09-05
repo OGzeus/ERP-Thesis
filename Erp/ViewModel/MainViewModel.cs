@@ -12,14 +12,6 @@ using Erp.Repositories;
 using FontAwesome.Sharp;
 using Erp.CommonFiles;
 using Erp.Model.Interfaces;
-using Erp.ViewModel.Inventory;
-using Erp.ViewModel.BasicFiles;
-using Erp.ViewModel.Suppliers;
-using Erp.ViewModel.Manufacture;
-using Erp.ViewModel.Stores;
-using Erp.ViewModel.SupplyChain;
-using Erp.ViewModel.Customer;
-using Erp.ViewModel.Data_Analytics;
 using System.Windows.Controls;
 using System.Collections.ObjectModel;
 
