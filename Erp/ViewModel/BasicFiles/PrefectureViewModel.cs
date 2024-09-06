@@ -18,14 +18,19 @@ namespace Erp.ViewModel.BasicFiles
         CommonFunctions CommonFunctions = new CommonFunctions();
 
 
+
+
+
         private ObservableCollection<PrefectureData> data;
-        public ObservableCollection<PrefectureData>  Data
+        public ObservableCollection<PrefectureData> Data
         {
             get { return data; }
-            set { data = value; OnPropertyChanged("Data"); }
+            set
+            {
+                data = value;
+                INotifyPropertyChanged(nameof(Data));
+            }
         }
-
-
 
         private List<CountryData> _CountryList;
 

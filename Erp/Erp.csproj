@@ -118,7 +118,6 @@
     <Compile Include="Converters\ColorConverter.cs" />
     <Compile Include="Converters\CultureFormatConverter.cs" />
     <Compile Include="Converters\CustomRowStyleConverter.cs" />
-    <Compile Include="Converters\CustomRowStyleSelector.cs" />
     <Compile Include="Converters\InvertBoolConverter.cs" />
     <Compile Include="Converters\MainStackPanelReadonly.cs" />
     <Compile Include="Converters\RatioConverter.cs" />
@@ -156,8 +155,6 @@
     <Compile Include="Model\BasicFiles\CountryData.cs" />
     <Compile Include="Model\BasicFiles\PrefectureData.cs" />
     <Compile Include="Model\ChildViewModelData.cs" />
-    <Compile Include="Model\Data Analytics\DemandForecastData.cs" />
-    <Compile Include="Model\Data Analytics\Forecast\ForecastInfoData.cs" />
     <Compile Include="Model\Enums\BasicEnums.cs" />
     <Compile Include="Model\F7Data.cs" />
     <Compile Include="Model\Interfaces\IToolbarRepository.cs" />

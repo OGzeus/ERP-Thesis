@@ -16,8 +16,6 @@
     </UserControl.DataContext>
     <UserControl.Resources>
         <converter:TimeBucketToDateFormatConverter x:Key="TimeBucketToDateFormatConverter" />
-        <converter:CustomRowStyleSelector x:Key="rowStyleSelector" />
-
     </UserControl.Resources>
     <Grid>
         <Grid.RowDefinitions>

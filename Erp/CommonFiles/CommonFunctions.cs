@@ -4585,20 +4585,19 @@ INNER JOIN City ON City.CityId = A.CityId
                     {
                         if (reader.Read())
                         {
-                            AirportData data = new AirportData();
-                            data.City = new CityData();
+                            FlatData.City = new CityData();
 
 
-                            data.Id = int.Parse(reader["AirportID"].ToString());
-                            data.Code = reader["AirportCode"].ToString();
-                            data.Descr = reader["AirportDescr"].ToString();
+                            FlatData.Id = int.Parse(reader["AirportID"].ToString());
+                            FlatData.Code = reader["AirportCode"].ToString();
+                            FlatData.Descr = reader["AirportDescr"].ToString();
 
-                            data.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
+                            FlatData.IsDeleted = bool.Parse(reader["IsDeleted"].ToString());
 
 
-                            data.City.CityId = int.Parse(reader["CityId"].ToString());
-                            data.City.CityCode = reader["CityCode"].ToString();
-                            data.City.CityDescr = reader["CityDescr"].ToString();
+                            FlatData.City.CityId = int.Parse(reader["CityId"].ToString());
+                            FlatData.City.CityCode = reader["CityCode"].ToString();
+                            FlatData.City.CityDescr = reader["CityDescr"].ToString();
                         }
                     }
 
