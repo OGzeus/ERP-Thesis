@@ -632,12 +632,12 @@ namespace Erp.ViewModel.Thesis
             if (InputData.CSType == BasicEnums.CSType.Set_Partition)
             {
                 //Set-Partition
-                OutputData = CplexFunctions.CalculateCrewScheduling_SetPartition_CPLEX(InputData);
+                //OutputData = CplexFunctions.CalculateCrewScheduling_SetPartition_CPLEX(InputData);
             }
             else if (InputData.CSType == BasicEnums.CSType.Set_Covering)
             {
                 //Set Cover
-                OutputData = CplexFunctions.CalculateCrewScheduling_SetCover_CPLEX(InputData);
+                //OutputData = CplexFunctions.CalculateCrewScheduling_SetCover_CPLEX(InputData);
             }
 
 

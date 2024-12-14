@@ -697,7 +697,7 @@ namespace Erp.ViewModel.Thesis
 
             #region Call Function For Optimization
 
-            OutputData = CplexFunctions.CalculateVacationPlanning_CPLEX(InputData);
+            //OutputData = CplexFunctions.CalculateVacationPlanning_CPLEX(InputData);
             if(OutputData != null)
             {
                 MessageBox.Show($"Optimization Completed for Vacation Planning with Code : {InputData.VPCode}", "", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -792,7 +792,7 @@ namespace Erp.ViewModel.Thesis
 
             #region Call Function For Optimization
             CGOutputdata = new VPCGOutputData();
-            CGOutputdata = CplexFunctions.CalculateVPColumnGeneration_CPLEX(CGInputdata);
+            //CGOutputdata = CplexFunctions.CalculateVPColumnGeneration_CPLEX(CGInputdata);
 
 
             #endregion

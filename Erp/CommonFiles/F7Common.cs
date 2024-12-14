@@ -299,5 +299,64 @@ namespace Erp.CommonFiles
 
         #endregion
 
+        #region Motherland
+
+
+        public F7Data F7MLEmployee(bool ShowDeleted)
+        {
+            F7Data GridData = new F7Data();
+            GridData.SfGridColumns = new Columns();
+            var Data = CommonFunctions.GetCityData(ShowDeleted).ToList();
+            GridData.CollectionView = CollectionViewSource.GetDefaultView(Data);
+
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "CityId", HeaderText = "City Id ", IsHidden = true });
+
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "CityCode", HeaderText = "City Code " });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "CityDescr", HeaderText = "City Descr " });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "PrefDescr", HeaderText = "Prefecture Descr " });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "CountryDescr", HeaderText = "Country Descr" });
+            GridData.SfGridColumns.Add(new GridCheckBoxColumn() { MappingName = "IsDeleted", HeaderText = "Deleted" });
+
+            GridData.F7key = "Department";
+            return GridData;
+        }
+        public F7Data F7Department(bool ShowDeleted)
+        {
+            F7Data GridData = new F7Data();
+            GridData.SfGridColumns = new Columns();
+            var Data = CommonFunctions.GetCityData(ShowDeleted).ToList();
+            GridData.CollectionView = CollectionViewSource.GetDefaultView(Data);
+
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "CityId", HeaderText = "City Id ", IsHidden = true });
+
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "CityCode", HeaderText = "City Code " });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "CityDescr", HeaderText = "City Descr " });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "PrefDescr", HeaderText = "Prefecture Descr " });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "CountryDescr", HeaderText = "Country Descr" });
+            GridData.SfGridColumns.Add(new GridCheckBoxColumn() { MappingName = "IsDeleted", HeaderText = "Deleted" });
+
+            GridData.F7key = "Department";
+            return GridData;
+        }
+
+        public F7Data F7Position(bool ShowDeleted)
+        {
+            F7Data GridData = new F7Data();
+            GridData.SfGridColumns = new Columns();
+            var Data = CommonFunctions.GetCityData(ShowDeleted).ToList();
+            GridData.CollectionView = CollectionViewSource.GetDefaultView(Data);
+
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "CityId", HeaderText = "City Id ", IsHidden = true });
+
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "CityCode", HeaderText = "City Code " });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "CityDescr", HeaderText = "City Descr " });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "PrefDescr", HeaderText = "Prefecture Descr " });
+            GridData.SfGridColumns.Add(new GridTextColumn() { MappingName = "CountryDescr", HeaderText = "Country Descr" });
+            GridData.SfGridColumns.Add(new GridCheckBoxColumn() { MappingName = "IsDeleted", HeaderText = "Deleted" });
+
+            GridData.F7key = "Department";
+            return GridData;
+        }
+        #endregion
     }
 }

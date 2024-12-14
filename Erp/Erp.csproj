@@ -115,6 +115,7 @@
     <Compile Include="CommonFiles\CommonFunctions.cs" />
     <Compile Include="CommonFiles\CPLEXFunctions.cs" />
     <Compile Include="CommonFiles\F7Common.cs" />
+    <Compile Include="CommonFiles\MLandFunctions.cs" />
     <Compile Include="Converters\ColorConverter.cs" />
     <Compile Include="Converters\CultureFormatConverter.cs" />
     <Compile Include="Converters\CustomRowStyleConverter.cs" />
@@ -132,6 +133,11 @@
     <Compile Include="DataBase\CityDataEntity.cs" />
     <Compile Include="DataBase\CountryDataEntity.cs" />
     <Compile Include="DataBase\ErpDbContext.cs" />
+    <Compile Include="DataBase\Motherland\ClientDataEntity.cs" />
+    <Compile Include="DataBase\Motherland\DepartmentDataEntity.cs" />
+    <Compile Include="DataBase\Motherland\MLEmployeeDataEntity.cs" />
+    <Compile Include="DataBase\Motherland\OfferDataEntity.cs" />
+    <Compile Include="DataBase\Motherland\PositionDataEntity.cs" />
     <Compile Include="DataBase\PrefectureEntity.cs" />
     <Compile Include="DataBase\Τhesis\AircraftDataEntity.cs" />
     <Compile Include="DataBase\Τhesis\AirportsDataEntity.cs" />
@@ -156,6 +162,7 @@
     <Compile Include="Model\BasicFiles\PrefectureData.cs" />
     <Compile Include="Model\ChildViewModelData.cs" />
     <Compile Include="Model\Enums\BasicEnums.cs" />
+    <Compile Include="Model\Enums\MLandEnums.cs" />
     <Compile Include="Model\F7Data.cs" />
     <Compile Include="Model\Interfaces\IToolbarRepository.cs" />
     <Compile Include="Model\Interfaces\IUserRepository.cs" />
@@ -163,6 +170,10 @@
     <Compile Include="Model\ItemMenu.cs" />
     <Compile Include="Model\Log.cs" />
     <Compile Include="Model\ModelBase.cs" />
+    <Compile Include="Model\Motherland\BasicFiles\DepartmentData.cs" />
+    <Compile Include="Model\Motherland\BasicFiles\PositionData.cs" />
+    <Compile Include="Model\Motherland\Client\ClientData.cs" />
+    <Compile Include="Model\Motherland\Employee\MLEmployeeData.cs" />
     <Compile Include="Model\SubItem.cs" />
     <Compile Include="Model\Thesis\ActivePanelToVisibilityLeaveTypeConverter.cs" />
     <Compile Include="Model\Thesis\AircraftData.cs" />
@@ -200,6 +211,11 @@
     <Compile Include="ViewModel\MainViewModel2.cs" />
     <Compile Include="ViewModel\LoginViewModel.cs" />
     <Compile Include="ViewModel\MainViewModel.cs" />
+    <Compile Include="ViewModel\Motherland\ClientViewModel.cs" />
+    <Compile Include="ViewModel\Motherland\DepartmentViewModel.cs" />
+    <Compile Include="ViewModel\Motherland\MLEmployeeViewModel.cs" />
+    <Compile Include="ViewModel\Motherland\OfferViewModel.cs" />
+    <Compile Include="ViewModel\Motherland\PositionViewModel.cs" />
     <Compile Include="ViewModel\TabViewModel.cs" />
     <Compile Include="ViewModel\Thesis\AirportsViewmodel.cs" />
     <Compile Include="ViewModel\Thesis\CrewSchedulingViewModel.cs" />
@@ -225,6 +241,21 @@
     </Compile>
     <Compile Include="View\MainView.xaml.cs">
       <DependentUpon>MainView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\Motherland\ClientView.xaml.cs">
+      <DependentUpon>ClientView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\Motherland\DepartmentView.xaml.cs">
+      <DependentUpon>DepartmentView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\Motherland\MLEmployeeView.xaml.cs">
+      <DependentUpon>MLEmployeeView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\Motherland\OfferView.xaml.cs">
+      <DependentUpon>OfferView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\Motherland\PositionView.xaml.cs">
+      <DependentUpon>PositionView.xaml</DependentUpon>
     </Compile>
     <Compile Include="View\Thesis\AirportsView.xaml.cs">
       <DependentUpon>AirportsView.xaml</DependentUpon>
@@ -297,6 +328,26 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="View\MainView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\Motherland\ClientView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\Motherland\DepartmentView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\Motherland\MLEmployeeView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\Motherland\OfferView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\Motherland\PositionView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -387,6 +438,7 @@
     <None Include="bin\Debug\OptimizationResults\Gurobi\Thesis\VP_Column_Generation\VP_CG.sol" />
     <None Include="bin\Debug\vplogfilefinal_CPLEX.log" />
     <None Include="bin\Debug\vplogfile_CPLEX.log" />
+    <None Include="Directory.Packages.props" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
     </None>
@@ -403,7 +455,10 @@
     <Resource Include="Images\Logo.PNG" />
     <Resource Include="Images\usericon.PNG" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Images\Motherland\" />
+    <Folder Include="Model\Motherland\Offer\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
     <PackageReference Include="Accord">

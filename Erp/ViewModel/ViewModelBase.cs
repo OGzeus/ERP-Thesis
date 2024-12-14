@@ -127,6 +127,7 @@ namespace Erp.ViewModel
 
         public CommonFunctions CommonFunctions = new CommonFunctions();
         public CPLEXFunctions CplexFunctions = new CPLEXFunctions();
+        public MLandFunctions MLandFunctions = new MLandFunctions();
 
         public F7Common F7Common = new F7Common();
 
